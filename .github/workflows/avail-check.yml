@@ -12,56 +12,30 @@ jobs:
       - name: Post weekly avail check to Discord
         env:
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
           python3 << 'PYEOF'
           import urllib.request, urllib.error, json, os, time
-          from urllib.parse import quote
           from datetime import datetime, timedelta, timezone
 
           WEBHOOK_URL = os.environ["WEBHOOK_URL"]
-          BOT_TOKEN   = os.environ.get("BOT_TOKEN", "").strip()
-          API         = "https://discord.com/api/v10"
-          UA          = "avail-check-bot/1.0 (+https://github.com/Isidore94/Discord_Bot)"
+          UA = "avail-check-bot/1.0 (+https://github.com/Isidore94/Discord_Bot)"
 
-          if not BOT_TOKEN:
-              print("WARNING: DISCORD_BOT_TOKEN not set - posts will go out but 👍 reactions will be skipped.")
-
-          def add_reaction(channel_id, message_id):
-              url = f"{API}/channels/{channel_id}/messages/{message_id}/reactions/{quote('👍')}/@me"
-              req = urllib.request.Request(
-                  url, data=b"", method="PUT",
-                  headers={"Authorization": f"Bot {BOT_TOKEN}",
-                           "Content-Length": "0", "User-Agent": UA},
-              )
-              try:
-                  with urllib.request.urlopen(req):
-                      print("    reacted 👍")
-              except urllib.error.HTTPError as e:
-                  print(f"    react err {e.code}: {e.reason} {e.read().decode('utf-8','replace')[:150]}")
-              time.sleep(0.35)
-
-          def post(content, react=False, ping=False):
+          def post(content, ping=False):
               payload = {"content": content}
               if ping:
                   payload["allowed_mentions"] = {"parse": ["everyone"]}
               data = json.dumps(payload).encode("utf-8")
-              # ?wait=true makes Discord return the created message (id + channel_id)
               req = urllib.request.Request(
-                  WEBHOOK_URL + "?wait=true", data=data,
+                  WEBHOOK_URL, data=data,
                   headers={"Content-Type": "application/json", "User-Agent": UA},
                   method="POST",
               )
               try:
-                  with urllib.request.urlopen(req) as resp:
-                      msg = json.loads(resp.read().decode("utf-8"))
-                  print(f"  ok: {content[:60]}")
+                  with urllib.request.urlopen(req):
+                      print(f"  ok: {content[:60]}")
               except urllib.error.HTTPError as e:
                   print(f"  err {e.code}: {e.reason}")
-                  return
               time.sleep(0.6)
-              if react and BOT_TOKEN:
-                  add_reaction(msg["channel_id"], msg["id"])
 
           today       = datetime.now(timezone.utc)
           next_monday = today + timedelta(days=1)
@@ -76,7 +50,7 @@ jobs:
           for day in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]:
               post(f"## {day}")
               for t in ["9","10"]:
-                  post(t, react=True)
+                  post(t)
           post("@here", ping=True)
           print("Done!")
           PYEOF
