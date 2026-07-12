@@ -5,7 +5,7 @@ The sample messages below are real posts from the trade channel.
 """
 
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import weekly_summary as ws
 
@@ -32,6 +32,18 @@ class ParseTradeLineTests(unittest.TestCase):
         self.assertEqual(t["side"], "Long")
         self.assertEqual(t["ticker"], "FBIN")
         self.assertEqual(t["price"], 52.13)
+
+    def test_exit_with_at_symbol(self):
+        t = ws.parse_trade_line("#Exit GOOGL @ 368.88")
+        self.assertEqual(t["side"], "Exit")
+        self.assertEqual(t["ticker"], "GOOGL")
+        self.assertEqual(t["price"], 368.88)
+        self.assertEqual(t["notes"], "")
+
+    def test_long_with_at_symbol_no_space(self):
+        t = ws.parse_trade_line("#Long AAPL @175.50")
+        self.assertEqual(t["ticker"], "AAPL")
+        self.assertEqual(t["price"], 175.50)
 
     def test_exit_with_at_keyword(self):
         t = ws.parse_trade_line("#Exit CRWD at 187.60")
@@ -175,33 +187,125 @@ class HoldingsTests(unittest.TestCase):
 
 
 class SummaryTests(unittest.TestCase):
-    def test_build_summary_sections_and_chunking(self):
-        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
-        log = {"messages": {
-            # Long from 3 days ago, still open
+    def _sample_log(self):
+        return {"messages": {
+            # isidore94: opened PENG ~3 weeks ago, still open (long swing memory)
             "100": {
-                "timestamp": "2026-07-09T00:00:00+00:00",
+                "timestamp": "2026-06-20T00:00:00+00:00",
                 "trades": [{"user": "isidore94", "side": "Long",
                             "ticker": "PENG", "price": 77.15, "partial": False,
                             "notes": ""}],
             },
-            # Full exit this week -> Closed this week
+            # isidore94: opened FBIN this week, still open
             "101": {
+                "timestamp": "2026-07-09T00:00:00+00:00",
+                "trades": [{"user": "isidore94", "side": "Long",
+                            "ticker": "FBIN", "price": 52.13, "partial": False,
+                            "notes": ""}],
+            },
+            # 00sav00: full exit this week -> weekly activity, no open trades
+            "102": {
                 "timestamp": "2026-07-11T00:00:00+00:00",
                 "trades": [{"user": "00sav00", "side": "Exit",
                             "ticker": "CRWD", "price": 187.60, "partial": False,
                             "notes": ""}],
             },
+            # 1ripley: opened NVDA this week then partially exited -> stays open
+            "103": {
+                "timestamp": "2026-07-10T00:00:00+00:00",
+                "trades": [{"user": "1ripley", "side": "Long",
+                            "ticker": "NVDA", "price": 200.0, "partial": False,
+                            "notes": ""}],
+            },
+            "104": {
+                "timestamp": "2026-07-11T12:00:00+00:00",
+                "trades": [{"user": "1ripley", "side": "Exit",
+                            "ticker": "NVDA", "price": 208.66, "partial": True,
+                            "notes": "still holding 4/5"}],
+            },
         }}
-        summary = ws.build_summary(log, now)
-        self.assertIn("Closed this week", summary)
-        self.assertIn("Still holding", summary)
-        self.assertIn("CRWD", summary)      # closed
-        self.assertIn("PENG", summary)      # still holding
-        self.assertIn("isidore94", summary)
 
+    def test_trader_by_trader_structure(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(self._sample_log(), now)
+
+        # Every active trader gets their own section with both headings.
+        for user in ("isidore94", "00sav00", "1ripley"):
+            self.assertIn(f"## {user}", summary)
+        self.assertEqual(summary.count("**Trades taken this week**"), 3)
+        self.assertEqual(summary.count("**Open trades**"), 3)
+
+    def test_open_positions_persist_and_partial_stays_open(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(self._sample_log(), now)
+        iso = summary.split("## isidore94")[1].split("##")[0]
+        # Long swing opened 3 weeks ago is still listed as open.
+        self.assertIn("PENG", iso)
+        self.assertIn("FBIN", iso)
+
+        rip = summary.split("## 1ripley")[1].split("##")[0]
+        # Partial exit does NOT close the position -> NVDA still open.
+        self.assertIn("Open trades", rip)
+        self.assertIn("NVDA", rip.split("**Open trades**")[1])
+
+    def test_trader_with_only_a_close_has_no_open_trades(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(self._sample_log(), now)
+        sav = summary.split("## 00sav00")[1].split("##")[0]
+        self.assertIn("Exit **CRWD**", sav)
+        self.assertIn("_none_", sav.split("**Open trades**")[1])
+
+    def test_chunking_stays_under_limit(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(self._sample_log(), now)
         for chunk in ws.chunk_message(summary):
             self.assertLessEqual(len(chunk), ws.CHUNK_LIMIT)
+
+
+class ContentLogTests(unittest.TestCase):
+    def test_content_entries_are_reparsed(self):
+        # Log stores raw content -> current parser (incl. @-price) is applied.
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        log = {"messages": {
+            "500": {
+                "timestamp": "2026-07-10T00:00:00+00:00",
+                "content": "00sav00 posted a trade:\n#Exit GOOGL @ 368.88",
+            },
+        }}
+        trades = ws.log_to_trades(log)
+        self.assertEqual(len(trades), 1)
+        self.assertEqual(trades[0]["ticker"], "GOOGL")
+        self.assertEqual(trades[0]["price"], 368.88)
+        self.assertEqual(trades[0]["notes"], "")
+
+    def test_legacy_trades_entries_still_supported(self):
+        log = {"messages": {
+            "600": {
+                "timestamp": "2026-07-10T00:00:00+00:00",
+                "trades": [{"user": "u", "side": "Long", "ticker": "PENG",
+                            "price": 77.15, "partial": False, "notes": ""}],
+            },
+        }}
+        trades = ws.log_to_trades(log)
+        self.assertEqual(len(trades), 1)
+        self.assertEqual(trades[0]["ticker"], "PENG")
+
+
+class FetchWindowTests(unittest.TestCase):
+    def test_first_run_backfills_initial_window(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        after = ws.fetch_after({"messages": {}}, now)
+        expected = ws.snowflake_for(now - timedelta(days=ws.INITIAL_LOOKBACK_DAYS))
+        self.assertEqual(after, expected)
+
+    def test_subsequent_run_resumes_from_newest_logged_id(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        log = {"messages": {
+            "100": {"timestamp": "2026-07-01T00:00:00+00:00", "trades": []},
+            "250": {"timestamp": "2026-07-08T00:00:00+00:00", "trades": []},
+            "175": {"timestamp": "2026-07-05T00:00:00+00:00", "trades": []},
+        }}
+        self.assertEqual(ws.fetch_after(log, now), 250)
 
 
 if __name__ == "__main__":

@@ -26,9 +26,9 @@ API_BASE = "https://discord.com/api/v10"
 SOURCE_CHANNEL_ID = "1473806053975261452"   # where YAGPDB posts trades
 TARGET_CHANNEL_ID = "1525965273306235051"   # where the summary is posted
 
-LOOKBACK_DAYS = 30       # how far back to fetch messages each run
-CLOSED_WINDOW_DAYS = 7   # "Closed this week" window
-RETENTION_DAYS = 400     # prune log entries older than this (open positions kept)
+INITIAL_LOOKBACK_DAYS = 30  # first run (empty log) backfills this many days
+WEEK_DAYS = 7               # "this week" window for the per-trader breakdown
+RETENTION_DAYS = 400        # prune log entries older than this (open positions kept)
 
 LOG_PATH = os.environ.get("TRADE_LOG_PATH", "trade_log.json")
 CHUNK_LIMIT = 1900       # stay under Discord's 2000-char message limit
@@ -59,7 +59,7 @@ TRADE_RE = re.compile(
     r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit)"          # side
     r"(?:\s+(?P<partial>[Pp]artial))?"             # optional "partial" (Exit)
     r"\s+\$?(?P<ticker>[A-Z][A-Z.]{0,6})"          # optional $, then TICKER
-    r"(?:\s+(?:[Aa]t\s+)?\$?(?P<price>\d+(?:\.\d+)?))?"  # optional price
+    r"(?:\s+(?:[Aa]t\s+|@\s*)?\$?(?P<price>\d+(?:\.\d+)?))?"  # optional price (at/@/$)
     r"(?P<notes>.*)$"                              # trailing free-text notes
 )
 
@@ -180,17 +180,21 @@ def save_log(log, path=LOG_PATH):
 
 
 def merge_messages(log, raw_messages):
-    """Merge freshly fetched Discord messages into the running log (dedup by id)."""
+    """Merge freshly fetched Discord messages into the running log (dedup by id).
+
+    The raw message ``content`` is stored (not the parsed result) so parser
+    improvements apply retroactively when the log is re-read on the next run.
+    """
     store = log.setdefault("messages", {})
     added = 0
     for msg in raw_messages:
-        trades = parse_message(msg.get("content", ""))
-        if not trades:
-            continue
+        content = msg.get("content", "")
+        if not parse_message(content):
+            continue  # skip messages that contain no trades
         mid = str(msg["id"])
         if mid not in store:
             added += 1
-        store[mid] = {"timestamp": msg["timestamp"], "trades": trades}
+        store[mid] = {"timestamp": msg["timestamp"], "content": content}
     return added
 
 
@@ -199,11 +203,31 @@ def parse_ts(value):
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
+def fetch_after(log, now):
+    """Snowflake to fetch messages after.
+
+    First run (empty log): backfill INITIAL_LOOKBACK_DAYS. Afterwards: resume
+    from the newest message already logged, so each weekly run only pulls what
+    is new (gap-free even if a run is missed) while the running log preserves
+    the full history of open positions.
+    """
+    ids = [int(mid) for mid in log.get("messages", {})]
+    if ids:
+        return max(ids)
+    return snowflake_for(now - timedelta(days=INITIAL_LOOKBACK_DAYS))
+
+
 def log_to_trades(log):
-    """Flatten the log into a chronologically sorted list of trade dicts."""
+    """Flatten the log into a chronologically sorted list of trade dicts.
+
+    Entries store raw ``content`` and are re-parsed each run; older entries
+    that stored a pre-parsed ``trades`` list are still supported.
+    """
     trades = []
     for mid, entry in log.get("messages", {}).items():
-        for i, tr in enumerate(entry.get("trades", [])):
+        parsed = parse_message(entry["content"]) if "content" in entry \
+            else entry.get("trades", [])
+        for i, tr in enumerate(parsed):
             t = dict(tr)
             t["message_id"] = mid
             t["timestamp"] = entry.get("timestamp")
@@ -257,13 +281,43 @@ def _fmt_price(price):
     return f"{price:g}" if price is not None else ""
 
 
+def _weekly_line(t):
+    """One line describing a trade a trader took this week."""
+    price = _fmt_price(t["price"])
+    price_str = f" @ {price}" if price else ""
+    if t["side"] == "Exit":
+        icon = "🟡" if t["partial"] else "✅"
+        verb = "Partial exit" if t["partial"] else "Exit"
+        notes = f" — {t['notes']}" if t["notes"] else ""
+        return f"- {icon} {verb} **{t['ticker']}**{price_str}{notes}"
+    icon = "🟢" if t["side"] == "Long" else "🔵"
+    return f"- {icon} {t['side']} **{t['ticker']}**{price_str}"
+
+
+def _open_line(t):
+    """One line describing a trader's still-open position."""
+    price = _fmt_price(t["price"])
+    price_str = f" @ {price}" if price else ""
+    opened = parse_ts(t["timestamp"])
+    return f"- {t['side']} **{t['ticker']}**{price_str} _(opened {_fmt_date(opened)})_"
+
+
 def build_summary(log, now):
-    """Build the full summary text (Markdown) from the running log."""
+    """Build a trader-by-trader summary (Markdown) from the running log.
+
+    Per trader: trades taken this week, and outstanding open trades. A position
+    opened with Long/Short stays open until a full Exit -- a partial Exit does
+    not close it -- so trades without an exit remain listed as open.
+    """
     trades = log_to_trades(log)
     holdings = compute_holdings(trades)
 
-    closed_cutoff = now - timedelta(days=CLOSED_WINDOW_DAYS)
-    week_start = now - timedelta(days=CLOSED_WINDOW_DAYS)
+    week_start = now - timedelta(days=WEEK_DAYS)
+    weekly_by_user = {}
+    for t in trades:
+        if parse_ts(t["timestamp"]) >= week_start:
+            weekly_by_user.setdefault(t["user"], []).append(t)
+
     if week_start.month == now.month:
         label = f"{_fmt_date(week_start)}–{now.day}, {now.year}"
     else:
@@ -271,42 +325,33 @@ def build_summary(log, now):
 
     lines = [f"# \U0001F4CA Weekly Trade Summary — {label}", ""]
 
-    # --- Closed this week -------------------------------------------------
-    lines.append("## ✅ Closed this week")
-    closed = [
-        t for t in trades
-        if t["side"] == "Exit" and parse_ts(t["timestamp"]) >= closed_cutoff
-    ]
-    if closed:
-        for t in closed:
-            verb = "partially exited" if t["partial"] else "exited"
-            price = _fmt_price(t["price"])
-            price_str = f" @ {price}" if price else ""
-            notes = f" — {t['notes']}" if t["notes"] else ""
-            flag = "  `⚠ partial`" if t["partial"] else ""
-            lines.append(
-                f"- **{t['user']}** {verb} **{t['ticker']}**"
-                f"{price_str}{notes}{flag}"
+    users = sorted(set(weekly_by_user) | set(holdings), key=str.lower)
+    if not users:
+        lines.append("_No trades this week and no open positions._")
+        return "\n".join(lines)
+
+    for user in users:
+        lines.append(f"## {user}")
+
+        lines.append("**Trades taken this week**")
+        week_trades = weekly_by_user.get(user, [])
+        if week_trades:
+            lines.extend(_weekly_line(t) for t in week_trades)
+        else:
+            lines.append("- _no new trades this week_")
+
+        lines.append("**Open trades**")
+        open_trades = holdings.get(user, [])
+        if open_trades:
+            lines.extend(
+                _open_line(t) for t in sorted(open_trades, key=lambda x: x["ticker"])
             )
-    else:
-        lines.append("_No positions closed this week._")
-    lines.append("")
+        else:
+            lines.append("- _none_")
 
-    # --- Still holding ----------------------------------------------------
-    lines.append("## \U0001F4C8 Still holding")
-    if holdings:
-        for user in sorted(holdings, key=str.lower):
-            lines.append(f"**{user}**")
-            for t in sorted(holdings[user], key=lambda x: x["ticker"]):
-                price = _fmt_price(t["price"])
-                price_str = f" @ {price}" if price else ""
-                opened = parse_ts(t["timestamp"])
-                since = f" _(since {_fmt_date(opened)})_"
-                lines.append(f"- {t['side']} **{t['ticker']}**{price_str}{since}")
-    else:
-        lines.append("_No open positions._")
+        lines.append("")
 
-    return "\n".join(lines)
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def chunk_message(text, limit=CHUNK_LIMIT):
@@ -347,10 +392,13 @@ def main():
         for prefix in ("Bot ", "Bearer "):
             if token.startswith(prefix):
                 token = token[len(prefix):].strip()
-        after = snowflake_for(now - timedelta(days=LOOKBACK_DAYS))
+        first_run = not log.get("messages")
+        after = fetch_after(log, now)
         raw = fetch_messages(token, SOURCE_CHANNEL_ID, after)
         added = merge_messages(log, raw)
-        print(f"Fetched {len(raw)} messages; {added} new trade message(s) logged.")
+        mode = "initial 30-day backfill" if first_run else "weekly incremental"
+        print(f"[{mode}] Fetched {len(raw)} messages; "
+              f"{added} new trade message(s) logged.")
 
         holdings = compute_holdings(log_to_trades(log))
         prune_log(log, holdings, now)
