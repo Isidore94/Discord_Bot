@@ -121,6 +121,14 @@ def _request(method, url, token, **kwargs):
             retry_after = resp.json().get("retry_after", 1)
             time.sleep(float(retry_after) + 0.5)
             continue
+        if resp.status_code == 401:
+            raise SystemExit(
+                "Discord returned 401 Unauthorized -- the DISCORD_BOT_TOKEN "
+                "secret is being rejected. Check that its value is the Bot "
+                "token from the Developer Portal (NOT the Application ID, "
+                "Public Key, or OAuth client secret), has no stray spaces or "
+                "newlines, and was not regenerated after you saved the secret."
+            )
         resp.raise_for_status()
         return resp
     resp.raise_for_status()
@@ -332,9 +340,13 @@ def main():
     log = load_log()
 
     if not dry_run:
-        token = os.environ.get("DISCORD_BOT_TOKEN")
+        token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
         if not token:
             raise SystemExit("DISCORD_BOT_TOKEN environment variable is required.")
+        # Tolerate a token accidentally pasted with an auth-scheme prefix.
+        for prefix in ("Bot ", "Bearer "):
+            if token.startswith(prefix):
+                token = token[len(prefix):].strip()
         after = snowflake_for(now - timedelta(days=LOOKBACK_DAYS))
         raw = fetch_messages(token, SOURCE_CHANNEL_ID, after)
         added = merge_messages(log, raw)
