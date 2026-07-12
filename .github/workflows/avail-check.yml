@@ -15,7 +15,7 @@ jobs:
         run: |
           python3 << 'PYEOF'
           import urllib.request, urllib.error, json, os, time
-          from datetime import datetime, timedelta
+          from datetime import datetime, timedelta, timezone
 
           WEBHOOK_URL = os.environ["WEBHOOK_URL"]
 
@@ -36,7 +36,7 @@ jobs:
                   print(f"  err {e.code}: {e.reason}")
               time.sleep(0.6)
 
-          today       = datetime.utcnow()
+          today       = datetime.now(timezone.utc)
           next_monday = today + timedelta(days=1)
           next_sunday = next_monday + timedelta(days=6)
 
