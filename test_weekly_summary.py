@@ -186,6 +186,55 @@ class HoldingsTests(unittest.TestCase):
         self.assertEqual(set(holdings), {"a", "b"})
 
 
+class WinRateTests(unittest.TestCase):
+    def _t(self, rows):
+        out = []
+        for i, (mid, user, side, ticker, price, partial) in enumerate(rows):
+            out.append({"message_id": str(mid), "index": 0,
+                        "timestamp": "2026-07-10T00:00:00+00:00", "user": user,
+                        "side": side, "ticker": ticker, "price": price,
+                        "partial": partial, "notes": ""})
+        return out
+
+    def test_long_win_and_loss(self):
+        wr = ws.compute_win_rates(self._t([
+            (1, "u", "Long", "AAA", 100.0, False),
+            (2, "u", "Exit", "AAA", 110.0, False),   # win: exit above entry
+            (3, "u", "Long", "BBB", 100.0, False),
+            (4, "u", "Exit", "BBB", 90.0, False),    # loss: exit below entry
+        ]))
+        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+
+    def test_short_win_is_exit_below_entry(self):
+        wr = ws.compute_win_rates(self._t([
+            (1, "u", "Short", "CCC", 100.0, False),
+            (2, "u", "Exit", "CCC", 90.0, False),    # win: short, exit below
+            (3, "u", "Short", "DDD", 100.0, False),
+            (4, "u", "Exit", "DDD", 105.0, False),   # loss: short, exit above
+        ]))
+        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+
+    def test_partial_exits_each_score_against_same_entry(self):
+        wr = ws.compute_win_rates(self._t([
+            (1, "u", "Long", "NVDA", 200.0, False),
+            (2, "u", "Exit", "NVDA", 197.5, True),   # partial loss
+            (3, "u", "Exit", "NVDA", 208.66, True),  # partial win, still open
+        ]))
+        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+
+    def test_exit_without_price_is_ignored(self):
+        wr = ws.compute_win_rates(self._t([
+            (1, "u", "Long", "EEE", 100.0, False),
+            (2, "u", "Exit", "EEE", None, False),    # no price -> not scored
+        ]))
+        self.assertEqual(wr, {})
+
+    def test_win_rate_line_formatting(self):
+        self.assertIn("67%", ws._win_rate_line({"wins": 2, "losses": 1}))
+        self.assertIsNone(ws._win_rate_line({"wins": 0, "losses": 0}))
+        self.assertIsNone(ws._win_rate_line(None))
+
+
 class SummaryTests(unittest.TestCase):
     def _sample_log(self):
         return {"messages": {

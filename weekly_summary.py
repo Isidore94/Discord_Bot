@@ -257,6 +257,34 @@ def compute_holdings(trades):
     return holdings
 
 
+def compute_win_rates(trades):
+    """Quasi win rate per user by comparing each exit's price to its entry.
+
+    A Long exit is a win when the exit price is above the entry; a Short exit is
+    a win when the exit price is below the entry. Both full and partial exits
+    count as data points (a partial does not close the position, so subsequent
+    exits are still compared to the same entry). Exits or entries without a
+    numeric price cannot be scored and are ignored.
+    """
+    entries = {}  # (user, ticker) -> (side, entry_price)
+    stats = {}    # user -> [wins, losses]
+    for t in trades:
+        key = (t["user"], t["ticker"])
+        if t["side"] in ("Long", "Short"):
+            entries[key] = (t["side"], t["price"])
+        elif t["side"] == "Exit":
+            info = entries.get(key)
+            if info and info[1] is not None and t["price"] is not None:
+                side, entry_price = info
+                win = t["price"] > entry_price if side == "Long" \
+                    else t["price"] < entry_price
+                s = stats.setdefault(t["user"], [0, 0])
+                s[0 if win else 1] += 1
+            if not t["partial"]:
+                entries.pop(key, None)  # full exit closes the position
+    return {u: {"wins": w, "losses": l} for u, (w, l) in stats.items()}
+
+
 def prune_log(log, holdings, now):
     """Drop messages older than RETENTION_DAYS, but always keep those that
     opened a position that is still held (so long swings survive)."""
@@ -302,6 +330,18 @@ def _open_line(t):
     return f"- {t['side']} **{t['ticker']}**{price_str} _(opened {_fmt_date(opened)})_"
 
 
+def _win_rate_line(stats):
+    """'Quasi win rate' line for a trader, or None if nothing was scoreable."""
+    if not stats:
+        return None
+    wins, losses = stats["wins"], stats["losses"]
+    total = wins + losses
+    if total == 0:
+        return None
+    pct = round(100 * wins / total)
+    return f"_Quasi win rate: **{pct}%** ({wins}W–{losses}L, {total} exits scored)_"
+
+
 def build_summary(log, now):
     """Build a trader-by-trader summary (Markdown) from the running log.
 
@@ -311,6 +351,7 @@ def build_summary(log, now):
     """
     trades = log_to_trades(log)
     holdings = compute_holdings(trades)
+    win_rates = compute_win_rates(trades)
 
     week_start = now - timedelta(days=WEEK_DAYS)
     weekly_by_user = {}
@@ -332,6 +373,10 @@ def build_summary(log, now):
 
     for user in users:
         lines.append(f"## {user}")
+
+        wr_line = _win_rate_line(win_rates.get(user))
+        if wr_line:
+            lines.append(wr_line)
 
         lines.append("**Trades taken this week**")
         week_trades = weekly_by_user.get(user, [])
