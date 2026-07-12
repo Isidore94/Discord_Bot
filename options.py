@@ -79,8 +79,12 @@ def _parse_exp(token, ref_date=None):
 
     A US-format date without a year (``7/18``) infers its year from ``ref_date``
     -- the next occurrence on or after that reference -- so an expiry posted in
-    December for ``1/17`` lands in the following year. ``ref_date`` defaults to
-    today. Returns None if the token is not a valid date.
+    December for ``1/17`` lands in the following year. A date that passed less
+    than ~a month before the reference keeps the current year: a message posted
+    days after expiry ("#Exit ... 1/16" on Jan 20) refers to the just-expired
+    contract, not next year's, and must key to the same contract the position
+    was opened under. ``ref_date`` defaults to today. Returns None if the token
+    is not a valid date.
     """
     ref = ref_date or date.today()
     token = token.strip()
@@ -101,7 +105,9 @@ def _parse_exp(token, ref_date=None):
                 cand = date(ref.year, mo, d)
             except ValueError:
                 return None
-            if cand < ref:  # already passed this year -> next year's contract
+            # Only roll to next year when the date is well past (>30 days):
+            # a recently-passed date refers to the just-expired contract.
+            if cand < ref and (ref - cand).days > 30:
                 try:
                     cand = date(ref.year + 1, mo, d)
                 except ValueError:

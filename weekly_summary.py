@@ -78,10 +78,16 @@ NEW_AVG_RE = re.compile(r"(?i)new\s+avg[.:]?\s*\$?(\d+(?:\.\d+)?)")
 
 # Free-text hints that an exit was partial, e.g. "partial profit swinging the
 # rest", "#Exit half of RIVN", "leaving quarter size on", "#Exit this add on
-# Long ALAB", "trimming here". Checked against the whole line.
+# Long ALAB", "trimming here". Checked against the whole line. Keep-verbs
+# (leave/keep/swing/hold) only count when a position word follows within a few
+# words, so full-exit commentary like "still bullish long term" or "keeping an
+# eye on re-entry" does NOT flip a genuine close into a partial.
 PARTIAL_HINT_RE = re.compile(
-    r"(?i)\b(?:partial\w*|half|trim\w*|leav\w*|keep\w*|swing\w*|still|"
-    r"quarter|(?:this|that|the|my)\s+add)\b"
+    r"(?i)\bpartial\w*\b|\bhalf\b|\btrim\w*\b|"
+    r"\b(?:this|that|the|my)\s+add\b|"
+    r"\b(?:leav\w*|keep\w*|swing\w*|hold\w*)(?:\s+\w+){0,3}?\s+"
+    r"(?:rest|half|quarter|some|position|size|runners?|shares?)\b|"
+    r"\bstill\s+(?:have|holding|hold|in|long|short)\b"
 )
 
 # A stated percentage return, e.g. "for 50%", "for -32%". Used to score an
@@ -294,27 +300,61 @@ def _pos_key(t):
     return (t["user"], t["ticker"])
 
 
+def _contract_live_on(exp_iso, trade_date):
+    """True if a contract with the given ISO expiration is still live (not yet
+    expired) on trade_date. Unknown dates count as live."""
+    if trade_date is None or not exp_iso:
+        return True
+    try:
+        return date.fromisoformat(exp_iso) >= trade_date
+    except (ValueError, TypeError):
+        return True
+
+
+def _trade_date(t):
+    """The calendar date a trade was posted, or None."""
+    ts = t.get("timestamp")
+    if not ts:
+        return None
+    try:
+        return parse_ts(ts).date()
+    except (ValueError, TypeError):
+        return None
+
+
 def _fallback_option_key(open_keys, t):
     """Key of the option a plain-stock Exit/Add most plausibly acts on.
 
     Traders often close (or add to) an option with an informal '#Exit TICKER
     ...' line (real example: '#Exit NVDA 11.70 for -32% on calls'). When such
     a line matches no open stock position but the trader has exactly ONE open
-    option contract on that ticker, treat it as acting on that contract.
-    Ambiguous (two+ contracts) -> None, and the line is ignored as before.
+    option contract on that ticker that is still live (its expiration has not
+    passed as of the line's date), treat it as acting on that contract. An
+    already-expired contract is never matched -- an exit posted after expiry
+    refers to something else (typically selling assigned shares), and scoring
+    a share price against an option premium produces garbage. Ambiguous
+    (two+ live contracts) -> None, and the line is ignored as before.
     """
+    when = _trade_date(t)
     cands = [k for k in open_keys
-             if len(k) > 2 and k[0] == t["user"] and k[1] == t["ticker"]]
+             if len(k) > 2 and k[0] == t["user"] and k[1] == t["ticker"]
+             and _contract_live_on(k[5], when)]
     return cands[0] if len(cands) == 1 else None
 
 
-def _tranche_pct(side, entry_price, t):
+def _tranche_pct(side, entry_price, t, entry_is_option=False):
     """Signed fractional return of one exit tranche.
 
-    Computed from entry vs exit price when both are known (inverted for
-    shorts); otherwise the trader's own stated return ("for 50%") is trusted
-    as-is. None when neither is available.
+    Normally computed from entry vs exit price (inverted for shorts), falling
+    back to the trader's own stated return ("for 50%"). For an INFORMAL
+    stock-form exit matched to an option position the units of the parsed
+    price are unreliable (it may be an underlying price, not a premium), so a
+    stated return takes precedence there ('#Exit NVDA 11.70 for -32% on
+    calls' scores -32%, not 11.70-vs-premium).
     """
+    if entry_is_option and not _is_option(t) \
+            and t.get("stated_pct") is not None:
+        return t["stated_pct"]
     if entry_price and t.get("price") is not None:
         pct = (t["price"] - entry_price) / entry_price
         return -pct if side == "Short" else pct
@@ -348,22 +388,44 @@ def log_to_trades(log):
     return trades
 
 
-def compute_holdings(trades):
+def _note_source(pos, t):
+    """Track every message id contributing to a still-open position (open,
+    adds, partials) so prune_log can protect all of them, not just the open."""
+    ids = pos.setdefault("src_ids", [pos.get("message_id")])
+    if t.get("message_id"):
+        ids.append(t["message_id"])
+
+
+def compute_holdings(trades, orphan_exits=None):
     """Return {user: [open trade dicts]} from chronologically ordered trades.
 
-    Long/Short opens (or refreshes) a position. An Add (the channel's add
-    function) scales in: the posted "New avg" replaces the entry price when
-    present (it accounts for real sizes); otherwise the add price is averaged
-    in equal-weight; the original open date is kept. A full Exit closes the
-    position; a partial Exit leaves it open but is tallied on it (count and
-    per-tranche returns) so the eventual close can score the whole position.
-    Exits/Adds that match no stock position fall back to the trader's single
-    open option on that ticker (see _fallback_option_key).
+    Long/Short opens (or refreshes) a position; a same-side refresh carries
+    over any banked partial tranches (realized P&L must survive a re-post).
+    An Add (the channel's add function) scales in: the posted "New avg"
+    replaces the entry price when present (it accounts for real sizes);
+    otherwise the add price is averaged in equal-weight; the original open
+    date is kept. A full Exit closes the position; a partial Exit leaves it
+    open but is tallied on it (count and per-tranche returns) so the eventual
+    close can score the whole position. Exits/Adds that match no stock
+    position fall back to the trader's single LIVE open option on that ticker
+    (see _fallback_option_key).
+
+    A full stock-form Exit that matches nothing is appended to
+    ``orphan_exits`` when a list is passed -- resolve_expired_options uses
+    these to recognize the sale of shares acquired through assignment.
     """
     open_positions = {}  # position key -> opening trade
     for t in trades:
         key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
+            prev = open_positions.get(key)
+            if prev and prev["side"] == t["side"] \
+                    and (prev.get("partials") or prev.get("partial_pcts")):
+                t = dict(t)  # same-side refresh: keep banked partial history
+                t["partials"] = prev.get("partials", 0)
+                t["partial_pcts"] = list(prev.get("partial_pcts", []))
+                t["src_ids"] = list(prev.get("src_ids", [])) + \
+                    ([t["message_id"]] if t.get("message_id") else [])
             open_positions[key] = t
         elif t["side"] == "Add":
             if key not in open_positions and not _is_option(t):
@@ -387,6 +449,7 @@ def compute_holdings(trades):
             if _is_option(pos):
                 pos["premium"] = pos["price"]
             pos["adds"] = pos.get("adds", 1) + 1
+            _note_source(pos, t)
             open_positions[key] = pos
         elif t["side"] == "Exit":
             if key not in open_positions and not _is_option(t):
@@ -395,11 +458,14 @@ def compute_holdings(trades):
                 pos = open_positions.get(key)
                 if pos is not None:
                     pos["partials"] = pos.get("partials", 0) + 1
-                    pct = _tranche_pct(pos["side"], pos.get("price"), t)
+                    pct = _tranche_pct(pos["side"], pos.get("price"), t,
+                                       entry_is_option=_is_option(pos))
                     if pct is not None:
                         pos.setdefault("partial_pcts", []).append(pct)
-            else:
-                open_positions.pop(key, None)
+                    _note_source(pos, t)
+            elif open_positions.pop(key, None) is None \
+                    and orphan_exits is not None and not _is_option(t):
+                orphan_exits.append(t)
     holdings = {}
     for t in open_positions.values():
         holdings.setdefault(t["user"], []).append(t)
@@ -435,9 +501,23 @@ def compute_win_rates(trades, week_start=None):
     for t in trades:
         key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
+            prev = entries.get(key)
+            partials, partial_pcts = 0, []
+            if prev and (prev["partials"] or prev["partial_pcts"]):
+                if prev["side"] == t["side"]:
+                    # Same-side refresh: banked partial tranches carry over.
+                    partials = prev["partials"]
+                    partial_pcts = list(prev["partial_pcts"])
+                elif prev["partial_pcts"]:
+                    # Side flip ends the old trade: score its banked partials.
+                    combined = sum(prev["partial_pcts"]) / len(prev["partial_pcts"])
+                    s = stats.setdefault(t["user"], _blank_stats())
+                    s["wins" if combined > 0 else "losses"] += 1
+                    s["pct_sum"] += combined
+                    s["pct_n"] += 1
             entries[key] = {"side": t["side"], "price": t["price"],
                             "timestamp": t.get("timestamp"), "adds": 1,
-                            "partials": 0, "partial_pcts": []}
+                            "partials": partials, "partial_pcts": partial_pcts}
         elif t["side"] == "Add":
             if key not in entries and not _is_option(t):
                 key = _fallback_option_key(entries, t) or key
@@ -460,7 +540,8 @@ def compute_win_rates(trades, week_start=None):
             info = entries.get(key)
             if info is None:
                 continue
-            pct = _tranche_pct(info["side"], info["price"], t)
+            pct = _tranche_pct(info["side"], info["price"], t,
+                               entry_is_option=len(key) > 2)
             if pct is not None:
                 t["pct"] = pct
             if info["timestamp"] and t.get("timestamp"):
@@ -491,8 +572,22 @@ def compute_win_rates(trades, week_start=None):
     return stats
 
 
+def _consume_orphan_sale(orphan_exits, user, ticker, exp_date):
+    """Pop and return the first unmatched full stock exit by ``user`` on
+    ``ticker`` posted on/after ``exp_date`` -- i.e. the sale of the shares
+    acquired through assignment at that expiration. None if there is none."""
+    if not orphan_exits:
+        return None
+    for i, o in enumerate(orphan_exits):
+        if o["user"] == user and o["ticker"] == ticker:
+            when = _trade_date(o)
+            if when is None or when >= exp_date:
+                return orphan_exits.pop(i)
+    return None
+
+
 def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
-                            cache=None):
+                            cache=None, orphan_exits=None):
     """Settle open OPTION positions whose expiration date has passed.
 
     ``holdings`` (as returned by ``compute_holdings``) is mutated in place: each
@@ -512,6 +607,15 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
     ``cache`` (a mutable {"TICKER:YYYY-MM-DD": close} dict, persisted in the
     running log) short-circuits refetching spots for expirations settled on
     earlier runs -- historical closes never change.
+
+    ``orphan_exits`` (from compute_holdings) are full stock exits that matched
+    no tracked position: one posted on/after a put's assignment is taken as
+    the sale of the assigned shares, so those shares are NOT kept as a holding
+    and the sale return (vs the assignment basis) scores as a tranche.
+
+    Earlier partial exits, the settlement itself, and any assigned-share sale
+    are combined as equal-size tranches into the outcome's single pct/win --
+    the same rule compute_win_rates applies to a regular close.
 
     Returns ``{user: [resolution, ...]}`` where each resolution is
     ``{"trade": <option>, "spot": <float>, "exp_date": <date>, "outcome": <dict>}``.
@@ -538,23 +642,48 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
             outcome = options.resolve_option(
                 t["side"], t["opt_type"], t["strike"], t.get("premium"), spot
             )
-            # Earlier partial exits blend with the settlement as equal-size
-            # tranches, the same way a regular close combines with partials.
-            partial_pcts = t.get("partial_pcts") or []
-            if partial_pcts and outcome.get("pct") is not None:
-                tranches = partial_pcts + [outcome["pct"]]
+            assigned_put = (outcome["status"] == "assigned"
+                            and t["side"] == "Short"
+                            and t["opt_type"] == options.PUT)
+            # Were the assigned shares already sold by a later unmatched exit?
+            sale, sale_pct = None, None
+            if assigned_put:
+                sale = _consume_orphan_sale(orphan_exits, user, t["ticker"],
+                                            exp_date)
+                if sale is not None:
+                    sale_pct = _tranche_pct("Long", outcome["basis"], sale)
+            # Earlier partial exits, the settlement, and any assigned-share
+            # sale combine as equal-size tranches -- the same rule a regular
+            # close applies (mean return decides the single win/loss).
+            partial_pcts = list(t.get("partial_pcts") or [])
+            tranches = list(partial_pcts)
+            if outcome.get("pct") is not None:
+                tranches.append(outcome["pct"])
+            if sale_pct is not None:
+                tranches.append(sale_pct)
+            if tranches:
                 combined = sum(tranches) / len(tranches)
                 outcome["pct"] = combined
                 outcome["win"] = combined > 0
+            extras = []
+            if partial_pcts:
                 n = t.get("partials", len(partial_pcts))
-                outcome["summary"] += (f" — net {combined * 100:+.1f}% incl. "
-                                       f"{n} earlier partial{'s' if n != 1 else ''}")
+                extras.append(f"{n} earlier partial{'s' if n != 1 else ''}")
+            if sale is not None:
+                sold = (f"shares later sold at {options._d(sale['price'])}"
+                        if sale.get("price") is not None else "shares later sold")
+                extras.append(sold)
+            if extras:
+                if tranches:
+                    outcome["summary"] += (f" — net {outcome['pct'] * 100:+.1f}% "
+                                           f"incl. {' + '.join(extras)}")
+                else:
+                    outcome["summary"] += f" — {' + '.join(extras)}"
             resolutions.setdefault(user, []).append(
                 {"trade": t, "spot": spot, "exp_date": exp_date, "outcome": outcome}
             )
-            # An assigned short put becomes a long stock position at the basis.
-            if (outcome["status"] == "assigned" and t["side"] == "Short"
-                    and t["opt_type"] == options.PUT):
+            # Assigned shares not yet sold become a tracked long stock position.
+            if assigned_put and sale is None:
                 kept.append({
                     "user": user,
                     "ticker": t["ticker"],
@@ -581,10 +710,13 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
                     entry = shares.get("price")
                     if entry:
                         eff = oc["basis"]  # strike + premium received
-                        oc["win"] = eff > entry
+                        share_pct = (eff - entry) / entry
+                        tranches = list(t.get("partial_pcts") or []) + [share_pct]
+                        combined = sum(tranches) / len(tranches)
+                        oc["win"] = combined > 0
                         oc["pnl"] = eff - entry
-                        oc["pct"] = (eff - entry) / entry
-                        oc["summary"] += (f" — shares {oc['pct'] * 100:+.1f}% "
+                        oc["pct"] = combined
+                        oc["summary"] += (f" — shares {share_pct * 100:+.1f}% "
                                           f"from {options._d(entry)} entry")
                     else:
                         oc["summary"] += " — closed the tracked share position"
@@ -601,7 +733,13 @@ def prune_log(log, holdings, now):
     opened a position that is still held (so long swings survive). Cached
     settlement spots for expirations past retention are dropped too."""
     cutoff = now - timedelta(days=RETENTION_DAYS)
-    keep_ids = {t["message_id"] for trades in holdings.values() for t in trades}
+    # Protect every message a still-open position was built from: the open
+    # itself plus its adds and partial exits (src_ids), so a long swing's
+    # averaged entry and banked partials survive retention.
+    keep_ids = {mid
+                for trades in holdings.values() for t in trades
+                for mid in (t.get("src_ids") or [t.get("message_id")])
+                if mid}
     store = log.get("messages", {})
     for mid in list(store.keys()):
         if mid in keep_ids:
@@ -745,10 +883,12 @@ def build_summary(log, now, spot_close=options.spot_close_on, last_close=None):
     """
     trades = log_to_trades(log)
     week_start = now - timedelta(days=WEEK_DAYS)
-    holdings = compute_holdings(trades)
+    orphan_exits = []
+    holdings = compute_holdings(trades, orphan_exits=orphan_exits)
     win_rates = compute_win_rates(trades, week_start=week_start)
     resolutions = resolve_expired_options(
-        holdings, now, spot_close, cache=log.setdefault("spot_cache", {})
+        holdings, now, spot_close, cache=log.setdefault("spot_cache", {}),
+        orphan_exits=orphan_exits,
     )
 
     # Fold settled options into the quasi win rate (all of them, so the rate is
@@ -880,11 +1020,17 @@ def main():
         holdings = compute_holdings(log_to_trades(log))
         prune_log(log, holdings, now)
 
-    # Settlement inside build_summary may add to the log's spot cache, so the
-    # log is saved after the summary is built (live runs only).
-    summary = build_summary(log, now, last_close=options.last_closes)
-    if not dry_run:
-        save_log(log)
+    if dry_run:
+        # Preview is fully offline: no settlement fetches, no mark-to-market.
+        summary = build_summary(log, now, spot_close=lambda ticker, d: None)
+    else:
+        # Settlement inside build_summary adds to the log's spot cache, so the
+        # log is saved after the summary is built -- but ALWAYS saved, even if
+        # summary building crashes, so this run's fetched messages are not lost.
+        try:
+            summary = build_summary(log, now, last_close=options.last_closes)
+        finally:
+            save_log(log)
     chunks = chunk_message(summary)
 
     if dry_run:

@@ -855,7 +855,10 @@ class RealWorldExitTests(unittest.TestCase):
     def test_plain_full_exits_stay_full(self):
         for line in ("#Exit CRWD at 187.60",
                      "#Exit GOOGL @ 368.88",
-                     "#Exit AMD at 2.00 cutting it"):
+                     "#Exit AMD at 2.00 cutting it",
+                     # incidental commentary must not flip a close to partial
+                     "#Exit AAPL at 200 still bullish long term",
+                     "#Exit CRWD 187.60 keeping an eye on re-entry"):
             self.assertFalse(ws.parse_trade_line(line)["partial"], line)
 
     def test_ticker_colliding_with_filler_word_still_parses(self):
@@ -910,6 +913,126 @@ class RealWorldExitTests(unittest.TestCase):
         self.assertFalse(oc["win"])
         self.assertAlmostEqual(oc["pct"], (0.25 - 1.0) / 2)
         self.assertIn("1 earlier partial", oc["summary"])
+
+
+class ReviewFixTests(unittest.TestCase):
+    """Regressions for the confirmed code-review findings."""
+
+    def test_assigned_share_sale_scores_vs_basis_not_premium(self):
+        # Short put assigns at basis 295; a later plain '#Exit TSLA 260' is
+        # the SHARE sale: it must score (260-295)/295, never 260-vs-premium.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-06T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Short put TSLA 300p 7/10 @ 5.00"},
+            "2": {"timestamp": "2026-07-20T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit TSLA 260"},
+        }}
+        # The raw replay must not produce the old -5100% garbage point.
+        self.assertEqual(ws.compute_win_rates(ws.log_to_trades(log)), {})
+        now = datetime(2026, 7, 22, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: 260.0)
+        self.assertIn("-11.9%", summary)          # (260-295)/295 via settlement
+        self.assertNotIn("5100", summary)
+        # Shares were sold, so nothing is left open.
+        self.assertIn("- _none_", summary.split("**Open trades**")[1])
+
+    def test_exit_after_expiry_never_matches_the_dead_contract(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-06T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Short put TSLA 300p 7/10 @ 5.00"},
+            "2": {"timestamp": "2026-07-20T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit TSLA 260"},
+        }}
+        trades = ws.log_to_trades(log)
+        holdings = ws.compute_holdings(trades)
+        self.assertEqual(len(holdings["u"]), 1)   # the put is still tracked
+        self.assertTrue(ws._is_option(holdings["u"][0]))
+
+    def test_stated_pct_beats_price_on_informal_option_exit(self):
+        # '#Exit NVDA 11.70 for -32% on calls': 11.70 is not a premium; the
+        # stated -32% must win, not (11.70-5)/5 = +134%.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long call NVDA 200c 9/18 @ 5.00"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit NVDA 11.70 for -32% on calls"},
+        }}
+        wr = ws.compute_win_rates(ws.log_to_trades(log))
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (0, 1))
+        self.assertAlmostEqual(wr["u"]["pct_sum"], -0.32)
+
+    def test_yearless_exit_days_after_expiry_matches_open_contract(self):
+        log = {"messages": {
+            "1": {"timestamp": "2027-01-10T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long call NVDA 500c 1/16 @ 5.00"},
+            "2": {"timestamp": "2027-01-20T00:00:00+00:00",   # 4 days post-expiry
+                  "content": "u posted a trade:\n#Exit NVDA 500c 1/16 @ 8.00"},
+        }}
+        trades = ws.log_to_trades(log)
+        self.assertEqual(ws.compute_holdings(trades), {})   # exit matched
+        wr = ws.compute_win_rates(trades)
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+
+    def test_same_side_reopen_carries_banked_partials(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 100.00"},
+            "2": {"timestamp": "2026-07-02T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit partial AAA 110.00"},
+            "3": {"timestamp": "2026-07-03T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 105.00"},   # refresh
+            "4": {"timestamp": "2026-07-04T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit AAA 100.00"},
+        }}
+        wr = ws.compute_win_rates(ws.log_to_trades(log))
+        # One data point: mean(+10%, (100-105)/105) -> small win, not a loss.
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+        self.assertAlmostEqual(wr["u"]["pct_sum"], (0.10 + (100 - 105) / 105) / 2)
+
+    def test_side_flip_scores_pending_partials(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 100.00"},
+            "2": {"timestamp": "2026-07-02T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit partial AAA 110.00"},
+            "3": {"timestamp": "2026-07-03T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Short AAA 120.00"},   # flip
+        }}
+        wr = ws.compute_win_rates(ws.log_to_trades(log))
+        # The long trade ended at the flip; its banked +10% partial scores.
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+        self.assertAlmostEqual(wr["u"]["pct_sum"], 0.10)
+
+    def test_assignment_blends_earlier_partials(self):
+        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Short",
+                           "opt_type": "put", "strike": 400.0, "premium": 3.2,
+                           "instrument": "option", "expiration": "2026-07-10",
+                           "timestamp": "2026-07-06T00:00:00+00:00",
+                           "message_id": "1", "index": 0, "notes": "",
+                           "partials": 1, "partial_pcts": [0.30]}]}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(holdings, now, lambda tk, d: 390.0)
+        oc = res["u"][0]["outcome"]
+        self.assertEqual(oc["status"], "assigned")
+        self.assertTrue(oc["win"])                 # banked +30% tranche scores
+        self.assertAlmostEqual(oc["pct"], 0.30)
+        self.assertIn("1 earlier partial", oc["summary"])
+
+    def test_prune_protects_adds_and_partials_of_open_positions(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        old = "2025-01-01T00:00:00+00:00"   # far past RETENTION_DAYS
+        log = {"messages": {
+            "1": {"timestamp": old,
+                  "content": "u posted a trade:\n#Long PENG 77.15"},
+            "2": {"timestamp": old,
+                  "content": "u posted a trade:\n#Add PENG 80.00"},
+            "3": {"timestamp": old,
+                  "content": "u posted a trade:\n#Exit partial PENG 90.00"},
+        }}
+        holdings = ws.compute_holdings(ws.log_to_trades(log))
+        ws.prune_log(log, holdings, now)
+        # Open + add + partial all survive while the position is held.
+        self.assertEqual(set(log["messages"]), {"1", "2", "3"})
 
 
 class SpotCacheTests(unittest.TestCase):

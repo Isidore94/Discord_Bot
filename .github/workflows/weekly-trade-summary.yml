@@ -22,7 +22,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        # yfinance is best-effort at runtime (the bot degrades to stock-only
+        # without it), so a broken yfinance/pandas install must not stop the
+        # summary from posting -- fall back to the hard requirement only.
+        run: pip install -r requirements.txt || pip install requests
 
       - name: Post weekly trade summary
         env:
