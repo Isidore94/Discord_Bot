@@ -23,7 +23,11 @@ jobs:
               data = json.dumps({"content": content}).encode("utf-8")
               req = urllib.request.Request(
                   WEBHOOK_URL, data=data,
-                  headers={"Content-Type": "application/json"}, method="POST"
+                  headers={
+                      "Content-Type": "application/json",
+                      "User-Agent": "avail-check-bot/1.0 (+https://github.com/Isidore94/Discord_Bot)",
+                  },
+                  method="POST",
               )
               try:
                   with urllib.request.urlopen(req):
