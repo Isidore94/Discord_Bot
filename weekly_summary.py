@@ -15,9 +15,11 @@ import os
 import re
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import requests
+
+import options
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -64,8 +66,22 @@ TRADE_RE = re.compile(
 )
 
 
-def parse_trade_line(line):
-    """Parse one '#Long/Short/Exit ...' line into a dict, or None if no match."""
+def parse_trade_line(line, ref_date=None):
+    """Parse one '#Long/Short/Exit ...' line into a dict, or None if no match.
+
+    An option line (call/put with a strike and expiration date) is recognized
+    first and enriched with option fields (``instrument="option"``, ``opt_type``,
+    ``strike``, ``expiration``, ``premium``); otherwise the line is parsed as a
+    plain-stock trade. ``ref_date`` is passed through only to infer an
+    expiration year written without one.
+    """
+    opt = options.parse_option(line, ref_date=ref_date)
+    if opt:
+        opt["instrument"] = "option"
+        opt["partial"] = False        # options resolve at expiration, not via partials
+        opt["price"] = opt["premium"]  # so existing price-aware helpers still work
+        return opt
+
     m = TRADE_RE.match(line.strip())
     if not m:
         return None
@@ -76,18 +92,20 @@ def parse_trade_line(line):
         "ticker": m.group("ticker").upper(),
         "price": float(price) if price is not None else None,
         "notes": (m.group("notes") or "").strip(),
+        "instrument": "stock",
     }
 
 
-def parse_message(content):
+def parse_message(content, ref_date=None):
     """Return a list of trade dicts parsed from one message's raw content.
 
     Each dict carries the poster's username plus the parsed trade fields. A
-    message with multiple poster/trade pairs yields multiple dicts.
+    message with multiple poster/trade pairs yields multiple dicts. ``ref_date``
+    is threaded through to option-expiration year inference.
     """
     trades = []
     for m in PAIR_RE.finditer(content or ""):
-        trade = parse_trade_line(m.group("trade"))
+        trade = parse_trade_line(m.group("trade"), ref_date=ref_date)
         if trade:
             trade["user"] = m.group("user").strip()
             trades.append(trade)
@@ -217,6 +235,24 @@ def fetch_after(log, now):
     return snowflake_for(now - timedelta(days=INITIAL_LOOKBACK_DAYS))
 
 
+def _is_option(t):
+    """True if a trade dict describes an option position."""
+    return t.get("instrument") == "option" or bool(t.get("expiration"))
+
+
+def _pos_key(t):
+    """Identity of the position a trade acts on.
+
+    Stocks key on (user, ticker) as before. Options key on the full contract so
+    an option never clobbers -- nor is clobbered by -- a same-ticker stock
+    position or a different contract on the same underlying.
+    """
+    if _is_option(t):
+        return (t["user"], t["ticker"], "option",
+                t.get("opt_type"), t.get("strike"), t.get("expiration"))
+    return (t["user"], t["ticker"])
+
+
 def log_to_trades(log):
     """Flatten the log into a chronologically sorted list of trade dicts.
 
@@ -225,7 +261,14 @@ def log_to_trades(log):
     """
     trades = []
     for mid, entry in log.get("messages", {}).items():
-        parsed = parse_message(entry["content"]) if "content" in entry \
+        ref = None
+        ts = entry.get("timestamp")
+        if ts:
+            try:
+                ref = parse_ts(ts).date()
+            except (ValueError, TypeError):
+                ref = None
+        parsed = parse_message(entry["content"], ref_date=ref) if "content" in entry \
             else entry.get("trades", [])
         for i, tr in enumerate(parsed):
             t = dict(tr)
@@ -243,17 +286,17 @@ def compute_holdings(trades):
     Long/Short opens (or refreshes) a position; a full Exit closes it; a partial
     Exit leaves the position open. Whatever is still open at the end is "held".
     """
-    open_positions = {}  # (user, ticker) -> opening trade
+    open_positions = {}  # position key -> opening trade
     for t in trades:
-        key = (t["user"], t["ticker"])
+        key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
             open_positions[key] = t
         elif t["side"] == "Exit" and not t["partial"]:
             open_positions.pop(key, None)
         # partial Exit: position stays open
     holdings = {}
-    for (user, _ticker), t in open_positions.items():
-        holdings.setdefault(user, []).append(t)
+    for t in open_positions.values():
+        holdings.setdefault(t["user"], []).append(t)
     return holdings
 
 
@@ -266,10 +309,10 @@ def compute_win_rates(trades):
     exits are still compared to the same entry). Exits or entries without a
     numeric price cannot be scored and are ignored.
     """
-    entries = {}  # (user, ticker) -> (side, entry_price)
+    entries = {}  # position key -> (side, entry_price)
     stats = {}    # user -> [wins, losses]
     for t in trades:
-        key = (t["user"], t["ticker"])
+        key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
             entries[key] = (t["side"], t["price"])
         elif t["side"] == "Exit":
@@ -283,6 +326,65 @@ def compute_win_rates(trades):
             if not t["partial"]:
                 entries.pop(key, None)  # full exit closes the position
     return {u: {"wins": w, "losses": l} for u, (w, l) in stats.items()}
+
+
+def resolve_expired_options(holdings, now, spot_close=options.spot_close_on):
+    """Settle open OPTION positions whose expiration date has passed.
+
+    ``holdings`` (as returned by ``compute_holdings``) is mutated in place: each
+    resolvable expired option is removed from the trader's open list, and a
+    short put that gets assigned is replaced by a long stock holding at its
+    assignment cost basis (strike minus premium) so the acquired shares keep
+    being tracked. An option whose spot price can't be fetched -- yfinance or
+    the network unavailable, or the contract not yet expired -- is left open.
+
+    ``spot_close(ticker, exp_date)`` is injectable for testing; it defaults to
+    the live yfinance lookup and returns None when a price is unavailable.
+
+    Returns ``{user: [resolution, ...]}`` where each resolution is
+    ``{"trade": <option>, "spot": <float>, "exp_date": <date>, "outcome": <dict>}``.
+    """
+    today = now.date()
+    resolutions = {}
+    for user, positions in list(holdings.items()):
+        kept = []
+        for t in positions:
+            exp = t.get("expiration") if _is_option(t) else None
+            exp_date = date.fromisoformat(exp) if exp else None
+            if exp_date is None or exp_date > today:
+                kept.append(t)  # not an option, or not yet expired
+                continue
+            spot = spot_close(t["ticker"], exp_date)
+            if spot is None:
+                kept.append(t)  # price unavailable -> leave open/pending
+                continue
+            outcome = options.resolve_option(
+                t["side"], t["opt_type"], t["strike"], t.get("premium"), spot
+            )
+            resolutions.setdefault(user, []).append(
+                {"trade": t, "spot": spot, "exp_date": exp_date, "outcome": outcome}
+            )
+            # An assigned short put becomes a long stock position at the basis.
+            if (outcome["status"] == "assigned" and t["side"] == "Short"
+                    and t["opt_type"] == options.PUT):
+                kept.append({
+                    "user": user,
+                    "ticker": t["ticker"],
+                    "side": "Long",
+                    "price": outcome["basis"],
+                    "partial": False,
+                    "instrument": "stock",
+                    "assigned": True,
+                    "notes": f"assigned from short {t['strike']:g}p exp {exp}",
+                    "timestamp": t.get("timestamp"),
+                    "message_id": t.get("message_id"),
+                    "index": t.get("index"),
+                })
+        if kept:
+            holdings[user] = kept
+        else:
+            holdings.pop(user, None)
+    return resolutions
 
 
 def prune_log(log, holdings, now):
@@ -311,6 +413,9 @@ def _fmt_price(price):
 
 def _weekly_line(t):
     """One line describing a trade a trader took this week."""
+    if _is_option(t):
+        icon = "🟢" if t["side"] == "Long" else "🔵"
+        return f"- {icon} {options.format_option_open(t)}"
     price = _fmt_price(t["price"])
     price_str = f" @ {price}" if price else ""
     if t["side"] == "Exit":
@@ -324,10 +429,16 @@ def _weekly_line(t):
 
 def _open_line(t):
     """One line describing a trader's still-open position."""
+    if _is_option(t):
+        opened = f" _(opened {_fmt_date(parse_ts(t['timestamp']))})_" \
+            if t.get("timestamp") else ""
+        return f"- {options.format_option_open(t)}{opened}"
     price = _fmt_price(t["price"])
     price_str = f" @ {price}" if price else ""
-    opened = parse_ts(t["timestamp"])
-    return f"- {t['side']} **{t['ticker']}**{price_str} _(opened {_fmt_date(opened)})_"
+    tag = " _(assigned)_" if t.get("assigned") else ""
+    opened = f" _(opened {_fmt_date(parse_ts(t['timestamp']))})_" \
+        if t.get("timestamp") else ""
+    return f"- {t['side']} **{t['ticker']}**{price_str}{tag}{opened}"
 
 
 def _win_rate_line(stats):
@@ -339,21 +450,40 @@ def _win_rate_line(stats):
     if total == 0:
         return None
     pct = round(100 * wins / total)
-    return f"_Quasi win rate: **{pct}%** ({wins}W–{losses}L, {total} exits scored)_"
+    return f"_Quasi win rate: **{pct}%** ({wins}W–{losses}L, {total} scored)_"
 
 
-def build_summary(log, now):
+def build_summary(log, now, spot_close=options.spot_close_on):
     """Build a trader-by-trader summary (Markdown) from the running log.
 
-    Per trader: trades taken this week, and outstanding open trades. A position
-    opened with Long/Short stays open until a full Exit -- a partial Exit does
-    not close it -- so trades without an exit remain listed as open.
+    Per trader: trades taken this week, options that settled this week, and
+    outstanding open trades. A stock position opened with Long/Short stays open
+    until a full Exit -- a partial Exit does not close it. An option stays open
+    until its expiration date passes, at which point it is settled against the
+    underlying's closing spot (via ``spot_close``): out-of-the-money it expires
+    (a win for the seller, a loss for the buyer); in-the-money a short option is
+    assigned and a long option is worth its intrinsic value. Settled option
+    wins/losses fold into the quasi win rate.
     """
     trades = log_to_trades(log)
     holdings = compute_holdings(trades)
     win_rates = compute_win_rates(trades)
+    resolutions = resolve_expired_options(holdings, now, spot_close)
 
     week_start = now - timedelta(days=WEEK_DAYS)
+
+    # Fold settled options into the quasi win rate (all of them, so the rate is
+    # stable run-to-run) and collect the ones that settled this week to display.
+    settled_by_user = {}
+    for user, recs in resolutions.items():
+        for rec in recs:
+            win = rec["outcome"]["win"]
+            if win is not None:
+                s = win_rates.setdefault(user, {"wins": 0, "losses": 0})
+                s["wins" if win else "losses"] += 1
+            if rec["exp_date"] >= week_start.date():
+                settled_by_user.setdefault(user, []).append(rec)
+
     weekly_by_user = {}
     for t in trades:
         if parse_ts(t["timestamp"]) >= week_start:
@@ -366,7 +496,9 @@ def build_summary(log, now):
 
     lines = [f"# \U0001F4CA Weekly Trade Summary — {label}", ""]
 
-    users = sorted(set(weekly_by_user) | set(holdings), key=str.lower)
+    users = sorted(
+        set(weekly_by_user) | set(holdings) | set(settled_by_user), key=str.lower
+    )
     if not users:
         lines.append("_No trades this week and no open positions._")
         return "\n".join(lines)
@@ -384,6 +516,14 @@ def build_summary(log, now):
             lines.extend(_weekly_line(t) for t in week_trades)
         else:
             lines.append("- _no new trades this week_")
+
+        settled = settled_by_user.get(user, [])
+        if settled:
+            lines.append("**Options settled this week**")
+            lines.extend(
+                options.format_option_resolution(r["trade"], r["outcome"], r["spot"])
+                for r in sorted(settled, key=lambda r: r["trade"]["ticker"])
+            )
 
         lines.append("**Open trades**")
         open_trades = holdings.get(user, [])

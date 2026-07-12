@@ -357,5 +357,118 @@ class FetchWindowTests(unittest.TestCase):
         self.assertEqual(ws.fetch_after(log, now), 250)
 
 
+class OptionIntegrationTests(unittest.TestCase):
+    """Option trades flow through parsing, holdings, and expiration settlement."""
+
+    def _fake_spot(self, mapping):
+        """Return a spot_close(ticker, date) backed by a {(ticker, iso): price}."""
+        return lambda ticker, d: mapping.get((ticker, d.isoformat()))
+
+    def test_parse_trade_line_recognizes_option(self):
+        t = ws.parse_trade_line("#Short put $SPY 400 2026-07-18 @ 3.20",
+                                ref_date=datetime(2026, 7, 1).date())
+        self.assertEqual(t["instrument"], "option")
+        self.assertEqual(t["opt_type"], "put")
+        self.assertEqual(t["strike"], 400.0)
+        self.assertEqual(t["expiration"], "2026-07-18")
+        self.assertEqual(t["premium"], 3.20)
+        self.assertEqual(t["price"], 3.20)   # premium mirrored so price helpers work
+
+    def test_option_and_stock_on_same_ticker_are_distinct_holdings(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-06T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long $AAPL 175.00"},
+            "2": {"timestamp": "2026-07-06T01:00:00+00:00",
+                  "content": "u posted a trade:\n#Long call AAPL 180c 2026-09-18 @ 4.00"},
+        }}
+        holdings = ws.compute_holdings(ws.log_to_trades(log))
+        aapl = holdings["u"]
+        self.assertEqual(len(aapl), 2)   # stock did not clobber the option
+        self.assertEqual({ws._is_option(t) for t in aapl}, {True, False})
+
+    def test_short_put_above_strike_settles_as_worthless_win(self):
+        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Short",
+                           "opt_type": "put", "strike": 400.0, "premium": 3.20,
+                           "instrument": "option", "expiration": "2026-07-10",
+                           "timestamp": "2026-07-06T00:00:00+00:00",
+                           "message_id": "1", "index": 0, "notes": ""}]}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            holdings, now, self._fake_spot({("SPY", "2026-07-10"): 405.0}))
+        self.assertEqual(res["u"][0]["outcome"]["status"], "expired_worthless")
+        self.assertTrue(res["u"][0]["outcome"]["win"])
+        self.assertNotIn("u", holdings)   # closed out, no longer held
+
+    def test_short_put_below_strike_assigns_and_creates_share_holding(self):
+        holdings = {"u": [{"user": "u", "ticker": "TSLA", "side": "Short",
+                           "opt_type": "put", "strike": 300.0, "premium": 5.0,
+                           "instrument": "option", "expiration": "2026-07-10",
+                           "timestamp": "2026-07-06T00:00:00+00:00",
+                           "message_id": "1", "index": 0, "notes": ""}]}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            holdings, now, self._fake_spot({("TSLA", "2026-07-10"): 260.0}))
+        self.assertEqual(res["u"][0]["outcome"]["status"], "assigned")
+        # The option is replaced by a long stock position at strike - premium.
+        held = holdings["u"]
+        self.assertEqual(len(held), 1)
+        self.assertFalse(ws._is_option(held[0]))
+        self.assertEqual(held[0]["side"], "Long")
+        self.assertEqual(held[0]["ticker"], "TSLA")
+        self.assertAlmostEqual(held[0]["price"], 295.0)
+        self.assertTrue(held[0]["assigned"])
+
+    def test_unexpired_option_is_left_open(self):
+        holdings = {"u": [{"user": "u", "ticker": "AAPL", "side": "Long",
+                           "opt_type": "put", "strike": 175.0, "premium": 5.5,
+                           "instrument": "option", "expiration": "2026-08-15",
+                           "timestamp": "2026-07-09T00:00:00+00:00",
+                           "message_id": "1", "index": 0, "notes": ""}]}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+
+        def _boom(ticker, d):  # must not be called for a future expiration
+            raise AssertionError("spot lookup called for an unexpired option")
+
+        res = ws.resolve_expired_options(holdings, now, _boom)
+        self.assertEqual(res, {})
+        self.assertEqual(len(holdings["u"]), 1)   # still held
+
+    def test_build_summary_reports_settled_options_and_folds_win_rate(self):
+        log = {"messages": {
+            "100": {"timestamp": "2026-07-06T00:00:00+00:00",
+                    "content": "isidore94 posted a trade:\n#Short put $SPY 400 7/10 @ 3.20"},
+            "101": {"timestamp": "2026-07-06T02:00:00+00:00",
+                    "content": "00sav00 posted a trade:\n#Long call NVDA 500c 7/10 for 12.00"},
+        }}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        spot = self._fake_spot({("SPY", "2026-07-10"): 405.0,   # short put win
+                                ("NVDA", "2026-07-10"): 480.0})  # long call loss
+        summary = ws.build_summary(log, now, spot_close=spot)
+
+        iso = summary.split("## isidore94")[1].split("##")[0]
+        self.assertIn("**Options settled this week**", iso)
+        self.assertIn("expired worthless — win", iso)
+        self.assertIn("100%", iso)   # settled win folded into the quasi win rate
+
+        sav = summary.split("## 00sav00")[1]
+        self.assertIn("expired worthless — loss", sav)
+        self.assertIn("0%", sav)     # settled loss folded in
+
+    def test_build_summary_without_options_is_unaffected(self):
+        # A stock-only log never triggers a spot lookup.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-10T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long $PENG 77.15"},
+        }}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+
+        def _boom(ticker, d):
+            raise AssertionError("spot lookup called with no options present")
+
+        summary = ws.build_summary(log, now, spot_close=_boom)
+        self.assertNotIn("Options settled", summary)
+        self.assertIn("Long **PENG**", summary)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
