@@ -87,6 +87,62 @@ class ParseOptionTests(unittest.TestCase):
         self.assertIsNone(
             o.parse_option("#Exit NVDA 11.70 for -32% on calls", self.REF))
 
+    def test_date_first_form_with_space_before_suffix(self):
+        # Real channel message: date BEFORE strike, space before the P/C
+        # suffix. Previously fell through to the stock parser and read the
+        # date's leading digits ("07") as a bogus $7 share price.
+        t = o.parse_option("#Long BE 07/10/2026 235.00 P 4.9", self.REF)
+        self.assertEqual(t["opt_type"], o.PUT)
+        self.assertEqual(t["ticker"], "BE")
+        self.assertEqual(t["strike"], 235.0)
+        self.assertEqual(t["expiration"], "2026-07-10")
+        self.assertEqual(t["premium"], 4.9)
+
+    def test_date_first_form_no_space_before_suffix_with_notes(self):
+        t = o.parse_option(
+            "#Long DELL 07/17/2026 385.00p 3.35 this am", self.REF)
+        self.assertEqual(t["opt_type"], o.PUT)
+        self.assertEqual(t["ticker"], "DELL")
+        self.assertEqual(t["strike"], 385.0)
+        self.assertEqual(t["premium"], 3.35)
+        self.assertEqual(t["notes"], "this am")
+
+    def test_date_first_form_with_filler_and_dollar_signs(self):
+        t = o.parse_option("#long NBIS sold 7/2/26 $200p $2.4", self.REF)
+        self.assertEqual(t["opt_type"], o.PUT)
+        self.assertEqual(t["ticker"], "NBIS")
+        self.assertEqual(t["strike"], 200.0)
+        self.assertEqual(t["expiration"], "2026-07-02")
+        self.assertEqual(t["premium"], 2.4)
+
+    def test_date_first_form_two_digit_year_no_decimal_strike(self):
+        t = o.parse_option("#Long MRVL 6/26/26 250 P 1.6 earlier", self.REF)
+        self.assertEqual(t["strike"], 250.0)
+        self.assertEqual(t["expiration"], "2026-06-26")
+        self.assertEqual(t["notes"], "earlier")
+
+    def test_strike_first_form_with_slang_filler_before_date(self):
+        # Real channel message: "lottos" (slang) sits between the strike and
+        # the date; previously broke the strike-first regex entirely and let
+        # 704 leak through as a fake $704 QQQ share price.
+        t = o.parse_option("#Short QQQ 704p lottos 6/26 3.45", self.REF)
+        self.assertEqual(t["opt_type"], o.PUT)
+        self.assertEqual(t["ticker"], "QQQ")
+        self.assertEqual(t["strike"], 704.0)
+        self.assertEqual(t["expiration"], "2026-06-26")
+        self.assertEqual(t["premium"], 3.45)
+
+    def test_multi_leg_spreads_are_not_parsed_as_single_leg_options(self):
+        # Spreads are out of scope; these must fall through to the stock
+        # parser rather than being misread as a single-leg option.
+        for line in (
+            "#Short AKAM next weeks PDS 124/122 for 90c",
+            "#Long CRWV via 97/96 (Jul 26) for .25c credit.",
+            "#Short SPY lotto PDS 746/745 for 37c, I believe we will fill "
+            "the gap from yesterday",
+        ):
+            self.assertIsNone(o.parse_option(line, self.REF), line)
+
 
 class ParseExpTests(unittest.TestCase):
     def test_invalid_date_returns_none(self):

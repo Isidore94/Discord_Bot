@@ -1035,6 +1035,32 @@ class ReviewFixTests(unittest.TestCase):
         self.assertEqual(set(log["messages"]), {"1", "2", "3"})
 
 
+class DateFirstOptionRegressionTests(unittest.TestCase):
+    """A date-first option post must never leak its date into a fake stock
+    price and produce a bogus mark-to-market percentage (real symptom: a
+    channel screenshot showing 'BE @ 7 -> 244.61 (+3394.4%)')."""
+
+    def test_date_first_option_is_not_priced_like_a_stock(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-06-30T14:48:35+00:00",
+                  "content": "u posted a trade:\n#Long BE 07/10/2026 235.00 P 4.9"},
+        }}
+        trades = ws.log_to_trades(log)
+        self.assertEqual(len(trades), 1)
+        t = trades[0]
+        self.assertEqual(t["instrument"], "option")
+        self.assertEqual(t["strike"], 235.0)
+        self.assertNotEqual(t.get("price"), 7.0)
+
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(
+            log, now, spot_close=lambda tk, d: None,
+            last_close=lambda tks: {"BE": 244.61})
+        self.assertNotIn("@ 7", summary)
+        self.assertNotIn("3394", summary)
+        self.assertIn("BE $235p", summary)
+
+
 class SpotCacheTests(unittest.TestCase):
     def _option(self, exp):
         return {"user": "u", "ticker": "SPY", "side": "Short", "opt_type": "put",

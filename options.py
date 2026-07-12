@@ -3,11 +3,19 @@
 
 Two capabilities layered on top of the plain-stock parser in weekly_summary.py:
 
-1. Parsing single-leg option trades out of a trade line, e.g.
+1. Parsing single-leg option trades out of a trade line, in either strike-
+   then-date order:
 
        #Short put $SPY 400 2026-07-18 @ 3.20
        #Long call NVDA 500c 8/15 for 12.00
        #Long put AAPL 175p exp 8/15/2026 5.50
+
+   or date-then-strike order, this channel's other common shape (a bare c/p
+   suffix, with or without a space, no "call"/"put" word):
+
+       #Long BE 07/10/2026 235.00 P 4.9
+       #Long DELL 07/17/2026 385.00p 3.35 this am
+       #long NBIS sold 7/2/26 $200p $2.4
 
    yielding the option's type (call/put), strike, expiration date and the
    premium paid (long) or collected (short).
@@ -45,12 +53,15 @@ PUT = "put"
 # An expiration date, ISO (2026-07-18) or US (7/18, 7/18/26, 7/18/2026).
 _DATE = r"\d{4}-\d{1,2}-\d{1,2}|\d{1,2}/\d{1,2}(?:/\d{2,4})?"
 
-# Filler words traders drop between the action and the ticker, e.g.
-# "#add Long ALAB", "#Exit half of RIVN", "#Exit this add on Long ALAB".
-# Shared with the stock regex in weekly_summary. Backtracking recovers a
-# ticker that collides with a filler word ("#Long ON 45.00" still parses).
+# Filler words traders drop between the action and the ticker, between the
+# ticker and a date-first option's expiration, or between a strike-first
+# option's strike and its expiration, e.g. "#add Long ALAB", "#Exit half of
+# RIVN", "#Exit this add on Long ALAB", "#long NBIS sold 7/2/26 $200p $2.4",
+# "#Short QQQ 704p lottos 6/26 3.45". Shared with the stock regex in
+# weekly_summary. Backtracking recovers a ticker that collides with a filler
+# word ("#Long ON 45.00" still parses).
 FILLER = (r"(?:\s+(?i:half|this|that|the|of|my|some|more|adds?|rest|"
-          r"long|short|on))*")
+          r"long|short|on|sold|bought|lottos?))*")
 
 # A single-leg option line. What distinguishes it from a plain-stock line is
 # the presence of BOTH a call/put marker (a "call"/"put" word or a c/p strike
@@ -66,8 +77,33 @@ OPTION_RE = re.compile(
     r"(?:(?P<type_word>[Cc]alls?|[Pp]uts?)\s+)?"           # optional 'call'/'put' word
     r"\$?(?P<ticker>[A-Za-z][A-Za-z.]{0,6})\s+"            # TICKER
     r"\$?(?P<strike>\d+(?:\.\d+)?)(?P<type_suffix>[CcPp])?"  # strike (+ optional c/p)
+    + FILLER +                                             # e.g. "lottos"
     r"\s+(?:exp(?:iry|iration|ires)?\.?\s*[:.]?\s*)?"      # optional 'exp' label
     r"(?P<exp>" + _DATE + r")"                             # expiration date
+    r"(?:\s*(?:@|for|at|premium|prem|:)?\s*\$?"            # optional premium intro
+    r"(?P<premium>\d+(?:\.\d+)?))?"                        # premium (optional)
+    r"(?P<notes>.*)$"
+)
+
+# The date-first shape this channel also uses: TICKER, then the expiration,
+# then STRIKE[C/P] (space before the suffix optional), then premium. No
+# "call"/"put" word variant has been observed in this order -- a bare suffix
+# is required to identify the option (real examples: "#Long BE 07/10/2026
+# 235.00 P 4.9", "#Long DELL 07/17/2026 385.00p 3.35 this am"). Tried as a
+# fallback only after OPTION_RE fails, so it cannot shadow the strike-first
+# form.
+OPTION_RE_DATE_FIRST = re.compile(
+    r"^#\s*"
+    r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit|[Aa]dd)"
+    r"(?:\s+(?P<partial>[Pp]artial))?"
+    + FILLER +
+    r"\s+"
+    r"\$?(?P<ticker>[A-Za-z][A-Za-z.]{0,6})"
+    + FILLER +                                             # e.g. "sold"
+    r"\s+(?:exp(?:iry|iration|ires)?\.?\s*[:.]?\s*)?"
+    r"(?P<exp>" + _DATE + r")"
+    r"\s+\$?(?P<strike>\d+(?:\.\d+)?)"
+    r"\s*(?P<type_suffix>[CcPp])\b"                        # required: only ID
     r"(?:\s*(?:@|for|at|premium|prem|:)?\s*\$?"            # optional premium intro
     r"(?P<premium>\d+(?:\.\d+)?))?"                        # premium (optional)
     r"(?P<notes>.*)$"
@@ -124,19 +160,12 @@ def _parse_exp(token, ref_date=None):
     return None
 
 
-def parse_option(line, ref_date=None):
-    """Parse a single-leg option trade line into a dict, or None if the line is
-    not a recognizable option.
-
-    ``ref_date`` is only used to infer the year of an expiration written without
-    one; it defaults to today.
-    """
-    m = OPTION_RE.match(line.strip())
-    if not m:
-        return None
-
-    type_word = m.group("type_word")
-    type_suffix = m.group("type_suffix")
+def _option_from_match(m, ref_date):
+    """Build the parsed-option dict from a successful OPTION_RE(_DATE_FIRST)
+    match, or None if it lacks a call/put marker or a valid expiration."""
+    groups = m.groupdict()
+    type_word = groups.get("type_word")
+    type_suffix = groups.get("type_suffix")
     if type_word:
         opt_type = PUT if type_word.lower().startswith("p") else CALL
     elif type_suffix:
@@ -148,10 +177,10 @@ def parse_option(line, ref_date=None):
     if exp is None:
         return None
 
-    premium = m.group("premium")
+    premium = groups.get("premium")
     return {
-        "side": m.group("side").capitalize(),   # Long / Short / Exit
-        "partial": bool(m.group("partial")),     # only meaningful on Exit
+        "side": m.group("side").capitalize(),   # Long / Short / Exit / Add
+        "partial": bool(groups.get("partial")),  # only meaningful on Exit
         "opt_type": opt_type,                    # call / put
         "ticker": m.group("ticker").upper().strip("."),
         "strike": float(m.group("strike")),
@@ -159,6 +188,25 @@ def parse_option(line, ref_date=None):
         "premium": float(premium) if premium is not None else None,
         "notes": (m.group("notes") or "").strip(),
     }
+
+
+def parse_option(line, ref_date=None):
+    """Parse a single-leg option trade line into a dict, or None if the line is
+    not a recognizable option.
+
+    Tries the strike-first form (OPTION_RE) then, if that doesn't match, the
+    date-first form this channel also uses (OPTION_RE_DATE_FIRST) -- see the
+    module docstring for examples of each. ``ref_date`` is only used to infer
+    the year of an expiration written without one; it defaults to today.
+    """
+    line = line.strip()
+    for pattern in (OPTION_RE, OPTION_RE_DATE_FIRST):
+        m = pattern.match(line)
+        if m:
+            parsed = _option_from_match(m, ref_date)
+            if parsed is not None:
+                return parsed
+    return None
 
 
 # ---------------------------------------------------------------------------
