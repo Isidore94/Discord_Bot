@@ -56,14 +56,37 @@ PAIR_RE = re.compile(
 #   #Exit NVDA 11.70 for -32% on calls
 #   #Exit CRWD at 187.60
 #   #Exit partial NVDA $208.66 for over $13 profit per share. (Still have ...).
+#   #add Long ALAB at 429.54. New avg: 449.76
+#   #Exit half of RIVN for 50% going to leave the rest ...
+#   #Exit this add on Long ALAB for a small 3 dollar loss.
+# Filler words between the action and the ticker are skipped (options.FILLER);
+# the price must not be a percentage ("for 100%" is a stated return, not $100).
 TRADE_RE = re.compile(
     r"^#\s*"
-    r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit)"          # side
+    r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit|[Aa]dd)"   # side / scale-in
     r"(?:\s+(?P<partial>[Pp]artial))?"             # optional "partial" (Exit)
+    + options.FILLER +                             # "half of", "this add on Long", ...
     r"\s+\$?(?P<ticker>[A-Z][A-Z.]{0,6})"          # optional $, then TICKER
-    r"(?:\s+(?:[Aa]t\s+|@\s*)?\$?(?P<price>\d+(?:\.\d+)?))?"  # optional price (at/@/$)
+    r"(?:\s+(?:[Aa]t\s+|@\s*)?\$?(?P<price>\d+(?:\.\d+)?)(?!\s*%))?"  # price, not N%
     r"(?P<notes>.*)$"                              # trailing free-text notes
 )
+
+# The channel's add function posts the running average itself:
+#   "#add Long ALAB at 429.54. New avg: 449.76" -- that value is authoritative
+# (it knows the sizes), so it replaces the tracked entry price outright.
+NEW_AVG_RE = re.compile(r"(?i)new\s+avg[.:]?\s*\$?(\d+(?:\.\d+)?)")
+
+# Free-text hints that an exit was partial, e.g. "partial profit swinging the
+# rest", "#Exit half of RIVN", "leaving quarter size on", "#Exit this add on
+# Long ALAB", "trimming here". Checked against the whole line.
+PARTIAL_HINT_RE = re.compile(
+    r"(?i)\b(?:partial\w*|half|trim\w*|leav\w*|keep\w*|swing\w*|still|"
+    r"quarter|(?:this|that|the|my)\s+add)\b"
+)
+
+# A stated percentage return, e.g. "for 50%", "for -32%". Used to score an
+# exit when entry/exit prices can't be compared.
+STATED_PCT_RE = re.compile(r"(?i)\bfor\s+(?:a\s+)?([+-]?\d+(?:\.\d+)?)\s*%")
 
 
 def parse_trade_line(line, ref_date=None):
@@ -75,25 +98,43 @@ def parse_trade_line(line, ref_date=None):
     plain-stock trade. An option Exit closes the contract early, with the
     premium received in the price slot. ``ref_date`` is passed through only to
     infer an expiration year written without one.
+
+    Post-parse enrichment (both kinds): an Exit whose free text signals a
+    partial ("half", "swinging the rest", ...) gets partial=True; an Add
+    carries ``new_avg`` when the channel's add function posted one; an Exit
+    stating its return ("for 50%") carries ``stated_pct`` as a fraction.
     """
+    trade = None
     opt = options.parse_option(line, ref_date=ref_date)
     if opt:
         opt["instrument"] = "option"
         opt["price"] = opt["premium"]  # so existing price-aware helpers still work
-        return opt
+        trade = opt
+    else:
+        m = TRADE_RE.match(line.strip())
+        if not m:
+            return None
+        price = m.group("price")
+        trade = {
+            "side": m.group("side").capitalize(),   # Long / Short / Exit / Add
+            "partial": bool(m.group("partial")),
+            "ticker": m.group("ticker").upper().strip("."),
+            "price": float(price) if price is not None else None,
+            "notes": (m.group("notes") or "").strip(),
+            "instrument": "stock",
+        }
 
-    m = TRADE_RE.match(line.strip())
-    if not m:
-        return None
-    price = m.group("price")
-    return {
-        "side": m.group("side").capitalize(),   # Long / Short / Exit
-        "partial": bool(m.group("partial")),
-        "ticker": m.group("ticker").upper(),
-        "price": float(price) if price is not None else None,
-        "notes": (m.group("notes") or "").strip(),
-        "instrument": "stock",
-    }
+    if trade["side"] == "Exit":
+        if not trade["partial"] and PARTIAL_HINT_RE.search(line):
+            trade["partial"] = True
+        pm = STATED_PCT_RE.search(line)
+        if pm:
+            trade["stated_pct"] = float(pm.group(1)) / 100.0
+    elif trade["side"] == "Add":
+        am = NEW_AVG_RE.search(line)
+        if am:
+            trade["new_avg"] = float(am.group(1))
+    return trade
 
 
 def parse_message(content, ref_date=None):
@@ -254,17 +295,30 @@ def _pos_key(t):
 
 
 def _fallback_option_key(open_keys, t):
-    """Key of the option a plain-stock Exit most plausibly closes.
+    """Key of the option a plain-stock Exit/Add most plausibly acts on.
 
-    Traders often close an option with an informal '#Exit TICKER ...' line
-    (real example: '#Exit NVDA 11.70 for -32% on calls'). When such an exit
-    matches no open stock position but the trader has exactly ONE open option
-    contract on that ticker, treat it as closing that contract. Ambiguous
-    (two+ contracts) -> None, and the exit is ignored as before.
+    Traders often close (or add to) an option with an informal '#Exit TICKER
+    ...' line (real example: '#Exit NVDA 11.70 for -32% on calls'). When such
+    a line matches no open stock position but the trader has exactly ONE open
+    option contract on that ticker, treat it as acting on that contract.
+    Ambiguous (two+ contracts) -> None, and the line is ignored as before.
     """
     cands = [k for k in open_keys
              if len(k) > 2 and k[0] == t["user"] and k[1] == t["ticker"]]
     return cands[0] if len(cands) == 1 else None
+
+
+def _tranche_pct(side, entry_price, t):
+    """Signed fractional return of one exit tranche.
+
+    Computed from entry vs exit price when both are known (inverted for
+    shorts); otherwise the trader's own stated return ("for 50%") is trusted
+    as-is. None when neither is available.
+    """
+    if entry_price and t.get("price") is not None:
+        pct = (t["price"] - entry_price) / entry_price
+        return -pct if side == "Short" else pct
+    return t.get("stated_pct")
 
 
 def log_to_trades(log):
@@ -297,32 +351,55 @@ def log_to_trades(log):
 def compute_holdings(trades):
     """Return {user: [open trade dicts]} from chronologically ordered trades.
 
-    Long/Short opens a position; a repeat same-side entry scales in (the entry
-    price becomes the equal-weight average and the original open date is kept);
-    a full Exit closes it; a partial Exit leaves it open. A full Exit that
-    matches no stock position falls back to the trader's single open option on
-    that ticker (see _fallback_option_key). Whatever is still open is "held".
+    Long/Short opens (or refreshes) a position. An Add (the channel's add
+    function) scales in: the posted "New avg" replaces the entry price when
+    present (it accounts for real sizes); otherwise the add price is averaged
+    in equal-weight; the original open date is kept. A full Exit closes the
+    position; a partial Exit leaves it open but is tallied on it (count and
+    per-tranche returns) so the eventual close can score the whole position.
+    Exits/Adds that match no stock position fall back to the trader's single
+    open option on that ticker (see _fallback_option_key).
     """
     open_positions = {}  # position key -> opening trade
     for t in trades:
         key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
-            prev = open_positions.get(key)
-            if prev and prev["side"] == t["side"] \
-                    and prev.get("price") is not None and t.get("price") is not None:
-                n = prev.get("adds", 1)
-                t = dict(t)
-                t["price"] = (prev["price"] * n + t["price"]) / (n + 1)
-                t["adds"] = n + 1
-                t["timestamp"] = prev.get("timestamp") or t.get("timestamp")
-                if _is_option(t):
-                    t["premium"] = t["price"]
             open_positions[key] = t
-        elif t["side"] == "Exit" and not t["partial"]:
+        elif t["side"] == "Add":
             if key not in open_positions and not _is_option(t):
                 key = _fallback_option_key(open_positions, t) or key
-            open_positions.pop(key, None)
-        # partial Exit: position stays open
+            pos = open_positions.get(key)
+            if pos is None:
+                # Add with no tracked entry (opened before the log window):
+                # best effort, treat it as opening a long at the known price.
+                t = dict(t)
+                t["side"] = "Long"
+                if t.get("new_avg") is not None:
+                    t["price"] = t["new_avg"]
+                open_positions[_pos_key(t)] = t
+                continue
+            pos = dict(pos)
+            if t.get("new_avg") is not None:
+                pos["price"] = t["new_avg"]
+            elif pos.get("price") is not None and t.get("price") is not None:
+                n = pos.get("adds", 1)
+                pos["price"] = (pos["price"] * n + t["price"]) / (n + 1)
+            if _is_option(pos):
+                pos["premium"] = pos["price"]
+            pos["adds"] = pos.get("adds", 1) + 1
+            open_positions[key] = pos
+        elif t["side"] == "Exit":
+            if key not in open_positions and not _is_option(t):
+                key = _fallback_option_key(open_positions, t) or key
+            if t["partial"]:
+                pos = open_positions.get(key)
+                if pos is not None:
+                    pos["partials"] = pos.get("partials", 0) + 1
+                    pct = _tranche_pct(pos["side"], pos.get("price"), t)
+                    if pct is not None:
+                        pos.setdefault("partial_pcts", []).append(pct)
+            else:
+                open_positions.pop(key, None)
     holdings = {}
     for t in open_positions.values():
         holdings.setdefault(t["user"], []).append(t)
@@ -335,63 +412,82 @@ def _blank_stats():
 
 
 def compute_win_rates(trades, week_start=None):
-    """Quasi win rate and return stats per user, comparing exits to entries.
+    """Quasi win rate and return stats per user, one data point per POSITION.
 
-    A Long exit is a win when the exit price is above the entry; a Short exit
-    is a win when the exit price is below the entry (for options the prices are
-    premiums, so buying back a short option below the premium collected is a
-    win). Both full and partial exits count; scale-ins average the entry price.
-    Exits or entries without a numeric price cannot be scored and are ignored.
+    Entry prices come from Long/Short opens, adjusted by Adds (the channel add
+    function's "New avg" is authoritative when posted, otherwise the add price
+    is averaged in equal-weight). A partial Exit does not score on its own: its
+    tranche return is remembered (computed from entry vs exit price -- premiums
+    for options -- or the trader's stated "for 50%"), and when the position
+    finally closes, all partials plus the closing exit are assumed EQUAL SIZE
+    and combine into a single win/loss at their average return. Positions whose
+    exits carry no usable numbers are ignored.
 
-    Per user returns wins/losses (all-time), pct_sum/pct_n (signed fractional
-    returns for the average-%-per-trade line), and week_wins/week_losses for
-    exits at or after ``week_start`` (both 0 when it is None). Each scored exit
-    trade dict is annotated in place with ``pct`` and ``held_days`` so summary
-    lines can display them.
+    Per user returns wins/losses (all-time), pct_sum/pct_n (for the
+    average-%-per-trade line), and week_wins/week_losses for positions closed
+    at or after ``week_start`` (both 0 when it is None). Exit trade dicts are
+    annotated in place: each partial with its own ``pct``, the closing exit
+    with the combined ``pct``, its ``partials`` count, and ``held_days``.
     """
-    entries = {}  # position key -> {"side", "price", "timestamp", "adds"}
+    entries = {}  # position key -> {"side","price","timestamp","adds",
+                  #                  "partials","partial_pcts"}
     stats = {}    # user -> stats dict
     for t in trades:
         key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
-            prev = entries.get(key)
-            if prev and prev["side"] == t["side"] \
-                    and prev["price"] is not None and t["price"] is not None:
-                n = prev["adds"]
-                entries[key] = {
-                    "side": t["side"],
-                    "price": (prev["price"] * n + t["price"]) / (n + 1),
-                    "timestamp": prev["timestamp"] or t.get("timestamp"),
-                    "adds": n + 1,
-                }
-            else:
-                entries[key] = {"side": t["side"], "price": t["price"],
-                                "timestamp": t.get("timestamp"), "adds": 1}
+            entries[key] = {"side": t["side"], "price": t["price"],
+                            "timestamp": t.get("timestamp"), "adds": 1,
+                            "partials": 0, "partial_pcts": []}
+        elif t["side"] == "Add":
+            if key not in entries and not _is_option(t):
+                key = _fallback_option_key(entries, t) or key
+            info = entries.get(key)
+            if info is None:
+                price = t.get("new_avg", t.get("price"))
+                entries[key] = {"side": "Long", "price": price,
+                                "timestamp": t.get("timestamp"), "adds": 1,
+                                "partials": 0, "partial_pcts": []}
+                continue
+            if t.get("new_avg") is not None:
+                info["price"] = t["new_avg"]
+            elif info["price"] is not None and t.get("price") is not None:
+                n = info["adds"]
+                info["price"] = (info["price"] * n + t["price"]) / (n + 1)
+            info["adds"] += 1
         elif t["side"] == "Exit":
             if key not in entries and not _is_option(t):
                 key = _fallback_option_key(entries, t) or key
             info = entries.get(key)
-            if info and info["price"] is not None and t["price"] is not None:
-                side, entry_price = info["side"], info["price"]
-                win = t["price"] > entry_price if side == "Long" \
-                    else t["price"] < entry_price
+            if info is None:
+                continue
+            pct = _tranche_pct(info["side"], info["price"], t)
+            if pct is not None:
+                t["pct"] = pct
+            if info["timestamp"] and t.get("timestamp"):
+                t["held_days"] = max(0, (parse_ts(t["timestamp"])
+                                         - parse_ts(info["timestamp"])).days)
+            if t["partial"]:
+                info["partials"] += 1
+                if pct is not None:
+                    info["partial_pcts"].append(pct)
+                continue
+            # Full exit: one data point for the whole position, all tranches
+            # (partials + this close) assumed equal size.
+            tranches = info["partial_pcts"] + ([pct] if pct is not None else [])
+            if tranches:
+                combined = sum(tranches) / len(tranches)
+                win = combined > 0
+                t["pct"] = combined
+                if info["partials"]:
+                    t["partials"] = info["partials"]
                 s = stats.setdefault(t["user"], _blank_stats())
                 s["wins" if win else "losses"] += 1
-                if entry_price > 0:
-                    pct = (t["price"] - entry_price) / entry_price
-                    if side == "Short":
-                        pct = -pct
-                    t["pct"] = pct
-                    s["pct_sum"] += pct
-                    s["pct_n"] += 1
-                if info["timestamp"] and t.get("timestamp"):
-                    t["held_days"] = max(0, (parse_ts(t["timestamp"])
-                                             - parse_ts(info["timestamp"])).days)
+                s["pct_sum"] += combined
+                s["pct_n"] += 1
                 if week_start is not None and t.get("timestamp") \
                         and parse_ts(t["timestamp"]) >= week_start:
                     s["week_wins" if win else "week_losses"] += 1
-            if not t["partial"]:
-                entries.pop(key, None)  # full exit closes the position
+            entries.pop(key, None)
     return stats
 
 
@@ -442,6 +538,17 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
             outcome = options.resolve_option(
                 t["side"], t["opt_type"], t["strike"], t.get("premium"), spot
             )
+            # Earlier partial exits blend with the settlement as equal-size
+            # tranches, the same way a regular close combines with partials.
+            partial_pcts = t.get("partial_pcts") or []
+            if partial_pcts and outcome.get("pct") is not None:
+                tranches = partial_pcts + [outcome["pct"]]
+                combined = sum(tranches) / len(tranches)
+                outcome["pct"] = combined
+                outcome["win"] = combined > 0
+                n = t.get("partials", len(partial_pcts))
+                outcome["summary"] += (f" — net {combined * 100:+.1f}% incl. "
+                                       f"{n} earlier partial{'s' if n != 1 else ''}")
             resolutions.setdefault(user, []).append(
                 {"trade": t, "spot": spot, "exp_date": exp_date, "outcome": outcome}
             )
@@ -524,10 +631,17 @@ def _fmt_price(price):
 
 
 def _score_suffix(t):
-    """' (+3.4%, held 12d)' for a scored exit, or '' when nothing is known."""
+    """' (+3.4%, 2 partials, held 12d)' for a scored exit, '' if unknown.
+
+    On a closing exit the pct is the whole position's equal-tranche average
+    and the partials count says how many partial exits fed into it.
+    """
     bits = []
     if t.get("pct") is not None:
         bits.append(f"{t['pct'] * 100:+.1f}%")
+    n = t.get("partials")
+    if n:
+        bits.append(f"{n} partial{'s' if n != 1 else ''}")
     if t.get("held_days") is not None:
         bits.append(f"held {t['held_days']}d")
     return f" ({', '.join(bits)})" if bits else ""
@@ -542,6 +656,8 @@ def _weekly_line(t):
             notes = f" — {t['notes']}" if t.get("notes") else ""
             return (f"- {icon} {options.format_option_open(t, verb=verb)}"
                     f"{_score_suffix(t)}{notes}")
+        if t["side"] == "Add":
+            return f"- ➕ {options.format_option_open(t)}"
         icon = "🟢" if t["side"] == "Long" else "🔵"
         return f"- {icon} {options.format_option_open(t)}"
     price = _fmt_price(t["price"])
@@ -551,6 +667,9 @@ def _weekly_line(t):
         verb = "Partial exit" if t["partial"] else "Exit"
         notes = f" — {t['notes']}" if t["notes"] else ""
         return f"- {icon} {verb} **{t['ticker']}**{price_str}{_score_suffix(t)}{notes}"
+    if t["side"] == "Add":
+        avg = f" → avg {t['new_avg']:g}" if t.get("new_avg") is not None else ""
+        return f"- ➕ Add **{t['ticker']}**{price_str}{avg}"
     icon = "🟢" if t["side"] == "Long" else "🔵"
     return f"- {icon} {t['side']} **{t['ticker']}**{price_str}"
 

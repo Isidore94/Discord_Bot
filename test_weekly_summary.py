@@ -214,13 +214,37 @@ class WinRateTests(unittest.TestCase):
         ]))
         self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 1))
 
-    def test_partial_exits_each_score_against_same_entry(self):
+    def test_partials_do_not_score_while_position_is_open(self):
         wr = ws.compute_win_rates(self._t([
             (1, "u", "Long", "NVDA", 200.0, False),
-            (2, "u", "Exit", "NVDA", 197.5, True),   # partial loss
-            (3, "u", "Exit", "NVDA", 208.66, True),  # partial win, still open
+            (2, "u", "Exit", "NVDA", 197.5, True),   # partial, still open
+            (3, "u", "Exit", "NVDA", 208.66, True),  # partial, still open
         ]))
-        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 1))
+        self.assertEqual(wr, {})   # nothing scored until the position closes
+
+    def test_partials_combine_with_close_as_equal_tranches(self):
+        trades = self._t([
+            (1, "u", "Long", "AAA", 100.0, False),
+            (2, "u", "Exit", "AAA", 105.0, True),   # +5% tranche
+            (3, "u", "Exit", "AAA", 95.0, True),    # -5% tranche
+            (4, "u", "Exit", "AAA", 110.0, False),  # +10% tranche, closes
+        ])
+        wr = ws.compute_win_rates(trades)
+        # One position -> ONE data point: mean(+5, -5, +10)% = +3.33% -> win.
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+        self.assertAlmostEqual(wr["u"]["pct_sum"], 0.10 / 3)
+        self.assertEqual(wr["u"]["pct_n"], 1)
+        final = trades[-1]
+        self.assertAlmostEqual(final["pct"], 0.10 / 3)
+        self.assertEqual(final["partials"], 2)
+
+    def test_losing_tranche_average_scores_one_loss(self):
+        wr = ws.compute_win_rates(self._t([
+            (1, "u", "Long", "BBB", 100.0, False),
+            (2, "u", "Exit", "BBB", 104.0, True),   # +4%
+            (3, "u", "Exit", "BBB", 90.0, False),   # -10% -> mean -3% -> loss
+        ]))
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (0, 1))
 
     def test_exit_without_price_is_ignored(self):
         wr = ws.compute_win_rates(self._t([
@@ -508,7 +532,7 @@ class OptionEarlyExitTests(unittest.TestCase):
         wr = ws.compute_win_rates(ws.log_to_trades(log))
         self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
 
-    def test_partial_option_exit_keeps_contract_open(self):
+    def test_partial_option_exit_keeps_contract_open_unscored(self):
         log = self._log([
             (1, "2026-07-01T00:00:00+00:00",
              "u posted a trade:\n#Long call NVDA 500c 8/15 for 12.00"),
@@ -517,9 +541,11 @@ class OptionEarlyExitTests(unittest.TestCase):
         ])
         trades = ws.log_to_trades(log)
         holdings = ws.compute_holdings(trades)
-        self.assertTrue(ws._is_option(holdings["u"][0]))
-        wr = ws.compute_win_rates(trades)  # still scored
-        self.assertEqual(wr["u"]["wins"], 1)
+        held = holdings["u"][0]
+        self.assertTrue(ws._is_option(held))
+        self.assertEqual(held["partials"], 1)          # tallied on the position
+        self.assertAlmostEqual(held["partial_pcts"][0], 0.25)
+        self.assertEqual(ws.compute_win_rates(trades), {})  # scores at close
 
     def test_informal_exit_closes_single_open_option(self):
         # Entry is structured; the exit is a plain '#Exit TICKER price' line.
@@ -692,45 +718,198 @@ class StatsAndMarksTests(unittest.TestCase):
         self.assertIn("_(awaiting settlement)_", line)
 
 
-class ScaleInTests(unittest.TestCase):
-    def test_same_side_reentry_averages_and_keeps_open_date(self):
-        log = {"messages": {
-            "1": {"timestamp": "2026-06-20T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Long $PENG 77.15"},
-            "2": {"timestamp": "2026-07-08T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Long PENG 80.00"},
-        }}
-        trades = ws.log_to_trades(log)
-        held = ws.compute_holdings(trades)["u"][0]
-        self.assertAlmostEqual(held["price"], 78.575)
+class AddFunctionTests(unittest.TestCase):
+    """The channel's #Add function, real formats from the trades channel."""
+
+    def _log(self, rows):
+        return {"messages": {str(mid): {"timestamp": ts, "content": c}
+                             for mid, ts, c in rows}}
+
+    def test_add_with_new_avg_replaces_entry_price(self):
+        # "#add Long ALAB at 429.54. New avg: 449.76" (real message)
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "p posted a trade:\n#Long ALAB 470.00"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "p posted a trade:\n#add Long ALAB at 429.54. New avg: 449.76"),
+        ])
+        held = ws.compute_holdings(ws.log_to_trades(log))["p"][0]
+        self.assertAlmostEqual(held["price"], 449.76)   # New avg is authoritative
         self.assertEqual(held["adds"], 2)
-        self.assertEqual(held["timestamp"], "2026-06-20T00:00:00+00:00")
+        self.assertEqual(held["timestamp"], "2026-07-01T00:00:00+00:00")
         self.assertIn("(avg of 2)", ws._open_line(held))
 
-    def test_win_rate_scores_against_averaged_entry(self):
-        log = {"messages": {
-            "1": {"timestamp": "2026-06-20T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Long AAA 100.00"},
-            "2": {"timestamp": "2026-07-01T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Long AAA 90.00"},
-            "3": {"timestamp": "2026-07-08T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Exit AAA 97.00"},
-        }}
+    def test_add_without_own_price_still_uses_new_avg(self):
+        # "#Add Long ALAB. New avg: 438.97" (real message, no add price)
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "p posted a trade:\n#Long ALAB 470.00"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "p posted a trade:\n#Add Long ALAB. New avg: 438.97"),
+        ])
+        held = ws.compute_holdings(ws.log_to_trades(log))["p"][0]
+        self.assertAlmostEqual(held["price"], 438.97)
+
+    def test_add_without_new_avg_averages_equal_weight(self):
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "p posted a trade:\n#Long PENG 77.15"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "p posted a trade:\n#Add PENG 80.00"),
+        ])
+        held = ws.compute_holdings(ws.log_to_trades(log))["p"][0]
+        self.assertAlmostEqual(held["price"], 78.575)
+
+    def test_untracked_add_opens_a_long(self):
+        log = self._log([
+            (1, "2026-07-09T00:00:00+00:00",
+             "p posted a trade:\n#add Long ALAB at 429.54. New avg: 449.76"),
+        ])
+        held = ws.compute_holdings(ws.log_to_trades(log))["p"][0]
+        self.assertEqual(held["side"], "Long")
+        self.assertAlmostEqual(held["price"], 449.76)
+
+    def test_win_rate_scores_against_new_avg(self):
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "p posted a trade:\n#Long ALAB 470.00"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "p posted a trade:\n#Add Long ALAB. New avg: 438.97"),
+            (3, "2026-07-10T00:00:00+00:00",
+             "p posted a trade:\n#Exit ALAB 450.00"),
+        ])
         wr = ws.compute_win_rates(ws.log_to_trades(log))
-        # avg entry 95 -> exit 97 is a win (vs a loss against the first 100)
-        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+        # 450 vs New avg 438.97 -> win (vs a loss against the original 470)
+        self.assertEqual((wr["p"]["wins"], wr["p"]["losses"]), (1, 0))
+
+    def test_repeat_long_refreshes_instead_of_averaging(self):
+        # Scale-ins go through #Add; a repeat #Long just refreshes the position.
+        log = self._log([
+            (1, "2026-06-20T00:00:00+00:00",
+             "u posted a trade:\n#Long PENG 77.15"),
+            (2, "2026-07-08T00:00:00+00:00",
+             "u posted a trade:\n#Long PENG 80.00"),
+        ])
+        held = ws.compute_holdings(ws.log_to_trades(log))["u"][0]
+        self.assertEqual(held["price"], 80.0)
+        self.assertEqual(held.get("adds", 1), 1)
 
     def test_opposite_side_reentry_replaces_position(self):
-        log = {"messages": {
-            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Long AAA 100.00"},
-            "2": {"timestamp": "2026-07-08T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Short AAA 110.00"},
-        }}
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "u posted a trade:\n#Long AAA 100.00"),
+            (2, "2026-07-08T00:00:00+00:00",
+             "u posted a trade:\n#Short AAA 110.00"),
+        ])
         held = ws.compute_holdings(ws.log_to_trades(log))["u"][0]
         self.assertEqual(held["side"], "Short")
         self.assertEqual(held["price"], 110.0)
-        self.assertEqual(held.get("adds", 1), 1)
+
+    def test_add_weekly_line_shows_new_avg(self):
+        t = ws.parse_trade_line("#add Long ALAB at 429.54. New avg: 449.76")
+        self.assertEqual(t["side"], "Add")
+        self.assertEqual(t["ticker"], "ALAB")
+        self.assertEqual(t["price"], 429.54)
+        self.assertEqual(t["new_avg"], 449.76)
+        line = ws._weekly_line(t)
+        self.assertIn("➕ Add **ALAB** @ 429.54 → avg 449.76", line)
+
+
+class RealWorldExitTests(unittest.TestCase):
+    """Free-text partial hints and stated-% returns, from real channel posts."""
+
+    def test_partial_detected_from_notes(self):
+        t = ws.parse_trade_line(
+            "#Exit NVDA 203.85 for 5.50 partial profit swinging the rest.")
+        self.assertTrue(t["partial"])
+        self.assertEqual(t["price"], 203.85)
+        self.assertNotIn("stated_pct", t)   # "5.50 partial" is $/share, not %
+
+    def test_exit_half_of_with_stated_percent(self):
+        t = ws.parse_trade_line(
+            "#Exit half of RIVN for 50% going to leave the rest to see if I "
+            "can get a free lunch on this lunatic")
+        self.assertEqual(t["ticker"], "RIVN")
+        self.assertTrue(t["partial"])
+        self.assertIsNone(t["price"])          # "50%" is a return, not a price
+        self.assertAlmostEqual(t["stated_pct"], 0.50)
+
+    def test_exit_this_add_on_long_is_partial(self):
+        t = ws.parse_trade_line(
+            "#Exit this add on Long ALAB for a small 3 dollar loss.")
+        self.assertEqual(t["ticker"], "ALAB")
+        self.assertTrue(t["partial"])
+
+    def test_leaving_size_on_is_partial_with_stated_percent(self):
+        t = ws.parse_trade_line(
+            "#Exit RIVN for 100% and and leaving quarter size on.")
+        self.assertEqual(t["ticker"], "RIVN")
+        self.assertTrue(t["partial"])
+        self.assertAlmostEqual(t["stated_pct"], 1.0)
+
+    def test_negative_stated_percent(self):
+        t = ws.parse_trade_line("#Exit NVDA 11.70 for -32% on calls")
+        self.assertFalse(t["partial"])
+        self.assertAlmostEqual(t["stated_pct"], -0.32)
+
+    def test_plain_full_exits_stay_full(self):
+        for line in ("#Exit CRWD at 187.60",
+                     "#Exit GOOGL @ 368.88",
+                     "#Exit AMD at 2.00 cutting it"):
+            self.assertFalse(ws.parse_trade_line(line)["partial"], line)
+
+    def test_ticker_colliding_with_filler_word_still_parses(self):
+        t = ws.parse_trade_line("#Long ON 45.00")
+        self.assertEqual(t["ticker"], "ON")
+        self.assertEqual(t["price"], 45.0)
+
+    def test_stated_percent_scores_priceless_partials(self):
+        # RIVN: two price-less partials with stated returns; still open.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "m posted a trade:\n#Long RIVN 10.00"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": ("m posted a trade:\n#Exit half of RIVN for 50% "
+                              "going to leave the rest")},
+            "3": {"timestamp": "2026-07-09T09:00:00+00:00",
+                  "content": ("m posted a trade:\n#Exit RIVN for 100% and "
+                              "and leaving quarter size on.")},
+        }}
+        trades = ws.log_to_trades(log)
+        held = ws.compute_holdings(trades)["m"][0]
+        self.assertEqual(held["partials"], 2)
+        self.assertEqual(held["partial_pcts"], [0.50, 1.0])
+        self.assertEqual(ws.compute_win_rates(trades), {})  # still open
+
+        # A final close combines: mean(+50%, +100%, +20%) -> one win.
+        log["messages"]["4"] = {
+            "timestamp": "2026-07-10T00:00:00+00:00",
+            "content": "m posted a trade:\n#Exit RIVN 12.00"}
+        trades = ws.log_to_trades(log)
+        wr = ws.compute_win_rates(trades)
+        self.assertEqual((wr["m"]["wins"], wr["m"]["losses"]), (1, 0))
+        self.assertAlmostEqual(wr["m"]["pct_sum"], (0.5 + 1.0 + 0.2) / 3)
+        final = [t for t in trades if not t["partial"] and t["side"] == "Exit"][0]
+        self.assertEqual(final["partials"], 2)
+        self.assertIn("2 partials", ws._weekly_line(final))
+
+    def test_expiry_settlement_blends_partial_tranches(self):
+        # Long call, partial exit at +25%, remainder expires worthless (-100%):
+        # mean(-37.5%) -> the settled outcome flips to a loss.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long call NVDA 500c 7/10 for 12.00"},
+            "2": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit partial NVDA 500c 7/10 @ 15.00"},
+        }}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        holdings = ws.compute_holdings(ws.log_to_trades(log))
+        res = ws.resolve_expired_options(
+            holdings, now, lambda tk, d: 480.0)   # OTM at expiry
+        oc = res["u"][0]["outcome"]
+        self.assertFalse(oc["win"])
+        self.assertAlmostEqual(oc["pct"], (0.25 - 1.0) / 2)
+        self.assertIn("1 earlier partial", oc["summary"])
 
 
 class SpotCacheTests(unittest.TestCase):

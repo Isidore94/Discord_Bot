@@ -45,15 +45,23 @@ PUT = "put"
 # An expiration date, ISO (2026-07-18) or US (7/18, 7/18/26, 7/18/2026).
 _DATE = r"\d{4}-\d{1,2}-\d{1,2}|\d{1,2}/\d{1,2}(?:/\d{2,4})?"
 
+# Filler words traders drop between the action and the ticker, e.g.
+# "#add Long ALAB", "#Exit half of RIVN", "#Exit this add on Long ALAB".
+# Shared with the stock regex in weekly_summary. Backtracking recovers a
+# ticker that collides with a filler word ("#Long ON 45.00" still parses).
+FILLER = (r"(?:\s+(?i:half|this|that|the|of|my|some|more|adds?|rest|"
+          r"long|short|on))*")
+
 # A single-leg option line. What distinguishes it from a plain-stock line is
 # the presence of BOTH a call/put marker (a "call"/"put" word or a c/p strike
 # suffix) AND an expiration date -- neither appears on a "#Long PENG 77.15".
-# Long/Short opens a position; Exit (optionally partial) closes one early,
-# with the premium received where the opening premium would be.
+# Long/Short opens a position; Add scales into one; Exit (optionally partial)
+# closes one early, with the premium received where the opening premium would be.
 OPTION_RE = re.compile(
     r"^#\s*"
-    r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit)"                  # open or early close
+    r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit|[Aa]dd)"           # open / scale-in / close
     r"(?:\s+(?P<partial>[Pp]artial))?"                     # optional 'partial' (Exit)
+    + FILLER +
     r"\s+"
     r"(?:(?P<type_word>[Cc]alls?|[Pp]uts?)\s+)?"           # optional 'call'/'put' word
     r"\$?(?P<ticker>[A-Za-z][A-Za-z.]{0,6})\s+"            # TICKER
@@ -139,7 +147,7 @@ def parse_option(line, ref_date=None):
         "side": m.group("side").capitalize(),   # Long / Short / Exit
         "partial": bool(m.group("partial")),     # only meaningful on Exit
         "opt_type": opt_type,                    # call / put
-        "ticker": m.group("ticker").upper(),
+        "ticker": m.group("ticker").upper().strip("."),
         "strike": float(m.group("strike")),
         "expiration": exp.isoformat(),           # YYYY-MM-DD
         "premium": float(premium) if premium is not None else None,

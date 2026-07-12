@@ -16,9 +16,22 @@ Stock trades:
 #Exit partial NVDA $208.66 for over $13 profit per share.
 ```
 
-A repeat same-side entry (`#Long PENG 80.00` while already long PENG) scales
-in: the entry becomes the equal-weight average and the original open date is
-kept.
+Adding to a position uses the channel's existing add function:
+
+```
+#add Long ALAB at 429.54. New avg: 449.76
+#Add Long ALAB. New avg: 438.97
+```
+
+The posted `New avg` is authoritative (it knows the real sizes) and replaces
+the tracked entry price; without one, the add price is averaged in
+equal-weight. The original open date is kept. A repeat `#Long`/`#Short`
+simply refreshes the position, as before.
+
+Partial exits are recognized from the explicit `partial` keyword or from
+free text (`half of`, `swinging the rest`, `leaving quarter size on`,
+`this add on`, `trimming`, ...). A stated return like `for 50%` / `for -32%`
+scores an exit even when no price is given.
 
 Option trades — a `call`/`put` (or a `c`/`p` strike suffix) plus a strike, an
 expiration date, and an optional premium:
@@ -74,7 +87,11 @@ are cached in the running log so they are never refetched.
 ## Summary extras
 
 - Per-trader stats line: quasi win rate (all-time), average %/trade, and this
-  week's W–L.
+  week's W–L. **One data point per position**: partial exits don't score
+  individually — the number of partials is tracked, every tranche (each
+  partial plus the final close, or the option's expiry settlement) is assumed
+  equal size, and the position scores a single win/loss at the equal-weighted
+  average return, shown as e.g. `(+5.3%, 1 partial, held 6d)`.
 - Scored exits show their % return and hold time, e.g. `(+10.0%, held 8d)`.
 - Open positions are marked to market with one batched quote fetch: stocks get
   `→ 82.3 (+6.7%)`, options show the underlying spot; open options expiring
