@@ -1,0 +1,5061 @@
+{
+  "messages": {
+    "1516072466533843027": {
+      "timestamp": "2026-06-15T13:30:43.286000+00:00",
+      "trades": [
+        {
+          "notes": "~$1",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AAL",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1516072800144720027": {
+      "timestamp": "2026-06-15T13:32:02.825000+00:00",
+      "trades": [
+        {
+          "notes": "c .51 lotto",
+          "partial": false,
+          "price": 212.5,
+          "side": "Long",
+          "ticker": "NVDA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516072908894769236": {
+      "timestamp": "2026-06-15T13:32:28.753000+00:00",
+      "trades": [
+        {
+          "notes": "CDS for 3.38 credit. 65% gain.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AMD",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516073729447301174": {
+      "timestamp": "2026-06-15T13:35:44.388000+00:00",
+      "trades": [
+        {
+          "notes": "c .775",
+          "partial": false,
+          "price": 600.0,
+          "side": "Long",
+          "ticker": "META",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516074036013043833": {
+      "timestamp": "2026-06-15T13:36:57.479000+00:00",
+      "trades": [
+        {
+          "notes": "c .35",
+          "partial": false,
+          "price": 35.0,
+          "side": "Long",
+          "ticker": "SMCI",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516075102469492857": {
+      "timestamp": "2026-06-15T13:41:11.742000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.25",
+          "partial": false,
+          "price": 205.0,
+          "side": "Long",
+          "ticker": "ORCL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516075505571336282": {
+      "timestamp": "2026-06-15T13:42:47.849000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.39",
+          "partial": false,
+          "price": 145.0,
+          "side": "Long",
+          "ticker": "INTC",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516077552920432834": {
+      "timestamp": "2026-06-15T13:50:55.975000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.11",
+          "partial": false,
+          "price": 650.0,
+          "side": "Long",
+          "ticker": "AMD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516079535311814817": {
+      "timestamp": "2026-06-15T13:58:48.614000+00:00",
+      "trades": [
+        {
+          "notes": "calls 10.5 earlier 28%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AMKR",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1516079545176948947": {
+      "timestamp": "2026-06-15T13:58:50.966000+00:00",
+      "trades": [
+        {
+          "notes": "c .38 lotto",
+          "partial": false,
+          "price": 297.5,
+          "side": "Long",
+          "ticker": "AAPL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516080046714917005": {
+      "timestamp": "2026-06-15T14:00:50.542000+00:00",
+      "trades": [
+        {
+          "notes": "- my trailing SL was triggered at multiple prices in PM - for an average of $30 profit per share lot.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "META",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1516080356690890812": {
+      "timestamp": "2026-06-15T14:02:04.446000+00:00",
+      "trades": [
+        {
+          "notes": "c 3.01",
+          "partial": false,
+          "price": 250.0,
+          "side": "Long",
+          "ticker": "SNOW",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516080617807286342": {
+      "timestamp": "2026-06-15T14:03:06.701000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.49",
+          "partial": false,
+          "price": 250.0,
+          "side": "Long",
+          "ticker": "QCOM",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516082936556818587": {
+      "timestamp": "2026-06-15T14:12:19.534000+00:00",
+      "trades": [
+        {
+          "notes": "for 2.00 gain, 41%.",
+          "partial": false,
+          "price": 6.85,
+          "side": "Exit",
+          "ticker": "BAC",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516084062576705696": {
+      "timestamp": "2026-06-15T14:16:47.998000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.10",
+          "partial": false,
+          "price": 190.0,
+          "side": "Long",
+          "ticker": "RDDT",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516085701915971680": {
+      "timestamp": "2026-06-15T14:23:18.847000+00:00",
+      "trades": [
+        {
+          "notes": "@ 31.05",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "TXG",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516086121581252649": {
+      "timestamp": "2026-06-15T14:24:58.903000+00:00",
+      "trades": [
+        {
+          "notes": "swing starter calls at 2.75 for loss",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "LMT",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516086156553486416": {
+      "timestamp": "2026-06-15T14:25:07.241000+00:00",
+      "trades": [
+        {
+          "notes": "scratch/small loss",
+          "partial": false,
+          "price": 260.4,
+          "side": "Exit",
+          "ticker": "NUE",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516087207180636201": {
+      "timestamp": "2026-06-15T14:29:17.730000+00:00",
+      "trades": [
+        {
+          "notes": "/17 80c added to position @ 12.40",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "AMKR",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1516088231937048667": {
+      "timestamp": "2026-06-15T14:33:22.051000+00:00",
+      "trades": [
+        {
+          "notes": "p for 90% profit",
+          "partial": false,
+          "price": 120.0,
+          "side": "Exit",
+          "ticker": "AAOI",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516088249829953668": {
+      "timestamp": "2026-06-15T14:33:26.317000+00:00",
+      "trades": [
+        {
+          "notes": "add @ $142.86",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "VPG",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1516091399391678545": {
+      "timestamp": "2026-06-15T14:45:57.231000+00:00",
+      "trades": [
+        {
+          "notes": "stopped .68",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "INTC",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516094906974605443": {
+      "timestamp": "2026-06-15T14:59:53.504000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.7",
+          "partial": false,
+          "price": 420.0,
+          "side": "Long",
+          "ticker": "UNH",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516095948206379199": {
+      "timestamp": "2026-06-15T15:04:01.753000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +38%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "RDDT",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516096312347594852": {
+      "timestamp": "2026-06-15T15:05:28.571000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 72.3,
+          "side": "Long",
+          "ticker": "AFRM",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516099906539094066": {
+      "timestamp": "2026-06-15T15:19:45.493000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 1.5,
+          "side": "Exit",
+          "ticker": "CEVA",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1516101767027363881": {
+      "timestamp": "2026-06-15T15:27:09.068000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.06",
+          "partial": false,
+          "price": 120.0,
+          "side": "Long",
+          "ticker": "SHOP",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516101949986963569": {
+      "timestamp": "2026-06-15T15:27:52.689000+00:00",
+      "trades": [
+        {
+          "notes": "c .41 lotto",
+          "partial": false,
+          "price": 375.0,
+          "side": "Long",
+          "ticker": "GOOGL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516102826651291800": {
+      "timestamp": "2026-06-15T15:31:21.702000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +58%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "META",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516105682296901644": {
+      "timestamp": "2026-06-15T15:42:42.541000+00:00",
+      "trades": [
+        {
+          "notes": "/4 out +38%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "AAPL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516106816453345451": {
+      "timestamp": "2026-06-15T15:47:12.945000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.66",
+          "partial": false,
+          "price": 115.0,
+          "side": "Long",
+          "ticker": "CRWV",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516107270650462259": {
+      "timestamp": "2026-06-15T15:49:01.234000+00:00",
+      "trades": [
+        {
+          "notes": "all out +30%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516107579615612928": {
+      "timestamp": "2026-06-15T15:50:14.897000+00:00",
+      "trades": [
+        {
+          "notes": "PDS for an overall loss of 100% on the original  spread. This market is just too bullish to be holding puts.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "CVNA",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516109065342943306": {
+      "timestamp": "2026-06-15T15:56:09.122000+00:00",
+      "trades": [
+        {
+          "notes": "65c gain",
+          "partial": false,
+          "price": 72.95,
+          "side": "Exit",
+          "ticker": "AFRM",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516109942019592213": {
+      "timestamp": "2026-06-15T15:59:38.138000+00:00",
+      "trades": [
+        {
+          "notes": "c .64 lotto",
+          "partial": false,
+          "price": 402.5,
+          "side": "Long",
+          "ticker": "MSFT",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516120725268988086": {
+      "timestamp": "2026-06-15T16:42:29.065000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 975.0,
+          "side": "Exit",
+          "ticker": "GEV",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1516120780033888407": {
+      "timestamp": "2026-06-15T16:42:42.122000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 212.04,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1516120820835946559": {
+      "timestamp": "2026-06-15T16:42:51.850000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 26.43,
+          "side": "Exit",
+          "ticker": "QBTS",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1516131301059723355": {
+      "timestamp": "2026-06-15T17:24:30.530000+00:00",
+      "trades": [
+        {
+          "notes": "c .55",
+          "partial": false,
+          "price": 295.0,
+          "side": "Long",
+          "ticker": "MCD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516133050210058260": {
+      "timestamp": "2026-06-15T17:31:27.560000+00:00",
+      "trades": [
+        {
+          "notes": "avg $196.57 incl assigned puts and adds.",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "ORCL",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1516135555828551690": {
+      "timestamp": "2026-06-15T17:41:24.946000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.9",
+          "partial": false,
+          "price": 350.0,
+          "side": "Long",
+          "ticker": "MRVL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516136342705275101": {
+      "timestamp": "2026-06-15T17:44:32.552000+00:00",
+      "trades": [
+        {
+          "notes": "c .59",
+          "partial": false,
+          "price": 240.0,
+          "side": "Long",
+          "ticker": "BA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516138631889293593": {
+      "timestamp": "2026-06-15T17:53:38.336000+00:00",
+      "trades": [
+        {
+          "notes": "for 60 cents per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "HBM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516139292731244707": {
+      "timestamp": "2026-06-15T17:56:15.893000+00:00",
+      "trades": [
+        {
+          "notes": "for 25 cents per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "BB",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516145377026375793": {
+      "timestamp": "2026-06-15T18:20:26.502000+00:00",
+      "trades": [
+        {
+          "notes": "for a 40 cent loss on shares. now forming a downtrend.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "IOVA",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516145931890724957": {
+      "timestamp": "2026-06-15T18:22:38.792000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +60%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "MRVL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516147891289329714": {
+      "timestamp": "2026-06-15T18:30:25.949000+00:00",
+      "trades": [
+        {
+          "notes": "the rest for 57 dollars per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ARM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516150839696167066": {
+      "timestamp": "2026-06-15T18:42:08.904000+00:00",
+      "trades": [
+        {
+          "notes": "ong QBTS for $1.48 loss per share.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "L",
+          "user": "the_prophet_1"
+        }
+      ]
+    },
+    "1516161882158006293": {
+      "timestamp": "2026-06-15T19:26:01.632000+00:00",
+      "trades": [
+        {
+          "notes": "p for 90% profit",
+          "partial": false,
+          "price": 195.0,
+          "side": "Exit",
+          "ticker": "BE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516163603181600920": {
+      "timestamp": "2026-06-15T19:32:51.956000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 56.23,
+          "side": "Long",
+          "ticker": "BRKR",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516165320757215302": {
+      "timestamp": "2026-06-15T19:39:41.458000+00:00",
+      "trades": [
+        {
+          "notes": "/19 160p for 94%",
+          "partial": false,
+          "price": 6.0,
+          "side": "Exit",
+          "ticker": "NBIS",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1516168231524630760": {
+      "timestamp": "2026-06-15T19:51:15.439000+00:00",
+      "trades": [
+        {
+          "notes": "out rest +84%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MRVL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516168393441415308": {
+      "timestamp": "2026-06-15T19:51:54.043000+00:00",
+      "trades": [
+        {
+          "notes": "sold next weeks 200p for $2.00",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "BE",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516170068537507942": {
+      "timestamp": "2026-06-15T19:58:33.417000+00:00",
+      "trades": [
+        {
+          "notes": ", smaller size",
+          "partial": false,
+          "price": 125.9,
+          "side": "Long",
+          "ticker": "ON",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516170427528122369": {
+      "timestamp": "2026-06-15T19:59:59.007000+00:00",
+      "trades": [
+        {
+          "notes": "swing shares 1/2 out at $259.88 for +10% profit on starter",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "NBIS",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516436863076925661": {
+      "timestamp": "2026-06-16T13:38:42.192000+00:00",
+      "trades": [
+        {
+          "notes": "c .14",
+          "partial": false,
+          "price": 45.0,
+          "side": "Long",
+          "ticker": "PYPL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516437753607491697": {
+      "timestamp": "2026-06-16T13:42:14.511000+00:00",
+      "trades": [
+        {
+          "notes": "c .73",
+          "partial": false,
+          "price": 20.0,
+          "side": "Long",
+          "ticker": "ARQQ",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516439151753564312": {
+      "timestamp": "2026-06-16T13:47:47.855000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.8",
+          "partial": false,
+          "price": 330.0,
+          "side": "Long",
+          "ticker": "V",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516439888277536788": {
+      "timestamp": "2026-06-16T13:50:43.456000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +30%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "ARQQ",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516440000831422576": {
+      "timestamp": "2026-06-16T13:51:10.291000+00:00",
+      "trades": [
+        {
+          "notes": "partial at $1082, $150 gain",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "STX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516440726920106114": {
+      "timestamp": "2026-06-16T13:54:03.404000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.26",
+          "partial": false,
+          "price": 620.0,
+          "side": "Long",
+          "ticker": "META",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516440903227805867": {
+      "timestamp": "2026-06-16T13:54:45.439000+00:00",
+      "trades": [
+        {
+          "notes": "c .42",
+          "partial": false,
+          "price": 302.5,
+          "side": "Long",
+          "ticker": "AAPL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516442115075211345": {
+      "timestamp": "2026-06-16T13:59:34.366000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.07",
+          "partial": false,
+          "price": 205.0,
+          "side": "Long",
+          "ticker": "ORCL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516442439525601455": {
+      "timestamp": "2026-06-16T14:00:51.721000+00:00",
+      "trades": [
+        {
+          "notes": "dollars per share",
+          "partial": true,
+          "price": 32.0,
+          "side": "Exit",
+          "ticker": "NBIS",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516443463162265661": {
+      "timestamp": "2026-06-16T14:04:55.775000+00:00",
+      "trades": [
+        {
+          "notes": "c .45 spec gamma squeeze",
+          "partial": false,
+          "price": 380.0,
+          "side": "Long",
+          "ticker": "SPCX",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516446362017988638": {
+      "timestamp": "2026-06-16T14:16:26.916000+00:00",
+      "trades": [
+        {
+          "notes": "p for 97% gain.",
+          "partial": false,
+          "price": 180.0,
+          "side": "Exit",
+          "ticker": "BE",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516446522198458388": {
+      "timestamp": "2026-06-16T14:17:05.106000+00:00",
+      "trades": [
+        {
+          "notes": "stopped .48",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ORCL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516446563017297991": {
+      "timestamp": "2026-06-16T14:17:14.838000+00:00",
+      "trades": [
+        {
+          "notes": "scratched",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "VPG",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1516446758614335638": {
+      "timestamp": "2026-06-16T14:18:01.472000+00:00",
+      "trades": [
+        {
+          "notes": "stopped .63",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "META",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516447210416640094": {
+      "timestamp": "2026-06-16T14:19:49.190000+00:00",
+      "trades": [
+        {
+          "notes": "took $1.17",
+          "partial": false,
+          "price": 86.78,
+          "side": "Exit",
+          "ticker": "TWST",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516447305245528167": {
+      "timestamp": "2026-06-16T14:20:11.799000+00:00",
+      "trades": [
+        {
+          "notes": "c .33",
+          "partial": false,
+          "price": 125.0,
+          "side": "Long",
+          "ticker": "WMT",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516449048142545048": {
+      "timestamp": "2026-06-16T14:27:07.338000+00:00",
+      "trades": [
+        {
+          "notes": "(multiple exits today) for over $60 profit per share.",
+          "partial": false,
+          "price": 1000.0,
+          "side": "Exit",
+          "ticker": "GEV",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1516449901171703920": {
+      "timestamp": "2026-06-16T14:30:30.716000+00:00",
+      "trades": [
+        {
+          "notes": "/4 out +16%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "WMT",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516450271796920411": {
+      "timestamp": "2026-06-16T14:31:59.080000+00:00",
+      "trades": [
+        {
+          "notes": "stopped .56",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "IREN",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516451906422313091": {
+      "timestamp": "2026-06-16T14:38:28.805000+00:00",
+      "trades": [
+        {
+          "notes": "sold next weeks 125p for $1.03",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "AAOI",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516452447160369253": {
+      "timestamp": "2026-06-16T14:40:37.727000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.86",
+          "partial": false,
+          "price": 375.0,
+          "side": "Long",
+          "ticker": "GOOGL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516454757806641197": {
+      "timestamp": "2026-06-16T14:49:48.628000+00:00",
+      "trades": [
+        {
+          "notes": "c out all for +67% and 1/2 of 130c for +113%",
+          "partial": false,
+          "price": 120.0,
+          "side": "Exit",
+          "ticker": "CRWV",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516455667253248162": {
+      "timestamp": "2026-06-16T14:53:25.457000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 373.0,
+          "side": "Long",
+          "ticker": "GOOGL",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516457471114477709": {
+      "timestamp": "2026-06-16T15:00:35.531000+00:00",
+      "trades": [
+        {
+          "notes": "c .34",
+          "partial": false,
+          "price": 255.0,
+          "side": "Long",
+          "ticker": "AMZN",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516458382066716692": {
+      "timestamp": "2026-06-16T15:04:12.719000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +100%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "GOOGL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516459513564364981": {
+      "timestamp": "2026-06-16T15:08:42.489000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +23%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "V",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516460925731999834": {
+      "timestamp": "2026-06-16T15:14:19.176000+00:00",
+      "trades": [
+        {
+          "notes": "c .33",
+          "partial": false,
+          "price": 76.0,
+          "side": "Long",
+          "ticker": "UBER",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516463160943575151": {
+      "timestamp": "2026-06-16T15:23:12.092000+00:00",
+      "trades": [
+        {
+          "notes": "remaining at $1034, $102 gain.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "STX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516464289953878206": {
+      "timestamp": "2026-06-16T15:27:41.269000+00:00",
+      "trades": [
+        {
+          "notes": "/4 left swing at $263.46 +11% gain",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "NBIS",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516466733509120084": {
+      "timestamp": "2026-06-16T15:37:23.858000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 214.5,
+          "side": "Long",
+          "ticker": "SPCX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516478833140957395": {
+      "timestamp": "2026-06-16T16:25:28.635000+00:00",
+      "trades": [
+        {
+          "notes": "ong SPCX at $216.50 - $2 gain",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "L",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516487919349534741": {
+      "timestamp": "2026-06-16T17:01:34.956000+00:00",
+      "trades": [
+        {
+          "notes": "CDS for 9.90 credit. 115% gain.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "FIX",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516496217066967192": {
+      "timestamp": "2026-06-16T17:34:33.286000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +91%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "AAPL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516507752476971130": {
+      "timestamp": "2026-06-16T18:20:23.542000+00:00",
+      "trades": [
+        {
+          "notes": "out rest +140%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "V",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516563752546336773": {
+      "timestamp": "2026-06-16T22:02:54.999000+00:00",
+      "trades": [
+        {
+          "notes": "swing starter calls at 1.50 around 12:20pm today got stopped out for small loss",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ADP",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516798423351689313": {
+      "timestamp": "2026-06-17T13:35:24.879000+00:00",
+      "trades": [
+        {
+          "notes": "for 5.30 loss. Old swing from end of April, under the 100.",
+          "partial": false,
+          "price": 36.95,
+          "side": "Exit",
+          "ticker": "HAL",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516798592805769286": {
+      "timestamp": "2026-06-17T13:36:05.280000+00:00",
+      "trades": [
+        {
+          "notes": "swing at $222, $9.50 gain overall.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MS",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1516799074399944835": {
+      "timestamp": "2026-06-17T13:38:00.101000+00:00",
+      "trades": [
+        {
+          "notes": "c 2.88",
+          "partial": false,
+          "price": 800.0,
+          "side": "Long",
+          "ticker": "WDC",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516800703933190264": {
+      "timestamp": "2026-06-17T13:44:28.612000+00:00",
+      "trades": [
+        {
+          "notes": "c .25 lotto spec",
+          "partial": false,
+          "price": 145.0,
+          "side": "Long",
+          "ticker": "ROKU",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516801584368193566": {
+      "timestamp": "2026-06-17T13:47:58.524000+00:00",
+      "trades": [
+        {
+          "notes": "c .51 lotto",
+          "partial": false,
+          "price": 302.5,
+          "side": "Long",
+          "ticker": "AAPL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516802130672091308": {
+      "timestamp": "2026-06-17T13:50:08.773000+00:00",
+      "trades": [
+        {
+          "notes": "c .75",
+          "partial": false,
+          "price": 210.0,
+          "side": "Long",
+          "ticker": "ADBE",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516802971793494056": {
+      "timestamp": "2026-06-17T13:53:29.312000+00:00",
+      "trades": [
+        {
+          "notes": "last piece of swing shares at 45.58 for 281% gain",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "QURE",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516805281583993052": {
+      "timestamp": "2026-06-17T14:02:40.009000+00:00",
+      "trades": [
+        {
+          "notes": "lets get a little spicy.",
+          "partial": false,
+          "price": 584.86,
+          "side": "Short",
+          "ticker": "META",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516807567597371402": {
+      "timestamp": "2026-06-17T14:11:45.037000+00:00",
+      "trades": [
+        {
+          "notes": "dt for loss at .38. I love and hate this ticker",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "LULU",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516808800982667417": {
+      "timestamp": "2026-06-17T14:16:39.099000+00:00",
+      "trades": [
+        {
+          "notes": "/112 cds $0.8",
+          "partial": false,
+          "price": 100.0,
+          "side": "Long",
+          "ticker": "RKLB",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1516809467562430523": {
+      "timestamp": "2026-06-17T14:19:18.024000+00:00",
+      "trades": [
+        {
+          "notes": "Sold Jul 2 170 PUT",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "GLW",
+          "user": "davidsachdev"
+        }
+      ]
+    },
+    "1516809578409623612": {
+      "timestamp": "2026-06-17T14:19:44.452000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.20",
+          "partial": false,
+          "price": 230.0,
+          "side": "Long",
+          "ticker": "MS",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516809593999720460": {
+      "timestamp": "2026-06-17T14:19:48.169000+00:00",
+      "trades": [
+        {
+          "notes": "Jul 2 350/300 PCS",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "ARM",
+          "user": "davidsachdev"
+        }
+      ]
+    },
+    "1516813292377473055": {
+      "timestamp": "2026-06-17T14:34:29.931000+00:00",
+      "trades": [
+        {
+          "notes": "for a 8 dollar loss on shares. RW and giving up the SMA after rejecting vwap.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "GOOGL",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516813952884150416": {
+      "timestamp": "2026-06-17T14:37:07.408000+00:00",
+      "trades": [
+        {
+          "notes": "the rest for 40 dollars per share.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "NBIS",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516814158153257011": {
+      "timestamp": "2026-06-17T14:37:56.348000+00:00",
+      "trades": [
+        {
+          "notes": "for 1.70 per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TXG",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516817867335798876": {
+      "timestamp": "2026-06-17T14:52:40.686000+00:00",
+      "trades": [
+        {
+          "notes": "c .29",
+          "partial": false,
+          "price": 60.0,
+          "side": "Long",
+          "ticker": "WOLF",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516818304956895316": {
+      "timestamp": "2026-06-17T14:54:25.023000+00:00",
+      "trades": [
+        {
+          "notes": "c .63",
+          "partial": false,
+          "price": 110.0,
+          "side": "Long",
+          "ticker": "HOOD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516818792015991004": {
+      "timestamp": "2026-06-17T14:56:21.147000+00:00",
+      "trades": [
+        {
+          "notes": "c 2.11",
+          "partial": false,
+          "price": 310.0,
+          "side": "Long",
+          "ticker": "NBIS",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516819187593383968": {
+      "timestamp": "2026-06-17T14:57:55.460000+00:00",
+      "trades": [
+        {
+          "notes": "for 10 dollars per share on this litle pop up Plan was to derisk this morning. $SPY not showing me enough here to veer away from that plan.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "DELL",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516822026025701578": {
+      "timestamp": "2026-06-17T15:09:12.195000+00:00",
+      "trades": [
+        {
+          "notes": "cut for small loss at 1.00",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "NBIS",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516822349369049190": {
+      "timestamp": "2026-06-17T15:10:29.286000+00:00",
+      "trades": [
+        {
+          "notes": "for 5.00 gain",
+          "partial": false,
+          "price": 579.86,
+          "side": "Exit",
+          "ticker": "META",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516822442541060218": {
+      "timestamp": "2026-06-17T15:10:51.500000+00:00",
+      "trades": [
+        {
+          "notes": "cds @ $0.55, 0.25 loss",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "RKLB",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1516825166053769378": {
+      "timestamp": "2026-06-17T15:21:40.836000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +30%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "HOOD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516825446430539928": {
+      "timestamp": "2026-06-17T15:22:47.683000+00:00",
+      "trades": [
+        {
+          "notes": "p for July 3rd for 85% profit",
+          "partial": false,
+          "price": 55.0,
+          "side": "Exit",
+          "ticker": "DRAM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516835102607544391": {
+      "timestamp": "2026-06-17T16:01:09.895000+00:00",
+      "trades": [
+        {
+          "notes": "/4 left +138%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "HOOD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516837216310136892": {
+      "timestamp": "2026-06-17T16:09:33.841000+00:00",
+      "trades": [
+        {
+          "notes": "/17 $10c 1.45",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "TE",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1516838160187916348": {
+      "timestamp": "2026-06-17T16:13:18.879000+00:00",
+      "trades": [
+        {
+          "notes": "/17 $10c 1.47",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "TE",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1516858418307010723": {
+      "timestamp": "2026-06-17T17:33:48.791000+00:00",
+      "trades": [
+        {
+          "notes": "c .77 lotto round 2",
+          "partial": false,
+          "price": 585.0,
+          "side": "Long",
+          "ticker": "META",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516859821641568346": {
+      "timestamp": "2026-06-17T17:39:23.372000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +34%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "META",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516874780333314259": {
+      "timestamp": "2026-06-17T18:38:49.802000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 9.74,
+          "side": "Long",
+          "ticker": "TE",
+          "user": "the_prophet_1"
+        }
+      ]
+    },
+    "1516874901464678420": {
+      "timestamp": "2026-06-17T18:39:18.682000+00:00",
+      "trades": [
+        {
+          "notes": "c .51",
+          "partial": false,
+          "price": 88.0,
+          "side": "Long",
+          "ticker": "CRCL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516875267203661864": {
+      "timestamp": "2026-06-17T18:40:45.881000+00:00",
+      "trades": [
+        {
+          "notes": "c .70",
+          "partial": false,
+          "price": 130.0,
+          "side": "Long",
+          "ticker": "INTC",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516875777461719050": {
+      "timestamp": "2026-06-17T18:42:47.536000+00:00",
+      "trades": [
+        {
+          "notes": "c .30",
+          "partial": false,
+          "price": 65.0,
+          "side": "Long",
+          "ticker": "MRNA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516876203728834683": {
+      "timestamp": "2026-06-17T18:44:29.166000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 14.95,
+          "side": "Long",
+          "ticker": "RDW",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516876954777944206": {
+      "timestamp": "2026-06-17T18:47:28.230000+00:00",
+      "trades": [
+        {
+          "notes": "very wide stop if market dies tmr/EOW ill take it off",
+          "partial": false,
+          "price": 328.0,
+          "side": "Long",
+          "ticker": "VRT",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1516877228292440264": {
+      "timestamp": "2026-06-17T18:48:33.441000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out +52%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "CRCL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516877921476808785": {
+      "timestamp": "2026-06-17T18:51:18.709000+00:00",
+      "trades": [
+        {
+          "notes": "out rest +313%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "HOOD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516880437958672534": {
+      "timestamp": "2026-06-17T19:01:18.685000+00:00",
+      "trades": [
+        {
+          "notes": "/8 left swing at $295.41 for 25% gain",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "NBIS",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516881773273809128": {
+      "timestamp": "2026-06-17T19:06:37.049000+00:00",
+      "trades": [
+        {
+          "notes": "via sold 195 put exp July 17th.",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "BE",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1516889777759064154": {
+      "timestamp": "2026-06-17T19:38:25.467000+00:00",
+      "trades": [
+        {
+          "notes": "swing 1/8 starter for tiny loss at 2.29",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TSLA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1516891795735183633": {
+      "timestamp": "2026-06-17T19:46:26.590000+00:00",
+      "trades": [
+        {
+          "notes": "ong TE starter for a small loss",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "L",
+          "user": "the_prophet_1"
+        }
+      ]
+    },
+    "1516896581381525505": {
+      "timestamp": "2026-06-17T20:05:27.577000+00:00",
+      "trades": [
+        {
+          "notes": "/19 $160p for small profit",
+          "partial": false,
+          "price": 6.0,
+          "side": "Exit",
+          "ticker": "AAOI",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1517159781171724400": {
+      "timestamp": "2026-06-18T13:31:19.297000+00:00",
+      "trades": [
+        {
+          "notes": "lotto calls 3/4 out at 17.75 on open",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "SPX",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1517160314066571265": {
+      "timestamp": "2026-06-18T13:33:26.349000+00:00",
+      "trades": [
+        {
+          "notes": "sold all but 1/8th",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MRNA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1517161380317495478": {
+      "timestamp": "2026-06-18T13:37:40.563000+00:00",
+      "trades": [
+        {
+          "notes": "p expires today for 20% profit dislike this RW on the open and the market looks like it wants to fill a gap right now.",
+          "partial": false,
+          "price": 160.0,
+          "side": "Exit",
+          "ticker": "AAOI",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517161581925105704": {
+      "timestamp": "2026-06-18T13:38:28.630000+00:00",
+      "trades": [
+        {
+          "notes": "for breakeven",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "PANW",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517161952051331223": {
+      "timestamp": "2026-06-18T13:39:56.875000+00:00",
+      "trades": [
+        {
+          "notes": "for 20 dollar loss per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "DDOG",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517162467308863651": {
+      "timestamp": "2026-06-18T13:41:59.722000+00:00",
+      "trades": [
+        {
+          "notes": "For 1.20 dollar loss per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "RDW",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517163347705991348": {
+      "timestamp": "2026-06-18T13:45:29.625000+00:00",
+      "trades": [
+        {
+          "notes": "ong AAOI for like 2.50 loss per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "L",
+          "user": "the_prophet_1"
+        }
+      ]
+    },
+    "1517164272021409902": {
+      "timestamp": "2026-06-18T13:49:09.999000+00:00",
+      "trades": [
+        {
+          "notes": "partial for about 11 dollars per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "INTC",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517166175975637084": {
+      "timestamp": "2026-06-18T13:56:43.937000+00:00",
+      "trades": [
+        {
+          "notes": "day trade,",
+          "partial": false,
+          "price": 51.0,
+          "side": "Long",
+          "ticker": "RBLX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517166881272758383": {
+      "timestamp": "2026-06-18T13:59:32.093000+00:00",
+      "trades": [
+        {
+          "notes": "full exit avg of 10 dollars per share I dont like the price action on the market here",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "INTC",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517167027167563928": {
+      "timestamp": "2026-06-18T14:00:06.877000+00:00",
+      "trades": [
+        {
+          "notes": "PCS 250/245 7/10 1.10",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "BE",
+          "user": "leebero"
+        }
+      ]
+    },
+    "1517169848440979548": {
+      "timestamp": "2026-06-18T14:11:19.521000+00:00",
+      "trades": [
+        {
+          "notes": "for breakeven",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "VRT",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517172073317793944": {
+      "timestamp": "2026-06-18T14:20:09.973000+00:00",
+      "trades": [
+        {
+          "notes": "for a 56c gain",
+          "partial": false,
+          "price": 51.56,
+          "side": "Exit",
+          "ticker": "RBLX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517173116420493433": {
+      "timestamp": "2026-06-18T14:24:18.668000+00:00",
+      "trades": [
+        {
+          "notes": "July 2 350/300 PCS for 5.04",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ARM",
+          "user": "davidsachdev"
+        }
+      ]
+    },
+    "1517174441358921868": {
+      "timestamp": "2026-06-18T14:29:34.558000+00:00",
+      "trades": [
+        {
+          "notes": "-  $4.45 gain",
+          "partial": false,
+          "price": 128.15,
+          "side": "Exit",
+          "ticker": "INTC",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517175510256587014": {
+      "timestamp": "2026-06-18T14:33:49.403000+00:00",
+      "trades": [
+        {
+          "notes": "- 85c loss",
+          "partial": false,
+          "price": 77.25,
+          "side": "Exit",
+          "ticker": "STM",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517176356746694827": {
+      "timestamp": "2026-06-18T14:37:11.222000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 64.48,
+          "side": "Long",
+          "ticker": "PENG",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1517178671226421460": {
+      "timestamp": "2026-06-18T14:46:23.037000+00:00",
+      "trades": [
+        {
+          "notes": "for ~$20 profit per share. Couldn\u2019t find the entry post, so here is the screenshot.",
+          "partial": false,
+          "price": 97.5,
+          "side": "Exit",
+          "ticker": "IBKR",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1517183345396547684": {
+      "timestamp": "2026-06-18T15:04:57.446000+00:00",
+      "trades": [
+        {
+          "notes": "tight stop DT only.",
+          "partial": false,
+          "price": 376.31,
+          "side": "Short",
+          "ticker": "MSFT",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1517187885600866477": {
+      "timestamp": "2026-06-18T15:22:59.915000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 51.22,
+          "side": "Short",
+          "ticker": "RPRX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517190125854130236": {
+      "timestamp": "2026-06-18T15:31:54.033000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 34.24,
+          "side": "Long",
+          "ticker": "HIMS",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517192539785007206": {
+      "timestamp": "2026-06-18T15:41:29.559000+00:00",
+      "trades": [
+        {
+          "notes": "PCS 20/19 7/10 0.20",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "USAR",
+          "user": "leebero"
+        }
+      ]
+    },
+    "1517197201284137103": {
+      "timestamp": "2026-06-18T16:00:00.947000+00:00",
+      "trades": [
+        {
+          "notes": "for breakeven as per my OCO. Am up 1 delicious pork chop with veggies for lunch tho",
+          "partial": false,
+          "price": 376.31,
+          "side": "Exit",
+          "ticker": "MSFT",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1517199920363339917": {
+      "timestamp": "2026-06-18T16:10:49.226000+00:00",
+      "trades": [
+        {
+          "notes": "-19c gain",
+          "partial": false,
+          "price": 34.43,
+          "side": "Exit",
+          "ticker": "HIMS",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517207580768735232": {
+      "timestamp": "2026-06-18T16:41:15.609000+00:00",
+      "trades": [
+        {
+          "notes": "hort $RPRX at $52.27 took the loss -$1.05",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "S",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517214072645357803": {
+      "timestamp": "2026-06-18T17:07:03.393000+00:00",
+      "trades": [
+        {
+          "notes": "starter swing at $11.43",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "RLJ",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517240949716160682": {
+      "timestamp": "2026-06-18T18:53:51.386000+00:00",
+      "trades": [
+        {
+          "notes": "lotto for .06c",
+          "partial": false,
+          "price": 121.0,
+          "side": "Long",
+          "ticker": "CSCO",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1517244109511983155": {
+      "timestamp": "2026-06-18T19:06:24.740000+00:00",
+      "trades": [
+        {
+          "notes": "ong LITE for about a 9% gain on shares (too lazy to do the triple digit math)",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "L",
+          "user": "the_prophet_1"
+        }
+      ]
+    },
+    "1517244609095532625": {
+      "timestamp": "2026-06-18T19:08:23.850000+00:00",
+      "trades": [
+        {
+          "notes": "next weeks PDS 124/122 for 90c",
+          "partial": false,
+          "price": null,
+          "side": "Short",
+          "ticker": "AKAM",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517245888949391562": {
+      "timestamp": "2026-06-18T19:13:28.991000+00:00",
+      "trades": [
+        {
+          "notes": "- $5.90 loss, very tiny overall amount. cutting some flat stocks, esp before MU earnings",
+          "partial": false,
+          "price": 120.0,
+          "side": "Exit",
+          "ticker": "ON",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1517252647609045034": {
+      "timestamp": "2026-06-18T19:40:20.381000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 187.0,
+          "side": "Long",
+          "ticker": "SPCX",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517253817069080748": {
+      "timestamp": "2026-06-18T19:44:59.202000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 23.78,
+          "side": "Long",
+          "ticker": "FCEL",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1517254000913682522": {
+      "timestamp": "2026-06-18T19:45:43.034000+00:00",
+      "trades": [
+        {
+          "notes": ".085 was more of a prayer than a lotto.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "CSCO",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1517257372949545145": {
+      "timestamp": "2026-06-18T19:59:06.990000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 226.8,
+          "side": "Long",
+          "ticker": "QCOM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1518611246646034564": {
+      "timestamp": "2026-06-22T13:38:55.633000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 213.8,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1518618675429511300": {
+      "timestamp": "2026-06-22T14:08:26.793000+00:00",
+      "trades": [
+        {
+          "notes": "for $3.57",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "DRAM",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1518619053307203687": {
+      "timestamp": "2026-06-22T14:09:56.886000+00:00",
+      "trades": [
+        {
+          "notes": "p July 17th for 17.10",
+          "partial": false,
+          "price": 200.0,
+          "side": "Long",
+          "ticker": "NVDA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1518621567670812863": {
+      "timestamp": "2026-06-22T14:19:56.357000+00:00",
+      "trades": [
+        {
+          "notes": "/26/26 250 P 1.6 earlier",
+          "partial": false,
+          "price": 6.0,
+          "side": "Long",
+          "ticker": "MRVL",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518626362288771102": {
+      "timestamp": "2026-06-22T14:38:59.483000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 427.86,
+          "side": "Exit",
+          "ticker": "DELL",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1518631357666951168": {
+      "timestamp": "2026-06-22T14:58:50.474000+00:00",
+      "trades": [
+        {
+          "notes": "PDS at $1.15 for a 28% gain.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AKAM",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1518631994659967160": {
+      "timestamp": "2026-06-22T15:01:22.345000+00:00",
+      "trades": [
+        {
+          "notes": "day trade",
+          "partial": false,
+          "price": 107.86,
+          "side": "Long",
+          "ticker": "UPS",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1518644202819293234": {
+      "timestamp": "2026-06-22T15:49:52.997000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 122.46,
+          "side": "Short",
+          "ticker": "PLTR",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1518645815311077397": {
+      "timestamp": "2026-06-22T15:56:17.445000+00:00",
+      "trades": [
+        {
+          "notes": "- 75c gain",
+          "partial": false,
+          "price": 108.61,
+          "side": "Exit",
+          "ticker": "UPS",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1518652003809624138": {
+      "timestamp": "2026-06-22T16:20:52.898000+00:00",
+      "trades": [
+        {
+          "notes": "for 1.17 gain on 2x DT. Love the ticker, but market not making LoD like I wanted.",
+          "partial": false,
+          "price": 120.76,
+          "side": "Exit",
+          "ticker": "PLTR",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1518671694682783935": {
+      "timestamp": "2026-06-22T17:39:07.568000+00:00",
+      "trades": [
+        {
+          "notes": "/26/2026 320.00 P 2.45 late post",
+          "partial": false,
+          "price": 6.0,
+          "side": "Long",
+          "ticker": "VRT",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518683727260024892": {
+      "timestamp": "2026-06-22T18:26:56.358000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 61.4,
+          "side": "Long",
+          "ticker": "IONQ",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1518684469975056537": {
+      "timestamp": "2026-06-22T18:29:53.435000+00:00",
+      "trades": [
+        {
+          "notes": "partial because for some reason my brokerage didn\u2019t sell it all at 26.20",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "FCEL",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1518684513801080912": {
+      "timestamp": "2026-06-22T18:30:03.884000+00:00",
+      "trades": [
+        {
+          "notes": "@ 170 for a loss",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "SPCX",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1518693935051051049": {
+      "timestamp": "2026-06-22T19:07:30.085000+00:00",
+      "trades": [
+        {
+          "notes": "sold 7/2/26 $200p $2.4",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "NBIS",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1518696674229223465": {
+      "timestamp": "2026-06-22T19:18:23.156000+00:00",
+      "trades": [
+        {
+          "notes": "next weeks 260p for 3.65",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "BE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1518702077038301305": {
+      "timestamp": "2026-06-22T19:39:51.286000+00:00",
+      "trades": [
+        {
+          "notes": "via 97/96 (Jul 26) for .25c credit.",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "CRWV",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1518702089608630442": {
+      "timestamp": "2026-06-22T19:39:54.283000+00:00",
+      "trades": [
+        {
+          "notes": "been trailing out all day, ~8$ avg gain",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "PENG",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518702876233302147": {
+      "timestamp": "2026-06-22T19:43:01.829000+00:00",
+      "trades": [
+        {
+          "notes": "via 97/96 (Jul 2) PCS for .25c credit.",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "CRWV",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1518703374898303177": {
+      "timestamp": "2026-06-22T19:45:00.720000+00:00",
+      "trades": [
+        {
+          "notes": "calls 1.9 27% i also dt'd this nicely today",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TE",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518706212097757255": {
+      "timestamp": "2026-06-22T19:56:17.161000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 155.97,
+          "side": "Long",
+          "ticker": "FLEX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1518974374458163222": {
+      "timestamp": "2026-06-23T13:41:52.050000+00:00",
+      "trades": [
+        {
+          "notes": "/4 left +60%",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "IBM",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1518975313818816532": {
+      "timestamp": "2026-06-23T13:45:36.011000+00:00",
+      "trades": [
+        {
+          "notes": "rolled some profits into the july 280c at 5.53",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "IBM",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1518975526151131327": {
+      "timestamp": "2026-06-23T13:46:26.635000+00:00",
+      "trades": [
+        {
+          "notes": "for profit.",
+          "partial": true,
+          "price": 26.67,
+          "side": "Exit",
+          "ticker": "QBTS",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1518981344342839499": {
+      "timestamp": "2026-06-23T14:09:33.800000+00:00",
+      "trades": [
+        {
+          "notes": "/17/26 17.50 C 1.75 spec size",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "INFQ",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518981543048118444": {
+      "timestamp": "2026-06-23T14:10:21.175000+00:00",
+      "trades": [
+        {
+          "notes": "/26/2026 500.00 P 2.35",
+          "partial": false,
+          "price": 6.0,
+          "side": "Long",
+          "ticker": "AMAT",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518981633565528156": {
+      "timestamp": "2026-06-23T14:10:42.756000+00:00",
+      "trades": [
+        {
+          "notes": "/10/2026 300.00 P 4.05",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "LRCX",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518981740394315831": {
+      "timestamp": "2026-06-23T14:11:08.226000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 63.46,
+          "side": "Long",
+          "ticker": "PENG",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1518981843137859656": {
+      "timestamp": "2026-06-23T14:11:32.722000+00:00",
+      "trades": [
+        {
+          "notes": "stopped out on swing this morning at $150",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "SPCX",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1518987525732044975": {
+      "timestamp": "2026-06-23T14:34:07.558000+00:00",
+      "trades": [
+        {
+          "notes": "for a 22 dollar loss on shares. more than 50% chance this flushes hard this week with MU and PCE. Tutes clearly front running them.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "QCOM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1518989816635719930": {
+      "timestamp": "2026-06-23T14:43:13.752000+00:00",
+      "trades": [
+        {
+          "notes": "sold the 7/17 300p for $7.60 - got filled on the open. Want to see this bounce hold on $SPY from the 50 SMA. This is conditional on that we have a choppy summer. If the market starts to get more bearish I will take it off.",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "COHR",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519001296374595725": {
+      "timestamp": "2026-06-23T15:28:50.735000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 169.45,
+          "side": "Short",
+          "ticker": "ORCL",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1519012802595917926": {
+      "timestamp": "2026-06-23T16:14:34.032000+00:00",
+      "trades": [
+        {
+          "notes": "september expiry 50p for 3.90. Final leg on this trade was waitign for a strong pullback to enter this. Have basically layered in 50-65 strike levels after fully exiting my DRAM position last week. If the stock holds below 90 dollars I will have done better selling puts. if it breaks down to 50-65 I get to reenter at fantastic support. if it chops in the summer I get to collect a large premium.",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "DRAM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1519037563518582977": {
+      "timestamp": "2026-06-23T17:52:57.496000+00:00",
+      "trades": [
+        {
+          "notes": "for 3.00 partial exit. Leaving a runner.",
+          "partial": false,
+          "price": 166.45,
+          "side": "Exit",
+          "ticker": "ORCL",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1519058039787884747": {
+      "timestamp": "2026-06-23T19:14:19.419000+00:00",
+      "trades": [
+        {
+          "notes": "short puts from last week at 15c - 93% gain",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "BE",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519067642647019541": {
+      "timestamp": "2026-06-23T19:52:28.919000+00:00",
+      "trades": [
+        {
+          "notes": "for 4.29 gain on runner. Fully out not swinging shorts above 50 SMA.",
+          "partial": false,
+          "price": 165.16,
+          "side": "Exit",
+          "ticker": "ORCL",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1519068441011818577": {
+      "timestamp": "2026-06-23T19:55:39.264000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 381.25,
+          "side": "Short",
+          "ticker": "TSLA",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1519069521426776164": {
+      "timestamp": "2026-06-23T19:59:56.855000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 245.19,
+          "side": "Long",
+          "ticker": "EXPE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1519335352060612701": {
+      "timestamp": "2026-06-24T13:36:15.817000+00:00",
+      "trades": [
+        {
+          "notes": "dollars per share",
+          "partial": false,
+          "price": 10.0,
+          "side": "Exit",
+          "ticker": "EXPE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1519336282277416992": {
+      "timestamp": "2026-06-24T13:39:57.598000+00:00",
+      "trades": [
+        {
+          "notes": "b/e",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "PENG",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1519342588472197255": {
+      "timestamp": "2026-06-24T14:05:01.112000+00:00",
+      "trades": [
+        {
+          "notes": "/17 10C .80 for loss",
+          "partial": false,
+          "price": 7.0,
+          "side": "Exit",
+          "ticker": "TE",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1519342681380225034": {
+      "timestamp": "2026-06-24T14:05:23.263000+00:00",
+      "trades": [
+        {
+          "notes": "day trade",
+          "partial": false,
+          "price": 456.0,
+          "side": "Long",
+          "ticker": "AXON",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519345999221489704": {
+      "timestamp": "2026-06-24T14:18:34.298000+00:00",
+      "trades": [
+        {
+          "notes": "- hedge against my puts, which I will be looking to exit well today",
+          "partial": false,
+          "price": 139.0,
+          "side": "Short",
+          "ticker": "AAOI",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519346637523124224": {
+      "timestamp": "2026-06-24T14:21:06.481000+00:00",
+      "trades": [
+        {
+          "notes": "took a 100% loss on the puts, stock is too weak",
+          "partial": false,
+          "price": 2.08,
+          "side": "Exit",
+          "ticker": "AAOI",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519352088625418240": {
+      "timestamp": "2026-06-24T14:42:46.125000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 115.75,
+          "side": "Short",
+          "ticker": "PLTR",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1519353874102878268": {
+      "timestamp": "2026-06-24T14:49:51.816000+00:00",
+      "trades": [
+        {
+          "notes": "short hedge at $145.60 for a $6.60 loss. Got whipped around on this one",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AAOI",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519364179902074940": {
+      "timestamp": "2026-06-24T15:30:48.910000+00:00",
+      "trades": [
+        {
+          "notes": "for breakeven",
+          "partial": false,
+          "price": 115.75,
+          "side": "Exit",
+          "ticker": "PLTR",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1519373627923894322": {
+      "timestamp": "2026-06-24T16:08:21.494000+00:00",
+      "trades": [
+        {
+          "notes": "day trade",
+          "partial": false,
+          "price": 96.0,
+          "side": "Short",
+          "ticker": "MSTR",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519381588410892289": {
+      "timestamp": "2026-06-24T16:39:59.422000+00:00",
+      "trades": [
+        {
+          "notes": "took $1.20 profit",
+          "partial": false,
+          "price": 94.8,
+          "side": "Exit",
+          "ticker": "MSTR",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519389916688027689": {
+      "timestamp": "2026-06-24T17:13:05.038000+00:00",
+      "trades": [
+        {
+          "notes": ".75 took the L pos",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "INFQ",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1519396261055303811": {
+      "timestamp": "2026-06-24T17:38:17.653000+00:00",
+      "trades": [
+        {
+          "notes": ", DELL for a scratch.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "FTNT",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1519681425639735357": {
+      "timestamp": "2026-06-25T12:31:26.188000+00:00",
+      "trades": [
+        {
+          "notes": "- treating the downgrade as a gift",
+          "partial": false,
+          "price": 427.0,
+          "side": "Long",
+          "ticker": "DELL",
+          "user": "leebero"
+        }
+      ]
+    },
+    "1519699476468600902": {
+      "timestamp": "2026-06-25T13:43:09.841000+00:00",
+      "trades": [
+        {
+          "notes": "ong ARM 351.56 - holding onto last 1/4 position for 50sma",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "L",
+          "user": "leebero"
+        }
+      ]
+    },
+    "1519702457834537013": {
+      "timestamp": "2026-06-25T13:55:00.654000+00:00",
+      "trades": [
+        {
+          "notes": "dollar win on shares",
+          "partial": false,
+          "price": 6.0,
+          "side": "Exit",
+          "ticker": "BRKR",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1519702852623401194": {
+      "timestamp": "2026-06-25T13:56:34.779000+00:00",
+      "trades": [
+        {
+          "notes": "PCS for 140% loss.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "USAR",
+          "user": "leebero"
+        }
+      ]
+    },
+    "1519707684360683612": {
+      "timestamp": "2026-06-25T14:15:46.755000+00:00",
+      "trades": [
+        {
+          "notes": "swing for loss at .79",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AAPL",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1519722102796587069": {
+      "timestamp": "2026-06-25T15:13:04.378000+00:00",
+      "trades": [
+        {
+          "notes": "p lottos 6/26 3.45",
+          "partial": false,
+          "price": 704.0,
+          "side": "Short",
+          "ticker": "QQQ",
+          "user": "leebero"
+        }
+      ]
+    },
+    "1519722217129382011": {
+      "timestamp": "2026-06-25T15:13:31.637000+00:00",
+      "trades": [
+        {
+          "notes": "@181.78 - Added to LTI, but also making we want to research if Healthcare in general does well during the \"typical\" summer doldrums.",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "RVMD",
+          "user": "davidsachdev"
+        }
+      ]
+    },
+    "1519742411113365697": {
+      "timestamp": "2026-06-25T16:33:46.258000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 90.13,
+          "side": "Short",
+          "ticker": "NOW",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1519758917423595762": {
+      "timestamp": "2026-06-25T17:39:21.669000+00:00",
+      "trades": [
+        {
+          "notes": "for a scratch.",
+          "partial": false,
+          "price": 90.13,
+          "side": "Exit",
+          "ticker": "NOW",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1519761917143683144": {
+      "timestamp": "2026-06-25T17:51:16.858000+00:00",
+      "trades": [
+        {
+          "notes": "swing 1/2 out at 10.35",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MSTR",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1519776727113535499": {
+      "timestamp": "2026-06-25T18:50:07.830000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 76.86,
+          "side": "Short",
+          "ticker": "TEAM",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1520059533236633821": {
+      "timestamp": "2026-06-26T13:33:54.064000+00:00",
+      "trades": [
+        {
+          "notes": "for a 1 dollar gain per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "CUZ",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520061599958696108": {
+      "timestamp": "2026-06-26T13:42:06.809000+00:00",
+      "trades": [
+        {
+          "notes": "dollar gain on shares",
+          "partial": false,
+          "price": 14.0,
+          "side": "Exit",
+          "ticker": "TSLA",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520065583687663841": {
+      "timestamp": "2026-06-26T13:57:56.604000+00:00",
+      "trades": [
+        {
+          "notes": "dollar gain on shares",
+          "partial": false,
+          "price": 1.1,
+          "side": "Exit",
+          "ticker": "UUUU",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520067179012427916": {
+      "timestamp": "2026-06-26T14:04:16.959000+00:00",
+      "trades": [
+        {
+          "notes": "puts .02 99%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AMAT",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1520067735114223678": {
+      "timestamp": "2026-06-26T14:06:29.544000+00:00",
+      "trades": [
+        {
+          "notes": "puts .2 88%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MRVL",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1520074999786897408": {
+      "timestamp": "2026-06-26T14:35:21.577000+00:00",
+      "trades": [
+        {
+          "notes": "p next week for a 180% loss. tough decision to make but the weakness I am seeing in this industry (GLW VRT BE TTMI) is undeniable and I do believe the market will rollover hard here. Would rather take the medium sized loss here than get assigned and ride this thing down to the 100sma. that would be a bag at that point and I dont believe in bag holdng",
+          "partial": false,
+          "price": 260.0,
+          "side": "Exit",
+          "ticker": "BE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520076093367783665": {
+      "timestamp": "2026-06-26T14:39:42.307000+00:00",
+      "trades": [
+        {
+          "notes": "day trade",
+          "partial": false,
+          "price": 17.56,
+          "side": "Short",
+          "ticker": "DHT",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1520078198040301568": {
+      "timestamp": "2026-06-26T14:48:04.100000+00:00",
+      "trades": [
+        {
+          "notes": "puts 1.8 54%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "LRCX",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1520079322063437904": {
+      "timestamp": "2026-06-26T14:52:32.088000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 17.3,
+          "side": "Short",
+          "ticker": "ZLAB",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520083720474984480": {
+      "timestamp": "2026-06-26T15:10:00.751000+00:00",
+      "trades": [
+        {
+          "notes": "- exited out of variosu PCSs on this as well.  Not because I think it is a bad trade, just think we have some opportunitites coming up as we get more info, and  want the cash avaiable.",
+          "partial": false,
+          "price": 180.41,
+          "side": "Exit",
+          "ticker": "RVMD",
+          "user": "davidsachdev"
+        }
+      ]
+    },
+    "1520083825177395401": {
+      "timestamp": "2026-06-26T15:10:25.714000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 134.74,
+          "side": "Short",
+          "ticker": "ALB",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1520101916682752094": {
+      "timestamp": "2026-06-26T16:22:19.065000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 7425.0,
+          "side": "Short",
+          "ticker": "MES",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520102291003281549": {
+      "timestamp": "2026-06-26T16:23:48.310000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 264.9,
+          "side": "Short",
+          "ticker": "BE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520102477679169757": {
+      "timestamp": "2026-06-26T16:24:32.817000+00:00",
+      "trades": [
+        {
+          "notes": "scratch. have a rule not shorting SPY above vwap ill stick to RW until we break down and retest vwap for a cleaner entry",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MES",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520111471076573335": {
+      "timestamp": "2026-06-26T17:00:17.010000+00:00",
+      "trades": [
+        {
+          "notes": "@ 17.52 stopped out",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ZLAB",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520111765432565890": {
+      "timestamp": "2026-06-26T17:01:27.190000+00:00",
+      "trades": [
+        {
+          "notes": "for a loss @ 270",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "BE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1520117113782800565": {
+      "timestamp": "2026-06-26T17:22:42.336000+00:00",
+      "trades": [
+        {
+          "notes": "for a 9c loss at 12:50EST. late post, was in the middle of a meeting.",
+          "partial": false,
+          "price": 17.65,
+          "side": "Exit",
+          "ticker": "DHT",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1521149933468516480": {
+      "timestamp": "2026-06-29T13:46:45.738000+00:00",
+      "trades": [
+        {
+          "notes": "stopped out -$5 L",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TEAM",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521151212144164964": {
+      "timestamp": "2026-06-29T13:51:50.598000+00:00",
+      "trades": [
+        {
+          "notes": "15ema bounce jamming in the trade with QQQ bouncing off the 50 and SPY back above it.",
+          "partial": false,
+          "price": 1960.0,
+          "side": "Long",
+          "ticker": "SNDK",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521160500681904290": {
+      "timestamp": "2026-06-29T14:28:45.158000+00:00",
+      "trades": [
+        {
+          "notes": "/21/2026 120.00 C 4.4 joining <@215322163643678721> o this one",
+          "partial": false,
+          "price": 8.0,
+          "side": "Long",
+          "ticker": "HOOD",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521171367721041970": {
+      "timestamp": "2026-06-29T15:11:56.062000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 116.83,
+          "side": "Short",
+          "ticker": "PLTR",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1521195362142916708": {
+      "timestamp": "2026-06-29T16:47:16.778000+00:00",
+      "trades": [
+        {
+          "notes": "for a monster profit (thank you <@268142042511704065> for making me aware).",
+          "partial": false,
+          "price": 749.0,
+          "side": "Exit",
+          "ticker": "CRWD",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1521197255594610929": {
+      "timestamp": "2026-06-29T16:54:48.212000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": false,
+          "price": 82.5,
+          "side": "Exit",
+          "ticker": "KO",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1521198284960567486": {
+      "timestamp": "2026-06-29T16:58:53.632000+00:00",
+      "trades": [
+        {
+          "notes": "AUG 26 75/80 CALL @1.80",
+          "partial": false,
+          "price": 21.0,
+          "side": "Long",
+          "ticker": "DRAM",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1521204794834944173": {
+      "timestamp": "2026-06-29T17:24:45.707000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 146.5,
+          "side": "Long",
+          "ticker": "AAOI",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521211553846661154": {
+      "timestamp": "2026-06-29T17:51:37.181000+00:00",
+      "trades": [
+        {
+          "notes": "/2 out swing at 17.55",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "TSLA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1521224671456923839": {
+      "timestamp": "2026-06-29T18:43:44.663000+00:00",
+      "trades": [
+        {
+          "notes": "B 21 AUG 26 400/410 CALL @3.20",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "AVGO",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1521238224364896320": {
+      "timestamp": "2026-06-29T19:37:35.928000+00:00",
+      "trades": [
+        {
+          "notes": "out rest swing at 19.55",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TSLA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1521241535541416026": {
+      "timestamp": "2026-06-29T19:50:45.374000+00:00",
+      "trades": [
+        {
+          "notes": "july calls swing 1/8th left at 14.65",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "HOOD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1521242725205414091": {
+      "timestamp": "2026-06-29T19:55:29.012000+00:00",
+      "trades": [
+        {
+          "notes": "for 1.00.",
+          "partial": false,
+          "price": 115.83,
+          "side": "Exit",
+          "ticker": "PLTR",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1521243180287393902": {
+      "timestamp": "2026-06-29T19:57:17.512000+00:00",
+      "trades": [
+        {
+          "notes": "calls 5.25 17%",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "HOOD",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521243983064338553": {
+      "timestamp": "2026-06-29T20:00:28.909000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 2018.4,
+          "side": "Long",
+          "ticker": "SNDK",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521251926740828222": {
+      "timestamp": "2026-06-29T20:32:02.829000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 452.0,
+          "side": "Long",
+          "ticker": "ALAB",
+          "user": "the_prophet_1"
+        }
+      ]
+    },
+    "1521274576871493663": {
+      "timestamp": "2026-06-29T22:02:03.041000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 61.45,
+          "side": "Long",
+          "ticker": "BAND",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1521274683293438005": {
+      "timestamp": "2026-06-29T22:02:28.414000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 131.4,
+          "side": "Long",
+          "ticker": "OKTA",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1521525379146448976": {
+      "timestamp": "2026-06-30T14:38:38.963000+00:00",
+      "trades": [
+        {
+          "notes": "shares trimming 5.5 half left",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "VRT",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521527364411199580": {
+      "timestamp": "2026-06-30T14:46:32.287000+00:00",
+      "trades": [
+        {
+          "notes": "also trimmed there for 120ish",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "SNDK",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521527881539260548": {
+      "timestamp": "2026-06-30T14:48:35.580000+00:00",
+      "trades": [
+        {
+          "notes": "/10/2026 235.00 P 4.9",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "BE",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521529002433445888": {
+      "timestamp": "2026-06-30T14:53:02.822000+00:00",
+      "trades": [
+        {
+          "notes": "dollars per share",
+          "partial": false,
+          "price": 2.5,
+          "side": "Exit",
+          "ticker": "AAOI",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521530219989700638": {
+      "timestamp": "2026-06-30T14:57:53.110000+00:00",
+      "trades": [
+        {
+          "notes": "the rest for a lot per share. we are getting a pullback here. t2104 screaming it",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "SNDK",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521530700774244454": {
+      "timestamp": "2026-06-30T14:59:47.738000+00:00",
+      "trades": [
+        {
+          "notes": "trim more 4$",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "VRT",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521553000177340477": {
+      "timestamp": "2026-06-30T16:28:24.330000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 9.32,
+          "side": "Long",
+          "ticker": "TE",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521558109519347832": {
+      "timestamp": "2026-06-30T16:48:42.492000+00:00",
+      "trades": [
+        {
+          "notes": "looking for $MU to bounce hard here off vwap. tight stop",
+          "partial": false,
+          "price": 73.6,
+          "side": "Long",
+          "ticker": "DRAM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521560400506917047": {
+      "timestamp": "2026-06-30T16:57:48.706000+00:00",
+      "trades": [
+        {
+          "notes": "for a 10 cent loss per share.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "DRAM",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521561899681189889": {
+      "timestamp": "2026-06-30T17:03:46.137000+00:00",
+      "trades": [
+        {
+          "notes": "/2 $295c  $9.15 DT only",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "MRVL",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1521593831378780383": {
+      "timestamp": "2026-06-30T19:10:39.247000+00:00",
+      "trades": [
+        {
+          "notes": "roll at 7.10",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TSLA",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1521602831205924914": {
+      "timestamp": "2026-06-30T19:46:24.973000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 157.6,
+          "side": "Long",
+          "ticker": "DOCN",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521603637082849290": {
+      "timestamp": "2026-06-30T19:49:37.109000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 206.5,
+          "side": "Long",
+          "ticker": "TWLO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521605631646109858": {
+      "timestamp": "2026-06-30T19:57:32.650000+00:00",
+      "trades": [
+        {
+          "notes": "@ 0.61 (+53%)",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ASTS",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1521614984545832960": {
+      "timestamp": "2026-06-30T20:34:42.555000+00:00",
+      "trades": [
+        {
+          "notes": "swing stopped out at 2.44",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MIMI",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1521874306563309619": {
+      "timestamp": "2026-07-01T13:45:09.742000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 140.5,
+          "side": "Long",
+          "ticker": "ROKU",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521874451359072407": {
+      "timestamp": "2026-07-01T13:45:44.264000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 84.4,
+          "side": "Long",
+          "ticker": "AMBA",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521877287526600796": {
+      "timestamp": "2026-07-01T13:57:00.459000+00:00",
+      "trades": [
+        {
+          "notes": "took profit $62.33",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "BAND",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1521878213783982130": {
+      "timestamp": "2026-07-01T14:00:41.296000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 348.75,
+          "side": "Long",
+          "ticker": "PANW",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1521879843783049407": {
+      "timestamp": "2026-07-01T14:07:09.918000+00:00",
+      "trades": [
+        {
+          "notes": "day trade",
+          "partial": false,
+          "price": 592.0,
+          "side": "Long",
+          "ticker": "AXON",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1521884562874040534": {
+      "timestamp": "2026-07-01T14:25:55.037000+00:00",
+      "trades": [
+        {
+          "notes": "$2 profit",
+          "partial": false,
+          "price": 594.0,
+          "side": "Exit",
+          "ticker": "AXON",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1521892014143045677": {
+      "timestamp": "2026-07-01T14:55:31.558000+00:00",
+      "trades": [
+        {
+          "notes": "dollar loss on shares",
+          "partial": false,
+          "price": 10.0,
+          "side": "Exit",
+          "ticker": "DOCN",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1521892191453184171": {
+      "timestamp": "2026-07-01T14:56:13.832000+00:00",
+      "trades": [
+        {
+          "notes": "@ 288.35",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "IBM",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1521892236617322508": {
+      "timestamp": "2026-07-01T14:56:24.600000+00:00",
+      "trades": [
+        {
+          "notes": "for 6.50 gain.",
+          "partial": false,
+          "price": 355.25,
+          "side": "Exit",
+          "ticker": "PANW",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1521894443303567430": {
+      "timestamp": "2026-07-01T15:05:10.715000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 23.31,
+          "side": "Long",
+          "ticker": "ZETA",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1521907591595167896": {
+      "timestamp": "2026-07-01T15:57:25.512000+00:00",
+      "trades": [
+        {
+          "notes": "$",
+          "partial": false,
+          "price": 6.0,
+          "side": "Exit",
+          "ticker": "AMBA",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1521935494647250964": {
+      "timestamp": "2026-07-01T17:48:18.118000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 300.43,
+          "side": "Long",
+          "ticker": "BE",
+          "user": "the_prophet_1"
+        }
+      ]
+    },
+    "1521958576191701073": {
+      "timestamp": "2026-07-01T19:20:01.187000+00:00",
+      "trades": [
+        {
+          "notes": "August swing calls 1/2 out at 7.40",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "HOOD",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1521960033926119635": {
+      "timestamp": "2026-07-01T19:25:48.738000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 360.52,
+          "side": "Long",
+          "ticker": "GOOGL",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1521963299363623014": {
+      "timestamp": "2026-07-01T19:38:47.279000+00:00",
+      "trades": [
+        {
+          "notes": "swing",
+          "partial": false,
+          "price": 58.4,
+          "side": "Long",
+          "ticker": "BAC",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1521968180195491932": {
+      "timestamp": "2026-07-01T19:58:10.960000+00:00",
+      "trades": [
+        {
+          "notes": "for a scratch getting some confirmation on my thesis from yday now. proceeding with caution",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ROKU",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1522244169551315086": {
+      "timestamp": "2026-07-02T14:14:51.950000+00:00",
+      "trades": [
+        {
+          "notes": "~20%",
+          "partial": false,
+          "price": 1.55,
+          "side": "Exit",
+          "ticker": "TE",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1522245008684613687": {
+      "timestamp": "2026-07-02T14:18:12.015000+00:00",
+      "trades": [
+        {
+          "notes": "cut for now for loss at 2.65",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "EEIQ",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1522303024578429120": {
+      "timestamp": "2026-07-02T18:08:44.082000+00:00",
+      "trades": [
+        {
+          "notes": "hedge 1/2 out at 6.7",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "QQQ",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1522317746086482030": {
+      "timestamp": "2026-07-02T19:07:13.963000+00:00",
+      "trades": [
+        {
+          "notes": "for a 3 dollar gain on shares.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TWLO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1522321606108647464": {
+      "timestamp": "2026-07-02T19:22:34.264000+00:00",
+      "trades": [
+        {
+          "notes": "@ 111.74",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "HOOD",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1522321901077401670": {
+      "timestamp": "2026-07-02T19:23:44.590000+00:00",
+      "trades": [
+        {
+          "notes": "@ 2.07",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AVGO",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1522324772225286327": {
+      "timestamp": "2026-07-02T19:35:09.125000+00:00",
+      "trades": [
+        {
+          "notes": "@ 0.95",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "DRAM",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1523686441337622682": {
+      "timestamp": "2026-07-06T13:45:56.340000+00:00",
+      "trades": [
+        {
+          "notes": "rest of the shares 5$,",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "VRT",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1523688634669203497": {
+      "timestamp": "2026-07-06T13:54:39.271000+00:00",
+      "trades": [
+        {
+          "notes": "swing at $59.72 for $1.32 gain",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "BAC",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1523688900978016298": {
+      "timestamp": "2026-07-06T13:55:42.764000+00:00",
+      "trades": [
+        {
+          "notes": "swing from 6/18 at $11.83 for a 40c gain",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "RLJ",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1523696948765524123": {
+      "timestamp": "2026-07-06T14:27:41.506000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 201.61,
+          "side": "Long",
+          "ticker": "RDDT",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1523707458491781222": {
+      "timestamp": "2026-07-06T15:09:27.220000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 37.03,
+          "side": "Short",
+          "ticker": "WHR",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1523708575678206023": {
+      "timestamp": "2026-07-06T15:13:53.578000+00:00",
+      "trades": [
+        {
+          "notes": "add new avg $195.05",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "NVDA",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1523708717214863391": {
+      "timestamp": "2026-07-06T15:14:27.323000+00:00",
+      "trades": [
+        {
+          "notes": "add new avg $131.85",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "PLTR",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1523709043305353327": {
+      "timestamp": "2026-07-06T15:15:45.069000+00:00",
+      "trades": [
+        {
+          "notes": "dca assigned CSP new avg $149.35",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "ORCL",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1523709801740238971": {
+      "timestamp": "2026-07-06T15:18:45.894000+00:00",
+      "trades": [
+        {
+          "notes": "+assigned puts new avg $398.55",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "MSFT",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1523710803331645611": {
+      "timestamp": "2026-07-06T15:22:44.692000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 175.0,
+          "side": "Long",
+          "ticker": "ANET",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1523712864530206875": {
+      "timestamp": "2026-07-06T15:30:56.120000+00:00",
+      "trades": [
+        {
+          "notes": "for a loss at 37.60",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "WHR",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1523713166498992221": {
+      "timestamp": "2026-07-06T15:32:08.115000+00:00",
+      "trades": [
+        {
+          "notes": "PCS 21Aug 85p/84p @ .36",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "TLT",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1523727115634344077": {
+      "timestamp": "2026-07-06T16:27:33.848000+00:00",
+      "trades": [
+        {
+          "notes": "for a 1.60 loss per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ANET",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1523727458749386794": {
+      "timestamp": "2026-07-06T16:28:55.653000+00:00",
+      "trades": [
+        {
+          "notes": "swing stopped out starter for small loss at .88",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AMAT",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1523733085005414551": {
+      "timestamp": "2026-07-06T16:51:17.057000+00:00",
+      "trades": [
+        {
+          "notes": "@ 381.04",
+          "partial": false,
+          "price": null,
+          "side": "Long",
+          "ticker": "GLD",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1523738263993716987": {
+      "timestamp": "2026-07-06T17:11:51.824000+00:00",
+      "trades": [
+        {
+          "notes": "for 4.00 profit per share.",
+          "partial": false,
+          "price": 205.61,
+          "side": "Exit",
+          "ticker": "RDDT",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1523767008871583987": {
+      "timestamp": "2026-07-06T19:06:05.137000+00:00",
+      "trades": [
+        {
+          "notes": "Jul $13c @ 0.94",
+          "partial": false,
+          "price": 17.0,
+          "side": "Long",
+          "ticker": "F",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1523771269642981526": {
+      "timestamp": "2026-07-06T19:23:00.984000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 221.0,
+          "side": "Long",
+          "ticker": "MS",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1523780651407376636": {
+      "timestamp": "2026-07-06T20:00:17.771000+00:00",
+      "trades": [
+        {
+          "notes": "for 6.00 gain.",
+          "partial": false,
+          "price": 366.52,
+          "side": "Exit",
+          "ticker": "GOOGL",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1523797196003344644": {
+      "timestamp": "2026-07-06T21:06:02.310000+00:00",
+      "trades": [
+        {
+          "notes": "swing earlier for loss hit stop at .50",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "INTC",
+          "user": "opreme"
+        }
+      ]
+    },
+    "1524050171757989899": {
+      "timestamp": "2026-07-07T13:51:16.430000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 87.2,
+          "side": "Short",
+          "ticker": "RKLB",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524051054663041137": {
+      "timestamp": "2026-07-07T13:54:46.931000+00:00",
+      "trades": [
+        {
+          "notes": "~$1",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "MS",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1524052232801353900": {
+      "timestamp": "2026-07-07T13:59:27.821000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 110.0,
+          "side": "Long",
+          "ticker": "NOW",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1524054699731320883": {
+      "timestamp": "2026-07-07T14:09:15.983000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 111.0,
+          "side": "Exit",
+          "ticker": "NOW",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1524056908393086987": {
+      "timestamp": "2026-07-07T14:18:02.569000+00:00",
+      "trades": [
+        {
+          "notes": "for 3.20 on that flush. Partial exit leaving a runner.",
+          "partial": false,
+          "price": 84.0,
+          "side": "Exit",
+          "ticker": "RKLB",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524059604391297075": {
+      "timestamp": "2026-07-07T14:28:45.345000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 40.45,
+          "side": "Long",
+          "ticker": "VKTX",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524061506373943376": {
+      "timestamp": "2026-07-07T14:36:18.813000+00:00",
+      "trades": [
+        {
+          "notes": "lotto PDS 746/745 for 37c, I believe we will fill the gap from yesterday",
+          "partial": false,
+          "price": null,
+          "side": "Short",
+          "ticker": "SPY",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1524064536519376969": {
+      "timestamp": "2026-07-07T14:48:21.256000+00:00",
+      "trades": [
+        {
+          "notes": "@ 368.88",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "GOOGL",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1524065328978726994": {
+      "timestamp": "2026-07-07T14:51:30.193000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 42.27,
+          "side": "Long",
+          "ticker": "RNG",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524067772206813295": {
+      "timestamp": "2026-07-07T15:01:12.704000+00:00",
+      "trades": [
+        {
+          "notes": "scratched",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "ZETA",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1524068047902736414": {
+      "timestamp": "2026-07-07T15:02:18.435000+00:00",
+      "trades": [
+        {
+          "notes": "$13.85 profit",
+          "partial": false,
+          "price": 145.25,
+          "side": "Exit",
+          "ticker": "OKTA",
+          "user": "ollyman."
+        }
+      ]
+    },
+    "1524068805784109170": {
+      "timestamp": "2026-07-07T15:05:19.128000+00:00",
+      "trades": [
+        {
+          "notes": "CDS @ 1.38",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "AMZN",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1524074688027033602": {
+      "timestamp": "2026-07-07T15:28:41.564000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 135.75,
+          "side": "Exit",
+          "ticker": "PLTR",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1524079470586236928": {
+      "timestamp": "2026-07-07T15:47:41.815000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 112.5,
+          "side": "Exit",
+          "ticker": "NOW",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1524082694500122636": {
+      "timestamp": "2026-07-07T16:00:30.456000+00:00",
+      "trades": [
+        {
+          "notes": "lottos PDS at 21c for a 16c loss",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "SPY",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1524091677919416383": {
+      "timestamp": "2026-07-07T16:36:12.270000+00:00",
+      "trades": [
+        {
+          "notes": "for profit.",
+          "partial": true,
+          "price": 112.95,
+          "side": "Exit",
+          "ticker": "NOW",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1524106382809235538": {
+      "timestamp": "2026-07-07T17:34:38.189000+00:00",
+      "trades": [
+        {
+          "notes": "for profit",
+          "partial": true,
+          "price": 197.5,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1524123675744403507": {
+      "timestamp": "2026-07-07T18:43:21.146000+00:00",
+      "trades": [
+        {
+          "notes": "for around 80 cents per share. this one took a while.",
+          "partial": true,
+          "price": null,
+          "side": "Exit",
+          "ticker": "RNG",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524141501993586820": {
+      "timestamp": "2026-07-07T19:54:11.255000+00:00",
+      "trades": [
+        {
+          "notes": "for 3.50 gain on remaining DT.",
+          "partial": false,
+          "price": 83.7,
+          "side": "Exit",
+          "ticker": "RKLB",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524411260748300460": {
+      "timestamp": "2026-07-08T13:46:06.754000+00:00",
+      "trades": [
+        {
+          "notes": "day trade, early one but a nice one",
+          "partial": false,
+          "price": 447.0,
+          "side": "Long",
+          "ticker": "DELL",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1524411268067229706": {
+      "timestamp": "2026-07-08T13:46:08.499000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 198.85,
+          "side": "Long",
+          "ticker": "NVDA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524418682745520211": {
+      "timestamp": "2026-07-08T14:15:36.296000+00:00",
+      "trades": [
+        {
+          "notes": "ell at $418.20, took the loss, was sized small so I was fine holding it as long as the open held.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "D",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1524420267844046968": {
+      "timestamp": "2026-07-08T14:21:54.213000+00:00",
+      "trades": [
+        {
+          "notes": "stop below the vwap test candle",
+          "partial": false,
+          "price": 946.0,
+          "side": "Long",
+          "ticker": "MU",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524423887746498742": {
+      "timestamp": "2026-07-08T14:36:17.265000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 394.82,
+          "side": "Short",
+          "ticker": "TSLA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524424014414741544": {
+      "timestamp": "2026-07-08T14:36:47.465000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 83.76,
+          "side": "Short",
+          "ticker": "QRVO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524425678898855957": {
+      "timestamp": "2026-07-08T14:43:24.309000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 14.19,
+          "side": "Short",
+          "ticker": "QXO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524426691429007460": {
+      "timestamp": "2026-07-08T14:47:25.715000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 157.51,
+          "side": "Short",
+          "ticker": "COIN",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524427949665681458": {
+      "timestamp": "2026-07-08T14:52:25.702000+00:00",
+      "trades": [
+        {
+          "notes": "with 50 cents per share some support on $QQQ here",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "QRVO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524428056012521534": {
+      "timestamp": "2026-07-08T14:52:51.057000+00:00",
+      "trades": [
+        {
+          "notes": "with a scratch",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "QXO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524429477894164642": {
+      "timestamp": "2026-07-08T14:58:30.060000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 14.35,
+          "side": "Short",
+          "ticker": "BMNR",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1524429563046658092": {
+      "timestamp": "2026-07-08T14:58:50.362000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 62.5,
+          "side": "Short",
+          "ticker": "CRCL",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1524434790877761716": {
+      "timestamp": "2026-07-08T15:19:36.774000+00:00",
+      "trades": [
+        {
+          "notes": "for 3.49 gain",
+          "partial": false,
+          "price": 391.33,
+          "side": "Exit",
+          "ticker": "TSLA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524443326139465802": {
+      "timestamp": "2026-07-08T15:53:31.739000+00:00",
+      "trades": [
+        {
+          "notes": "b/e",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "BMNR",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1524443378169811164": {
+      "timestamp": "2026-07-08T15:53:44.144000+00:00",
+      "trades": [
+        {
+          "notes": "b/e",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "CRCL",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1524451061430222909": {
+      "timestamp": "2026-07-08T16:24:15.976000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": true,
+          "price": 199.95,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1524453702432460982": {
+      "timestamp": "2026-07-08T16:34:45.640000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 66.8,
+          "side": "Short",
+          "ticker": "CAVA",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524465453257326663": {
+      "timestamp": "2026-07-08T17:21:27.255000+00:00",
+      "trades": [
+        {
+          "notes": "c 1.03",
+          "partial": false,
+          "price": 16.0,
+          "side": "Long",
+          "ticker": "RIVN",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524471724689723616": {
+      "timestamp": "2026-07-08T17:46:22.481000+00:00",
+      "trades": [
+        {
+          "notes": "try this again",
+          "partial": false,
+          "price": 393.12,
+          "side": "Short",
+          "ticker": "TSLA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524475699308658868": {
+      "timestamp": "2026-07-08T18:02:10.104000+00:00",
+      "trades": [
+        {
+          "notes": "for a negligble win.",
+          "partial": false,
+          "price": 392.97,
+          "side": "Exit",
+          "ticker": "TSLA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524495500252938301": {
+      "timestamp": "2026-07-08T19:20:51.017000+00:00",
+      "trades": [
+        {
+          "notes": "for 5.50 partial profit swinging the rest.",
+          "partial": false,
+          "price": 203.85,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524810437194158180": {
+      "timestamp": "2026-07-09T16:12:17.835000+00:00",
+      "trades": [
+        {
+          "notes": "for 100% and and leaving quarter size on.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "RIVN",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1524866824922206289": {
+      "timestamp": "2026-07-09T19:56:21.717000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 197.71,
+          "side": "Long",
+          "ticker": "CRWD",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1524867371854991462": {
+      "timestamp": "2026-07-09T19:58:32.116000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 218.24,
+          "side": "Long",
+          "ticker": "TWLO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1524867495599804438": {
+      "timestamp": "2026-07-09T19:59:01.619000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 48.9,
+          "side": "Long",
+          "ticker": "HPE",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1524868271503966247": {
+      "timestamp": "2026-07-09T20:02:06.609000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 200.43,
+          "side": "Long",
+          "ticker": "RDDT",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525133078551466046": {
+      "timestamp": "2026-07-10T13:34:21.529000+00:00",
+      "trades": [
+        {
+          "notes": "for 6.00 gain.",
+          "partial": false,
+          "price": 206.43,
+          "side": "Exit",
+          "ticker": "RDDT",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525140747446386831": {
+      "timestamp": "2026-07-10T14:04:49.936000+00:00",
+      "trades": [
+        {
+          "notes": "for 7.00 gain",
+          "partial": false,
+          "price": 207.63,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525141276243136594": {
+      "timestamp": "2026-07-10T14:06:56.011000+00:00",
+      "trades": [
+        {
+          "notes": "/17/2026 385.00p 3.35 this am",
+          "partial": false,
+          "price": 7.0,
+          "side": "Long",
+          "ticker": "DELL",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1525142405354098708": {
+      "timestamp": "2026-07-10T14:11:25.212000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 56.18,
+          "side": "Short",
+          "ticker": "AXTI",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525143734126379078": {
+      "timestamp": "2026-07-10T14:16:42.016000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 15.02,
+          "side": "Long",
+          "ticker": "DLO",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1525144783155236954": {
+      "timestamp": "2026-07-10T14:20:52.124000+00:00",
+      "trades": [
+        {
+          "notes": "with 5 dollars of profit per share",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "TWLO",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1525145117000994826": {
+      "timestamp": "2026-07-10T14:22:11.719000+00:00",
+      "trades": [
+        {
+          "notes": "partial for 2.00 leaving a runner in case we roll over ty <@268142042511704065> nice callout",
+          "partial": false,
+          "price": 54.18,
+          "side": "Exit",
+          "ticker": "AXTI",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525146006780383312": {
+      "timestamp": "2026-07-10T14:25:43.859000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 49.7,
+          "side": "Exit",
+          "ticker": "HPE",
+          "user": "ryderlive"
+        }
+      ]
+    },
+    "1525147593930445015": {
+      "timestamp": "2026-07-10T14:32:02.265000+00:00",
+      "trades": [
+        {
+          "notes": "calls at  2.76 for 167% gain, have 2 left of the original 10",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "RIVN",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525149564489695404": {
+      "timestamp": "2026-07-10T14:39:52.083000+00:00",
+      "trades": [
+        {
+          "notes": ", got a nice fill",
+          "partial": false,
+          "price": 131.2,
+          "side": "Long",
+          "ticker": "CROX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1525155137470074992": {
+      "timestamp": "2026-07-10T15:02:00.785000+00:00",
+      "trades": [
+        {
+          "notes": "/2 at $133.46 - 2.26 gain",
+          "partial": false,
+          "price": 1.0,
+          "side": "Exit",
+          "ticker": "CROX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1525158961379152022": {
+      "timestamp": "2026-07-10T15:17:12.476000+00:00",
+      "trades": [
+        {
+          "notes": "with 3 dollars per share. bounce stronger than id like to see on QQQ",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "BE",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1525160048454795435": {
+      "timestamp": "2026-07-10T15:21:31.655000+00:00",
+      "trades": [
+        {
+          "notes": "remaining at $133.18, $2.12 avg gain overall.",
+          "partial": false,
+          "price": null,
+          "side": "Exit",
+          "ticker": "CROX",
+          "user": "jazzyblacksanta"
+        }
+      ]
+    },
+    "1525161607364083953": {
+      "timestamp": "2026-07-10T15:27:43.328000+00:00",
+      "trades": [
+        {
+          "notes": "for 1.00 loss on rest of position.",
+          "partial": false,
+          "price": 57.18,
+          "side": "Exit",
+          "ticker": "AXTI",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525162281355444284": {
+      "timestamp": "2026-07-10T15:30:24.020000+00:00",
+      "trades": [
+        {
+          "notes": "for over $13 profit per share. (Still have over 4/5th position on).",
+          "partial": true,
+          "price": 208.66,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "1ripley"
+        }
+      ]
+    },
+    "1525169985037668595": {
+      "timestamp": "2026-07-10T16:01:00.721000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 77.15,
+          "side": "Long",
+          "ticker": "PENG",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1525177107238355124": {
+      "timestamp": "2026-07-10T16:29:18.786000+00:00",
+      "trades": [
+        {
+          "notes": "for -32% on calls I took June 22nd expiring next week.",
+          "partial": false,
+          "price": 11.7,
+          "side": "Exit",
+          "ticker": "NVDA",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525184024551620638": {
+      "timestamp": "2026-07-10T16:56:48.002000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 135.9,
+          "side": "Long",
+          "ticker": "TGT",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1525195167722766571": {
+      "timestamp": "2026-07-10T17:41:04.741000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 79.96,
+          "side": "Long",
+          "ticker": "PENG",
+          "user": "mallowmushroom"
+        }
+      ]
+    },
+    "1525202804396785744": {
+      "timestamp": "2026-07-10T18:11:25.466000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 52.13,
+          "side": "Long",
+          "ticker": "FBIN",
+          "user": "isidore94"
+        }
+      ]
+    },
+    "1525203977560653965": {
+      "timestamp": "2026-07-10T18:16:05.170000+00:00",
+      "trades": [
+        {
+          "notes": "",
+          "partial": false,
+          "price": 187.6,
+          "side": "Exit",
+          "ticker": "CRWD",
+          "user": "00sav00"
+        }
+      ]
+    },
+    "1525256921312002119": {
+      "timestamp": "2026-07-10T21:46:27.944000+00:00",
+      "trades": [
+        {
+          "notes": "at close",
+          "partial": false,
+          "price": 792.5,
+          "side": "Long",
+          "ticker": "LITE",
+          "user": "1ripley"
+        }
+      ]
+    }
+  }
+}
