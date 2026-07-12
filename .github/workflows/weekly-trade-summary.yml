@@ -1,0 +1,42 @@
+name: Weekly Discord Trade Summary
+
+on:
+  schedule:
+    # 16:00 UTC every Sunday == 9:00am US Pacific (PDT)
+    - cron: "0 16 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write  # allow committing the updated running log back to the repo
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Post weekly trade summary
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: python weekly_summary.py
+
+      - name: Commit updated running log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain trade_log.json)" ]; then
+            git add trade_log.json
+            git commit -m "Update trade running log [skip ci]"
+            git push
+          else
+            echo "No changes to the running log."
+          fi
