@@ -203,7 +203,7 @@ class WinRateTests(unittest.TestCase):
             (3, "u", "Long", "BBB", 100.0, False),
             (4, "u", "Exit", "BBB", 90.0, False),    # loss: exit below entry
         ]))
-        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 1))
 
     def test_short_win_is_exit_below_entry(self):
         wr = ws.compute_win_rates(self._t([
@@ -212,7 +212,7 @@ class WinRateTests(unittest.TestCase):
             (3, "u", "Short", "DDD", 100.0, False),
             (4, "u", "Exit", "DDD", 105.0, False),   # loss: short, exit above
         ]))
-        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 1))
 
     def test_partial_exits_each_score_against_same_entry(self):
         wr = ws.compute_win_rates(self._t([
@@ -220,7 +220,7 @@ class WinRateTests(unittest.TestCase):
             (2, "u", "Exit", "NVDA", 197.5, True),   # partial loss
             (3, "u", "Exit", "NVDA", 208.66, True),  # partial win, still open
         ]))
-        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 1))
 
     def test_exit_without_price_is_ignored(self):
         wr = ws.compute_win_rates(self._t([
@@ -468,6 +468,309 @@ class OptionIntegrationTests(unittest.TestCase):
         summary = ws.build_summary(log, now, spot_close=_boom)
         self.assertNotIn("Options settled", summary)
         self.assertIn("Long **PENG**", summary)
+
+
+class OptionEarlyExitTests(unittest.TestCase):
+    """Options closed before expiration via structured or informal Exit lines."""
+
+    def _log(self, rows):
+        # rows: (message_id, iso_timestamp, content)
+        return {"messages": {str(mid): {"timestamp": ts, "content": c}
+                             for mid, ts, c in rows}}
+
+    def test_structured_exit_parses_as_option(self):
+        t = ws.parse_trade_line("#Exit NVDA 500c 8/15 @ 15.00",
+                                ref_date=datetime(2026, 7, 1).date())
+        self.assertEqual(t["instrument"], "option")
+        self.assertEqual(t["side"], "Exit")
+        self.assertEqual(t["price"], 15.0)
+
+    def test_structured_exit_closes_the_contract(self):
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "u posted a trade:\n#Long call NVDA 500c 8/15 for 12.00"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "u posted a trade:\n#Exit NVDA 500c 8/15 @ 15.00"),
+        ])
+        trades = ws.log_to_trades(log)
+        self.assertEqual(ws.compute_holdings(trades), {})
+        wr = ws.compute_win_rates(trades)
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+        self.assertAlmostEqual(wr["u"]["pct_sum"], 0.25)  # 15 vs 12 premium
+
+    def test_short_option_buyback_below_premium_is_a_win(self):
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "u posted a trade:\n#Short put SPY 400p 8/21 @ 3.20"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "u posted a trade:\n#Exit SPY 400p 8/21 @ 1.10"),
+        ])
+        wr = ws.compute_win_rates(ws.log_to_trades(log))
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+
+    def test_partial_option_exit_keeps_contract_open(self):
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "u posted a trade:\n#Long call NVDA 500c 8/15 for 12.00"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "u posted a trade:\n#Exit partial NVDA 500c 8/15 @ 15.00"),
+        ])
+        trades = ws.log_to_trades(log)
+        holdings = ws.compute_holdings(trades)
+        self.assertTrue(ws._is_option(holdings["u"][0]))
+        wr = ws.compute_win_rates(trades)  # still scored
+        self.assertEqual(wr["u"]["wins"], 1)
+
+    def test_informal_exit_closes_single_open_option(self):
+        # Entry is structured; the exit is a plain '#Exit TICKER price' line.
+        log = self._log([
+            (1, "2026-07-02T00:00:00+00:00",
+             "u posted a trade:\n#Long put AMD 160p 9/18 @ 4.00"),
+            (2, "2026-07-10T00:00:00+00:00",
+             "u posted a trade:\n#Exit AMD at 2.00 cutting it"),
+        ])
+        trades = ws.log_to_trades(log)
+        self.assertEqual(ws.compute_holdings(trades), {})
+        wr = ws.compute_win_rates(trades)
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (0, 1))
+
+    def test_informal_exit_ambiguous_between_two_contracts_is_ignored(self):
+        log = self._log([
+            (1, "2026-07-02T00:00:00+00:00",
+             "u posted a trade:\n#Long put AMD 160p 9/18 @ 4.00"),
+            (2, "2026-07-02T01:00:00+00:00",
+             "u posted a trade:\n#Long call AMD 180c 9/18 @ 3.00"),
+            (3, "2026-07-10T00:00:00+00:00",
+             "u posted a trade:\n#Exit AMD at 2.00"),
+        ])
+        trades = ws.log_to_trades(log)
+        holdings = ws.compute_holdings(trades)
+        self.assertEqual(len(holdings["u"]), 2)   # both contracts still open
+        self.assertEqual(ws.compute_win_rates(trades), {})
+
+    def test_informal_exit_still_prefers_open_stock_position(self):
+        # Backward compatibility: with a stock position open on the ticker,
+        # a plain exit closes the STOCK, not the option.
+        log = self._log([
+            (1, "2026-07-01T00:00:00+00:00",
+             "u posted a trade:\n#Long NVDA 170.00"),
+            (2, "2026-07-02T00:00:00+00:00",
+             "u posted a trade:\n#Long call NVDA 200c 9/18 @ 5.00"),
+            (3, "2026-07-10T00:00:00+00:00",
+             "u posted a trade:\n#Exit NVDA at 185.00"),
+        ])
+        holdings = ws.compute_holdings(ws.log_to_trades(log))
+        held = holdings["u"]
+        self.assertEqual(len(held), 1)
+        self.assertTrue(ws._is_option(held[0]))   # option survived, stock closed
+
+
+class WheelTests(unittest.TestCase):
+    """Covered-call assignment closes tracked shares and realizes their P&L."""
+
+    def _spot(self, mapping):
+        return lambda ticker, d: mapping.get((ticker, d.isoformat()))
+
+    def _holdings(self, *trades):
+        out = {}
+        for t in trades:
+            out.setdefault(t["user"], []).append(t)
+        return out
+
+    def _stock(self, ticker, price):
+        return {"user": "u", "ticker": ticker, "side": "Long", "price": price,
+                "partial": False, "instrument": "stock", "notes": "",
+                "timestamp": "2026-06-01T00:00:00+00:00",
+                "message_id": "1", "index": 0}
+
+    def _short_call(self, ticker, strike, premium, exp):
+        return {"user": "u", "ticker": ticker, "side": "Short",
+                "opt_type": "call", "strike": strike, "premium": premium,
+                "instrument": "option", "expiration": exp, "notes": "",
+                "timestamp": "2026-07-06T00:00:00+00:00",
+                "message_id": "2", "index": 0}
+
+    def test_covered_call_assignment_closes_shares_and_scores(self):
+        holdings = self._holdings(self._stock("MSFT", 430.0),
+                                  self._short_call("MSFT", 450.0, 6.0, "2026-07-10"))
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            holdings, now, self._spot({("MSFT", "2026-07-10"): 470.0}))
+        oc = res["u"][0]["outcome"]
+        self.assertEqual(oc["status"], "assigned")
+        self.assertTrue(oc["win"])                       # sold 456 vs 430 entry
+        self.assertAlmostEqual(oc["pct"], 26.0 / 430.0)
+        self.assertIn("from $430.00 entry", oc["summary"])
+        self.assertNotIn("u", holdings)                  # shares closed too
+
+    def test_covered_call_can_lose_vs_basis(self):
+        # Called away below the share entry -> scored as a loss.
+        holdings = self._holdings(self._stock("MSFT", 460.0),
+                                  self._short_call("MSFT", 450.0, 6.0, "2026-07-10"))
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            holdings, now, self._spot({("MSFT", "2026-07-10"): 470.0}))
+        self.assertFalse(res["u"][0]["outcome"]["win"])  # 456 < 460
+
+    def test_naked_short_call_assignment_stays_unscored(self):
+        holdings = self._holdings(self._short_call("MSFT", 450.0, 6.0, "2026-07-10"))
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            holdings, now, self._spot({("MSFT", "2026-07-10"): 470.0}))
+        oc = res["u"][0]["outcome"]
+        self.assertEqual(oc["status"], "assigned")
+        self.assertIsNone(oc["win"])
+
+
+class StatsAndMarksTests(unittest.TestCase):
+    def test_win_rate_line_includes_avg_and_weekly_split(self):
+        line = ws._win_rate_line({"wins": 2, "losses": 1, "pct_sum": 0.10,
+                                  "pct_n": 3, "week_wins": 1, "week_losses": 0})
+        self.assertIn("67%", line)
+        self.assertIn("avg +3.3%/trade", line)
+        self.assertIn("this week 1W–0L", line)
+
+    def test_win_rate_line_tolerates_minimal_stats(self):
+        line = ws._win_rate_line({"wins": 2, "losses": 1})
+        self.assertIn("67%", line)
+        self.assertNotIn("avg", line)
+        self.assertNotIn("this week", line)
+
+    def test_exits_annotated_with_pct_and_held_days(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 100.00"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit AAA 110.00"},
+        }}
+        trades = ws.log_to_trades(log)
+        ws.compute_win_rates(trades)
+        exit_t = [t for t in trades if t["side"] == "Exit"][0]
+        self.assertAlmostEqual(exit_t["pct"], 0.10)
+        self.assertEqual(exit_t["held_days"], 8)
+        self.assertIn("(+10.0%, held 8d)", ws._weekly_line(exit_t))
+
+    def test_marks_annotate_open_positions(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long $PENG 77.15"},
+            "2": {"timestamp": "2026-07-08T01:00:00+00:00",
+                  "content": "u posted a trade:\n#Short put SPY 400p 7/17 @ 3.20"},
+        }}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(
+            log, now, spot_close=lambda tk, d: None,
+            last_close=lambda tks: {"PENG": 82.3, "SPY": 402.3})
+        self.assertIn("→ 82.3 (+6.7%)", summary)          # stock mark-to-market
+        self.assertIn("(spot 402.3)", summary)            # option underlying
+        self.assertIn("⏳ expires this week", summary)    # 7/17 within 7 days
+
+    def test_no_last_close_means_no_marks(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long $PENG 77.15"},
+        }}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        self.assertNotIn("→", summary.split("**Open trades**")[1])
+
+    def test_short_position_mark_is_inverted(self):
+        line = ws._open_line(
+            {"user": "u", "ticker": "AAPL", "side": "Short", "price": 200.0,
+             "partial": False, "instrument": "stock", "notes": "",
+             "timestamp": "2026-07-08T00:00:00+00:00"},
+            marks={"AAPL": 190.0})
+        self.assertIn("(+5.0%)", line)   # short: price falling is a gain
+
+    def test_expired_but_unsettled_option_flagged(self):
+        line = ws._open_line(
+            {"user": "u", "ticker": "SPY", "side": "Short", "opt_type": "put",
+             "strike": 400.0, "premium": 3.2, "instrument": "option",
+             "expiration": "2026-07-10", "notes": "",
+             "timestamp": "2026-07-06T00:00:00+00:00"},
+            now=datetime(2026, 7, 12, tzinfo=timezone.utc))
+        self.assertIn("_(awaiting settlement)_", line)
+
+
+class ScaleInTests(unittest.TestCase):
+    def test_same_side_reentry_averages_and_keeps_open_date(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-06-20T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long $PENG 77.15"},
+            "2": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long PENG 80.00"},
+        }}
+        trades = ws.log_to_trades(log)
+        held = ws.compute_holdings(trades)["u"][0]
+        self.assertAlmostEqual(held["price"], 78.575)
+        self.assertEqual(held["adds"], 2)
+        self.assertEqual(held["timestamp"], "2026-06-20T00:00:00+00:00")
+        self.assertIn("(avg of 2)", ws._open_line(held))
+
+    def test_win_rate_scores_against_averaged_entry(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-06-20T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 100.00"},
+            "2": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 90.00"},
+            "3": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit AAA 97.00"},
+        }}
+        wr = ws.compute_win_rates(ws.log_to_trades(log))
+        # avg entry 95 -> exit 97 is a win (vs a loss against the first 100)
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
+
+    def test_opposite_side_reentry_replaces_position(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 100.00"},
+            "2": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Short AAA 110.00"},
+        }}
+        held = ws.compute_holdings(ws.log_to_trades(log))["u"][0]
+        self.assertEqual(held["side"], "Short")
+        self.assertEqual(held["price"], 110.0)
+        self.assertEqual(held.get("adds", 1), 1)
+
+
+class SpotCacheTests(unittest.TestCase):
+    def _option(self, exp):
+        return {"user": "u", "ticker": "SPY", "side": "Short", "opt_type": "put",
+                "strike": 400.0, "premium": 3.2, "instrument": "option",
+                "expiration": exp, "notes": "",
+                "timestamp": "2026-07-06T00:00:00+00:00",
+                "message_id": "1", "index": 0}
+
+    def test_cached_spot_skips_fetch(self):
+        calls = []
+
+        def spot(ticker, d):
+            calls.append(ticker)
+            return 405.0
+
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        cache = {"SPY:2026-07-10": 405.0}
+        holdings = {"u": [self._option("2026-07-10")]}
+        res = ws.resolve_expired_options(holdings, now, spot, cache=cache)
+        self.assertEqual(calls, [])   # served from cache
+        self.assertTrue(res["u"][0]["outcome"]["win"])
+
+    def test_fetched_spot_is_written_to_cache(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        cache = {}
+        holdings = {"u": [self._option("2026-07-10")]}
+        ws.resolve_expired_options(holdings, now, lambda tk, d: 405.0, cache=cache)
+        self.assertEqual(cache, {"SPY:2026-07-10": 405.0})
+
+    def test_prune_drops_stale_and_malformed_cache_entries(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        log = {"messages": {}, "spot_cache": {
+            "SPY:2026-07-10": 405.0,     # fresh -> kept
+            "OLD:2020-01-17": 100.0,     # past retention -> dropped
+            "garbage": 1.0,              # malformed -> dropped
+        }}
+        ws.prune_log(log, {}, now)
+        self.assertEqual(log["spot_cache"], {"SPY:2026-07-10": 405.0})
 
 
 if __name__ == "__main__":

@@ -48,9 +48,13 @@ _DATE = r"\d{4}-\d{1,2}-\d{1,2}|\d{1,2}/\d{1,2}(?:/\d{2,4})?"
 # A single-leg option line. What distinguishes it from a plain-stock line is
 # the presence of BOTH a call/put marker (a "call"/"put" word or a c/p strike
 # suffix) AND an expiration date -- neither appears on a "#Long PENG 77.15".
+# Long/Short opens a position; Exit (optionally partial) closes one early,
+# with the premium received where the opening premium would be.
 OPTION_RE = re.compile(
     r"^#\s*"
-    r"(?P<side>[Ll]ong|[Ss]hort)\s+"                       # options are long or short
+    r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit)"                  # open or early close
+    r"(?:\s+(?P<partial>[Pp]artial))?"                     # optional 'partial' (Exit)
+    r"\s+"
     r"(?:(?P<type_word>[Cc]alls?|[Pp]uts?)\s+)?"           # optional 'call'/'put' word
     r"\$?(?P<ticker>[A-Za-z][A-Za-z.]{0,6})\s+"            # TICKER
     r"\$?(?P<strike>\d+(?:\.\d+)?)(?P<type_suffix>[CcPp])?"  # strike (+ optional c/p)
@@ -132,7 +136,8 @@ def parse_option(line, ref_date=None):
 
     premium = m.group("premium")
     return {
-        "side": m.group("side").capitalize(),   # Long / Short
+        "side": m.group("side").capitalize(),   # Long / Short / Exit
+        "partial": bool(m.group("partial")),     # only meaningful on Exit
         "opt_type": opt_type,                    # call / put
         "ticker": m.group("ticker").upper(),
         "strike": float(m.group("strike")),
@@ -164,6 +169,8 @@ def resolve_option(side, opt_type, strike, premium, spot):
       win      -- True/False for a realized win/loss, or None when the position
                   converts into shares (assignment) so its P&L is not yet fixed
       pnl      -- realized profit/loss per share where defined, else None
+      pct      -- signed fractional return on the premium (e.g. a short option
+                  expiring worthless is +1.0, a long one -1.0), else None
       basis    -- per-share price at which shares change hands (assignment /
                   exercise), else None
       summary  -- short human-readable description of the outcome
@@ -178,26 +185,29 @@ def resolve_option(side, opt_type, strike, premium, spot):
             intrinsic = (spot - strike) if opt_type == CALL else (strike - spot)
             basis = strike  # buy (call) / sell (put) shares at the strike
             if prem is None:
-                pnl, win = None, True
+                pnl, pct, win = None, None, True
                 summary = f"in the money — worth {_d(intrinsic)}/sh at expiry"
             else:
                 pnl = intrinsic - prem
+                pct = pnl / prem if prem > 0 else None
                 win = pnl > 0
                 summary = (f"in the money — worth {_d(intrinsic)}/sh vs "
                            f"{_d(prem)} paid ({_signed(pnl)}/sh)")
-            return _outcome("exercised", itm, win, pnl, basis, summary)
+            return _outcome("exercised", itm, win, pnl, pct, basis, summary)
         # out of the money -> worthless, the premium paid is a total loss
         pnl = -prem if prem is not None else None
+        pct = -1.0 if prem else None
         summary = (f"expired worthless — loss of {_d(prem)} premium"
                    if prem is not None else "expired worthless — premium lost")
-        return _outcome("expired_worthless", itm, False, pnl, None, summary)
+        return _outcome("expired_worthless", itm, False, pnl, pct, None, summary)
 
     # side == "Short"
     if not itm:  # short call below strike, or short put above strike -> worthless
         pnl = prem if prem is not None else None
+        pct = 1.0 if prem else None
         summary = (f"expired worthless — win, kept {_d(prem)} premium"
                    if prem is not None else "expired worthless — win")
-        return _outcome("expired_worthless", itm, True, pnl, None, summary)
+        return _outcome("expired_worthless", itm, True, pnl, pct, None, summary)
 
     # in the money short option -> assigned
     if opt_type == PUT:  # cash-secured put: buy shares at the strike
@@ -207,7 +217,7 @@ def resolve_option(side, opt_type, strike, premium, spot):
                        f"(strike {_d(strike)} − {_d(prem)} premium)")
         else:
             summary = f"shares assigned at strike {_d(strike)}"
-        return _outcome("assigned", itm, None, None, basis, summary)
+        return _outcome("assigned", itm, None, None, None, basis, summary)
 
     # short call: shares called away / sold at the strike
     basis = (strike + prem) if prem is not None else strike
@@ -216,15 +226,16 @@ def resolve_option(side, opt_type, strike, premium, spot):
                    f"(effective {_d(basis)}/sh incl. premium)")
     else:
         summary = f"shares called away at strike {_d(strike)}"
-    return _outcome("assigned", itm, None, None, basis, summary)
+    return _outcome("assigned", itm, None, None, None, basis, summary)
 
 
-def _outcome(status, itm, win, pnl, basis, summary):
+def _outcome(status, itm, win, pnl, pct, basis, summary):
     return {
         "status": status,
         "itm": itm,
         "win": win,
         "pnl": pnl,
+        "pct": pct,
         "basis": basis,
         "summary": summary,
     }
@@ -265,6 +276,42 @@ def spot_close_on(ticker, exp_date, today=None):
         return None
 
 
+def last_closes(tickers):
+    """Return {ticker: latest close} for the given tickers in ONE batched
+    yfinance download, or {} (possibly missing some tickers) on any failure.
+
+    Used to mark open positions to market. Like spot_close_on, this is
+    failure-tolerant by design: no yfinance, no network, or a partial result
+    just means fewer (or no) mark-to-market annotations.
+    """
+    tickers = sorted(set(tickers))
+    if not tickers:
+        return {}
+    try:
+        import yfinance as yf
+    except Exception:
+        return {}
+    try:
+        data = yf.download(tickers, period="5d", interval="1d",
+                           auto_adjust=False, progress=False,
+                           group_by="ticker", threads=False)
+        if data is None or getattr(data, "empty", True):
+            return {}
+        out = {}
+        multi = getattr(data.columns, "nlevels", 1) > 1
+        for tk in tickers:
+            try:
+                series = data[tk]["Close"] if multi else data["Close"]
+                series = series.dropna()
+                if len(series):
+                    out[tk] = float(series.iloc[-1])
+            except Exception:
+                continue
+        return out
+    except Exception:
+        return {}
+
+
 # ---------------------------------------------------------------------------
 # Formatting
 # ---------------------------------------------------------------------------
@@ -287,10 +334,11 @@ def _contract(t):
     return f"{t['ticker']} ${strike}{suffix} exp {t['expiration']}"
 
 
-def format_option_open(t):
-    """One line for a still-open (unexpired) option position."""
+def format_option_open(t, verb=None):
+    """One line for an option position; ``verb`` overrides the leading word
+    (e.g. 'Partial exit' instead of the trade's own side)."""
     prem = f" @ {_d(t['premium'])}" if t.get("premium") is not None else ""
-    return f"{t['side']} {t['opt_type']} **{_contract(t)}**{prem}"
+    return f"{verb or t['side']} {t['opt_type']} **{_contract(t)}**{prem}"
 
 
 def format_option_resolution(t, outcome, spot):

@@ -67,6 +67,26 @@ class ParseOptionTests(unittest.TestCase):
         t = o.parse_option("#Long call NVDA 500c 8/15 @ 12.00 swing idea", self.REF)
         self.assertEqual(t["notes"], "swing idea")
 
+    def test_exit_option_line(self):
+        t = o.parse_option("#Exit NVDA 500c 8/15 @ 15.00", self.REF)
+        self.assertEqual(t["side"], "Exit")
+        self.assertFalse(t["partial"])
+        self.assertEqual(t["opt_type"], o.CALL)
+        self.assertEqual(t["strike"], 500.0)
+        self.assertEqual(t["expiration"], "2026-08-15")
+        self.assertEqual(t["premium"], 15.0)
+
+    def test_exit_partial_option_line(self):
+        t = o.parse_option("#Exit partial put SPY 400 2026-07-18 @ 1.10", self.REF)
+        self.assertEqual(t["side"], "Exit")
+        self.assertTrue(t["partial"])
+        self.assertEqual(t["opt_type"], o.PUT)
+
+    def test_informal_stock_exit_is_not_an_option(self):
+        # No expiration date -> stock-style exit even if it mentions calls.
+        self.assertIsNone(
+            o.parse_option("#Exit NVDA 11.70 for -32% on calls", self.REF))
+
 
 class ParseExpTests(unittest.TestCase):
     def test_invalid_date_returns_none(self):
@@ -153,6 +173,19 @@ class ResolveMatrixTests(unittest.TestCase):
         self.assertEqual(r["status"], "expired_worthless")
         self.assertFalse(r["win"])
 
+    # --- Fractional return on premium (pct) ---
+    def test_pct_on_premium(self):
+        self.assertAlmostEqual(
+            o.resolve_option("Short", "put", 400, 3.2, 405)["pct"], 1.0)
+        self.assertAlmostEqual(
+            o.resolve_option("Long", "call", 500, 12.0, 480)["pct"], -1.0)
+        self.assertAlmostEqual(
+            o.resolve_option("Long", "call", 500, 12.0, 530)["pct"], 1.5)  # 18/12
+        self.assertIsNone(
+            o.resolve_option("Short", "put", 400, 3.2, 390)["pct"])  # assigned
+        self.assertIsNone(
+            o.resolve_option("Short", "put", 400, None, 405)["pct"])  # no premium
+
     # --- Missing premium is tolerated ---
     def test_missing_premium_still_classifies(self):
         worthless = o.resolve_option("Short", "put", 400, None, 405)
@@ -172,6 +205,9 @@ class SpotCloseTests(unittest.TestCase):
             o.spot_close_on("AAPL", date(2026, 8, 15), today=date(2026, 7, 12))
         )
 
+    def test_last_closes_empty_input_is_networkless(self):
+        self.assertEqual(o.last_closes([]), {})
+
 
 class FormatTests(unittest.TestCase):
     def test_open_line_shows_contract_and_premium(self):
@@ -180,6 +216,11 @@ class FormatTests(unittest.TestCase):
         self.assertIn("Short put", line)
         self.assertIn("SPY $400p exp 2026-07-18", line)
         self.assertIn("$3.20", line)
+
+    def test_open_line_verb_override(self):
+        t = o.parse_option("#Exit NVDA 500c 8/15 @ 15.00", date(2026, 7, 1))
+        line = o.format_option_open(t, verb="Partial exit")
+        self.assertTrue(line.startswith("Partial exit call"))
 
     def test_resolution_line_marks_win_and_loss(self):
         t = o.parse_option("#Short put SPY 400p 2026-07-18 @ 3.20", date(2026, 7, 1))

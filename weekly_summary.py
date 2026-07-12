@@ -72,13 +72,13 @@ def parse_trade_line(line, ref_date=None):
     An option line (call/put with a strike and expiration date) is recognized
     first and enriched with option fields (``instrument="option"``, ``opt_type``,
     ``strike``, ``expiration``, ``premium``); otherwise the line is parsed as a
-    plain-stock trade. ``ref_date`` is passed through only to infer an
-    expiration year written without one.
+    plain-stock trade. An option Exit closes the contract early, with the
+    premium received in the price slot. ``ref_date`` is passed through only to
+    infer an expiration year written without one.
     """
     opt = options.parse_option(line, ref_date=ref_date)
     if opt:
         opt["instrument"] = "option"
-        opt["partial"] = False        # options resolve at expiration, not via partials
         opt["price"] = opt["premium"]  # so existing price-aware helpers still work
         return opt
 
@@ -253,6 +253,20 @@ def _pos_key(t):
     return (t["user"], t["ticker"])
 
 
+def _fallback_option_key(open_keys, t):
+    """Key of the option a plain-stock Exit most plausibly closes.
+
+    Traders often close an option with an informal '#Exit TICKER ...' line
+    (real example: '#Exit NVDA 11.70 for -32% on calls'). When such an exit
+    matches no open stock position but the trader has exactly ONE open option
+    contract on that ticker, treat it as closing that contract. Ambiguous
+    (two+ contracts) -> None, and the exit is ignored as before.
+    """
+    cands = [k for k in open_keys
+             if len(k) > 2 and k[0] == t["user"] and k[1] == t["ticker"]]
+    return cands[0] if len(cands) == 1 else None
+
+
 def log_to_trades(log):
     """Flatten the log into a chronologically sorted list of trade dicts.
 
@@ -283,15 +297,30 @@ def log_to_trades(log):
 def compute_holdings(trades):
     """Return {user: [open trade dicts]} from chronologically ordered trades.
 
-    Long/Short opens (or refreshes) a position; a full Exit closes it; a partial
-    Exit leaves the position open. Whatever is still open at the end is "held".
+    Long/Short opens a position; a repeat same-side entry scales in (the entry
+    price becomes the equal-weight average and the original open date is kept);
+    a full Exit closes it; a partial Exit leaves it open. A full Exit that
+    matches no stock position falls back to the trader's single open option on
+    that ticker (see _fallback_option_key). Whatever is still open is "held".
     """
     open_positions = {}  # position key -> opening trade
     for t in trades:
         key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
+            prev = open_positions.get(key)
+            if prev and prev["side"] == t["side"] \
+                    and prev.get("price") is not None and t.get("price") is not None:
+                n = prev.get("adds", 1)
+                t = dict(t)
+                t["price"] = (prev["price"] * n + t["price"]) / (n + 1)
+                t["adds"] = n + 1
+                t["timestamp"] = prev.get("timestamp") or t.get("timestamp")
+                if _is_option(t):
+                    t["premium"] = t["price"]
             open_positions[key] = t
         elif t["side"] == "Exit" and not t["partial"]:
+            if key not in open_positions and not _is_option(t):
+                key = _fallback_option_key(open_positions, t) or key
             open_positions.pop(key, None)
         # partial Exit: position stays open
     holdings = {}
@@ -300,35 +329,74 @@ def compute_holdings(trades):
     return holdings
 
 
-def compute_win_rates(trades):
-    """Quasi win rate per user by comparing each exit's price to its entry.
+def _blank_stats():
+    return {"wins": 0, "losses": 0, "pct_sum": 0.0, "pct_n": 0,
+            "week_wins": 0, "week_losses": 0}
 
-    A Long exit is a win when the exit price is above the entry; a Short exit is
-    a win when the exit price is below the entry. Both full and partial exits
-    count as data points (a partial does not close the position, so subsequent
-    exits are still compared to the same entry). Exits or entries without a
-    numeric price cannot be scored and are ignored.
+
+def compute_win_rates(trades, week_start=None):
+    """Quasi win rate and return stats per user, comparing exits to entries.
+
+    A Long exit is a win when the exit price is above the entry; a Short exit
+    is a win when the exit price is below the entry (for options the prices are
+    premiums, so buying back a short option below the premium collected is a
+    win). Both full and partial exits count; scale-ins average the entry price.
+    Exits or entries without a numeric price cannot be scored and are ignored.
+
+    Per user returns wins/losses (all-time), pct_sum/pct_n (signed fractional
+    returns for the average-%-per-trade line), and week_wins/week_losses for
+    exits at or after ``week_start`` (both 0 when it is None). Each scored exit
+    trade dict is annotated in place with ``pct`` and ``held_days`` so summary
+    lines can display them.
     """
-    entries = {}  # position key -> (side, entry_price)
-    stats = {}    # user -> [wins, losses]
+    entries = {}  # position key -> {"side", "price", "timestamp", "adds"}
+    stats = {}    # user -> stats dict
     for t in trades:
         key = _pos_key(t)
         if t["side"] in ("Long", "Short"):
-            entries[key] = (t["side"], t["price"])
+            prev = entries.get(key)
+            if prev and prev["side"] == t["side"] \
+                    and prev["price"] is not None and t["price"] is not None:
+                n = prev["adds"]
+                entries[key] = {
+                    "side": t["side"],
+                    "price": (prev["price"] * n + t["price"]) / (n + 1),
+                    "timestamp": prev["timestamp"] or t.get("timestamp"),
+                    "adds": n + 1,
+                }
+            else:
+                entries[key] = {"side": t["side"], "price": t["price"],
+                                "timestamp": t.get("timestamp"), "adds": 1}
         elif t["side"] == "Exit":
+            if key not in entries and not _is_option(t):
+                key = _fallback_option_key(entries, t) or key
             info = entries.get(key)
-            if info and info[1] is not None and t["price"] is not None:
-                side, entry_price = info
+            if info and info["price"] is not None and t["price"] is not None:
+                side, entry_price = info["side"], info["price"]
                 win = t["price"] > entry_price if side == "Long" \
                     else t["price"] < entry_price
-                s = stats.setdefault(t["user"], [0, 0])
-                s[0 if win else 1] += 1
+                s = stats.setdefault(t["user"], _blank_stats())
+                s["wins" if win else "losses"] += 1
+                if entry_price > 0:
+                    pct = (t["price"] - entry_price) / entry_price
+                    if side == "Short":
+                        pct = -pct
+                    t["pct"] = pct
+                    s["pct_sum"] += pct
+                    s["pct_n"] += 1
+                if info["timestamp"] and t.get("timestamp"):
+                    t["held_days"] = max(0, (parse_ts(t["timestamp"])
+                                             - parse_ts(info["timestamp"])).days)
+                if week_start is not None and t.get("timestamp") \
+                        and parse_ts(t["timestamp"]) >= week_start:
+                    s["week_wins" if win else "week_losses"] += 1
             if not t["partial"]:
                 entries.pop(key, None)  # full exit closes the position
-    return {u: {"wins": w, "losses": l} for u, (w, l) in stats.items()}
+    return stats
 
 
-def resolve_expired_options(holdings, now, spot_close=options.spot_close_on):
+def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
+                            cache=None):
     """Settle open OPTION positions whose expiration date has passed.
 
     ``holdings`` (as returned by ``compute_holdings``) is mutated in place: each
@@ -338,8 +406,16 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on):
     being tracked. An option whose spot price can't be fetched -- yfinance or
     the network unavailable, or the contract not yet expired -- is left open.
 
+    Wheel linkage: an assigned short CALL additionally closes the trader's
+    tracked long shares of the same ticker (covered call / wheel), realizing
+    the share P&L against the effective sale price (strike + premium) so the
+    outcome scores as a win or loss instead of dangling.
+
     ``spot_close(ticker, exp_date)`` is injectable for testing; it defaults to
     the live yfinance lookup and returns None when a price is unavailable.
+    ``cache`` (a mutable {"TICKER:YYYY-MM-DD": close} dict, persisted in the
+    running log) short-circuits refetching spots for expirations settled on
+    earlier runs -- historical closes never change.
 
     Returns ``{user: [resolution, ...]}`` where each resolution is
     ``{"trade": <option>, "spot": <float>, "exp_date": <date>, "outcome": <dict>}``.
@@ -354,10 +430,15 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on):
             if exp_date is None or exp_date > today:
                 kept.append(t)  # not an option, or not yet expired
                 continue
-            spot = spot_close(t["ticker"], exp_date)
+            cache_key = f"{t['ticker']}:{exp}"
+            spot = cache.get(cache_key) if cache is not None else None
+            if spot is None:
+                spot = spot_close(t["ticker"], exp_date)
             if spot is None:
                 kept.append(t)  # price unavailable -> leave open/pending
                 continue
+            if cache is not None:
+                cache[cache_key] = spot
             outcome = options.resolve_option(
                 t["side"], t["opt_type"], t["strike"], t.get("premium"), spot
             )
@@ -380,6 +461,27 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on):
                     "message_id": t.get("message_id"),
                     "index": t.get("index"),
                 })
+        # Wheel linkage: each assigned short call closes tracked long shares.
+        for rec in resolutions.get(user, []):
+            t, oc = rec["trade"], rec["outcome"]
+            if not (oc["status"] == "assigned" and t["side"] == "Short"
+                    and t["opt_type"] == options.CALL):
+                continue
+            for i, h in enumerate(kept):
+                if not _is_option(h) and h["side"] == "Long" \
+                        and h["ticker"] == t["ticker"]:
+                    shares = kept.pop(i)
+                    entry = shares.get("price")
+                    if entry:
+                        eff = oc["basis"]  # strike + premium received
+                        oc["win"] = eff > entry
+                        oc["pnl"] = eff - entry
+                        oc["pct"] = (eff - entry) / entry
+                        oc["summary"] += (f" — shares {oc['pct'] * 100:+.1f}% "
+                                          f"from {options._d(entry)} entry")
+                    else:
+                        oc["summary"] += " — closed the tracked share position"
+                    break
         if kept:
             holdings[user] = kept
         else:
@@ -389,7 +491,8 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on):
 
 def prune_log(log, holdings, now):
     """Drop messages older than RETENTION_DAYS, but always keep those that
-    opened a position that is still held (so long swings survive)."""
+    opened a position that is still held (so long swings survive). Cached
+    settlement spots for expirations past retention are dropped too."""
     cutoff = now - timedelta(days=RETENTION_DAYS)
     keep_ids = {t["message_id"] for trades in holdings.values() for t in trades}
     store = log.get("messages", {})
@@ -398,6 +501,15 @@ def prune_log(log, holdings, now):
             continue
         if parse_ts(store[mid]["timestamp"]) < cutoff:
             del store[mid]
+    cache = log.get("spot_cache", {})
+    for key in list(cache.keys()):
+        try:
+            exp = date.fromisoformat(key.split(":", 1)[1])
+        except (IndexError, ValueError):
+            del cache[key]
+            continue
+        if exp < cutoff.date():
+            del cache[key]
 
 
 # ---------------------------------------------------------------------------
@@ -411,9 +523,25 @@ def _fmt_price(price):
     return f"{price:g}" if price is not None else ""
 
 
+def _score_suffix(t):
+    """' (+3.4%, held 12d)' for a scored exit, or '' when nothing is known."""
+    bits = []
+    if t.get("pct") is not None:
+        bits.append(f"{t['pct'] * 100:+.1f}%")
+    if t.get("held_days") is not None:
+        bits.append(f"held {t['held_days']}d")
+    return f" ({', '.join(bits)})" if bits else ""
+
+
 def _weekly_line(t):
     """One line describing a trade a trader took this week."""
     if _is_option(t):
+        if t["side"] == "Exit":
+            icon = "🟡" if t["partial"] else "✅"
+            verb = "Partial exit" if t["partial"] else "Exit"
+            notes = f" — {t['notes']}" if t.get("notes") else ""
+            return (f"- {icon} {options.format_option_open(t, verb=verb)}"
+                    f"{_score_suffix(t)}{notes}")
         icon = "🟢" if t["side"] == "Long" else "🔵"
         return f"- {icon} {options.format_option_open(t)}"
     price = _fmt_price(t["price"])
@@ -422,67 +550,111 @@ def _weekly_line(t):
         icon = "🟡" if t["partial"] else "✅"
         verb = "Partial exit" if t["partial"] else "Exit"
         notes = f" — {t['notes']}" if t["notes"] else ""
-        return f"- {icon} {verb} **{t['ticker']}**{price_str}{notes}"
+        return f"- {icon} {verb} **{t['ticker']}**{price_str}{_score_suffix(t)}{notes}"
     icon = "🟢" if t["side"] == "Long" else "🔵"
     return f"- {icon} {t['side']} **{t['ticker']}**{price_str}"
 
 
-def _open_line(t):
-    """One line describing a trader's still-open position."""
-    if _is_option(t):
-        opened = f" _(opened {_fmt_date(parse_ts(t['timestamp']))})_" \
-            if t.get("timestamp") else ""
-        return f"- {options.format_option_open(t)}{opened}"
-    price = _fmt_price(t["price"])
-    price_str = f" @ {price}" if price else ""
-    tag = " _(assigned)_" if t.get("assigned") else ""
+def _open_line(t, now=None, marks=None):
+    """One line describing a trader's still-open position.
+
+    ``marks`` ({ticker: latest close}) appends a mark-to-market for stocks and
+    the underlying spot for options; ``now`` drives the expires-soon tag.
+    """
+    mark = (marks or {}).get(t["ticker"])
     opened = f" _(opened {_fmt_date(parse_ts(t['timestamp']))})_" \
         if t.get("timestamp") else ""
-    return f"- {t['side']} **{t['ticker']}**{price_str}{tag}{opened}"
+    if _is_option(t):
+        tags = f" (spot {mark:g})" if mark is not None else ""
+        if now is not None:
+            exp = date.fromisoformat(t["expiration"])
+            today = now.date()
+            if exp <= today:
+                tags += " _(awaiting settlement)_"
+            elif exp <= today + timedelta(days=7):
+                tags += " ⏳ expires this week"
+        return f"- {options.format_option_open(t)}{tags}{opened}"
+    price = _fmt_price(t["price"])
+    price_str = f" @ {price}" if price else ""
+    mtm = ""
+    if mark is not None and t.get("price"):
+        upct = (mark - t["price"]) / t["price"]
+        if t["side"] == "Short":
+            upct = -upct
+        mtm = f" → {mark:g} ({upct * 100:+.1f}%)"
+    tags = f" (avg of {t['adds']})" if t.get("adds", 1) > 1 else ""
+    if t.get("assigned"):
+        tags += " _(assigned)_"
+    return f"- {t['side']} **{t['ticker']}**{price_str}{tags}{mtm}{opened}"
 
 
 def _win_rate_line(stats):
     """'Quasi win rate' line for a trader, or None if nothing was scoreable."""
     if not stats:
         return None
-    wins, losses = stats["wins"], stats["losses"]
+    wins, losses = stats.get("wins", 0), stats.get("losses", 0)
     total = wins + losses
     if total == 0:
         return None
     pct = round(100 * wins / total)
-    return f"_Quasi win rate: **{pct}%** ({wins}W–{losses}L, {total} scored)_"
+    parts = [f"Quasi win rate: **{pct}%** ({wins}W–{losses}L, {total} scored)"]
+    if stats.get("pct_n"):
+        avg = stats["pct_sum"] / stats["pct_n"] * 100
+        parts.append(f"avg {avg:+.1f}%/trade")
+    week_w, week_l = stats.get("week_wins", 0), stats.get("week_losses", 0)
+    if week_w + week_l:
+        parts.append(f"this week {week_w}W–{week_l}L")
+    return "_" + " · ".join(parts) + "_"
 
 
-def build_summary(log, now, spot_close=options.spot_close_on):
+def build_summary(log, now, spot_close=options.spot_close_on, last_close=None):
     """Build a trader-by-trader summary (Markdown) from the running log.
 
-    Per trader: trades taken this week, options that settled this week, and
-    outstanding open trades. A stock position opened with Long/Short stays open
-    until a full Exit -- a partial Exit does not close it. An option stays open
-    until its expiration date passes, at which point it is settled against the
-    underlying's closing spot (via ``spot_close``): out-of-the-money it expires
-    (a win for the seller, a loss for the buyer); in-the-money a short option is
-    assigned and a long option is worth its intrinsic value. Settled option
-    wins/losses fold into the quasi win rate.
+    Per trader: an all-time/weekly stats line, trades taken this week, options
+    that settled this week, and outstanding open trades. A stock position
+    opened with Long/Short stays open until a full Exit -- a partial Exit does
+    not close it. An option stays open until it is exited early or its
+    expiration date passes, at which point it is settled against the
+    underlying's closing spot (via ``spot_close``, cached in the log):
+    out-of-the-money it expires (a win for the seller, a loss for the buyer);
+    in-the-money a short option is assigned and a long option is worth its
+    intrinsic value. Settled option wins/losses fold into the quasi win rate.
+
+    ``last_close`` (an injectable ``tickers -> {ticker: close}``, e.g.
+    options.last_closes) marks open positions to market; None skips marking,
+    keeping direct calls and tests network-free.
     """
     trades = log_to_trades(log)
-    holdings = compute_holdings(trades)
-    win_rates = compute_win_rates(trades)
-    resolutions = resolve_expired_options(holdings, now, spot_close)
-
     week_start = now - timedelta(days=WEEK_DAYS)
+    holdings = compute_holdings(trades)
+    win_rates = compute_win_rates(trades, week_start=week_start)
+    resolutions = resolve_expired_options(
+        holdings, now, spot_close, cache=log.setdefault("spot_cache", {})
+    )
 
     # Fold settled options into the quasi win rate (all of them, so the rate is
     # stable run-to-run) and collect the ones that settled this week to display.
     settled_by_user = {}
     for user, recs in resolutions.items():
         for rec in recs:
-            win = rec["outcome"]["win"]
-            if win is not None:
-                s = win_rates.setdefault(user, {"wins": 0, "losses": 0})
-                s["wins" if win else "losses"] += 1
-            if rec["exp_date"] >= week_start.date():
+            oc = rec["outcome"]
+            this_week = rec["exp_date"] >= week_start.date()
+            if oc["win"] is not None:
+                s = win_rates.setdefault(user, _blank_stats())
+                s["wins" if oc["win"] else "losses"] += 1
+                if this_week:
+                    s["week_wins" if oc["win"] else "week_losses"] += 1
+                if oc.get("pct") is not None:
+                    s["pct_sum"] += oc["pct"]
+                    s["pct_n"] += 1
+            if this_week:
                 settled_by_user.setdefault(user, []).append(rec)
+
+    marks = {}
+    if last_close is not None:
+        open_tickers = {t["ticker"] for held in holdings.values() for t in held}
+        if open_tickers:
+            marks = last_close(sorted(open_tickers)) or {}
 
     weekly_by_user = {}
     for t in trades:
@@ -529,7 +701,8 @@ def build_summary(log, now, spot_close=options.spot_close_on):
         open_trades = holdings.get(user, [])
         if open_trades:
             lines.extend(
-                _open_line(t) for t in sorted(open_trades, key=lambda x: x["ticker"])
+                _open_line(t, now=now, marks=marks)
+                for t in sorted(open_trades, key=lambda x: x["ticker"])
             )
         else:
             lines.append("- _none_")
@@ -587,9 +760,12 @@ def main():
 
         holdings = compute_holdings(log_to_trades(log))
         prune_log(log, holdings, now)
-        save_log(log)
 
-    summary = build_summary(log, now)
+    # Settlement inside build_summary may add to the log's spot cache, so the
+    # log is saved after the summary is built (live runs only).
+    summary = build_summary(log, now, last_close=options.last_closes)
+    if not dry_run:
+        save_log(log)
     chunks = chunk_message(summary)
 
     if dry_run:
