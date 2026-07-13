@@ -785,6 +785,55 @@ def _score_suffix(t):
     return f" ({', '.join(bits)})" if bits else ""
 
 
+def _group_weekly(week_trades):
+    """Fold a same-week Long/Short-then-full-Exit pair on the same position
+    into a single round-trip unit, so a closed trade reads as one line
+    instead of two separate bullets scattered through the list.
+
+    Adds, partial exits, and an exit that closes a position opened before
+    this week are never merged -- they stay standalone, exactly as before.
+    A position opened this week that never got a matching exit surfaces as
+    a "still open" unit (also shown, in full, under Open trades below).
+
+    Returns a list of render units in roughly chronological order (a merged
+    pair lands at its exit's position; a still-open leftover trails at the
+    end): a plain trade dict, a ("pair", open_t, exit_t) tuple, or a
+    ("still_open", open_t) tuple.
+    """
+    units = []
+    open_by_key = {}
+    for t in week_trades:
+        if t["side"] in ("Long", "Short"):
+            key = _pos_key(t)
+            prev = open_by_key.get(key)
+            if prev is not None:
+                units.append(prev)  # superseded without closing -> standalone
+            open_by_key[key] = t
+        elif t["side"] == "Exit" and not t["partial"]:
+            key = _pos_key(t)
+            opened = open_by_key.pop(key, None)
+            units.append(("pair", opened, t) if opened is not None else t)
+        else:
+            units.append(t)  # Add, or partial Exit
+    units.extend(("still_open", t) for t in open_by_key.values())
+    return units
+
+
+def _weekly_merged_line(open_t, exit_t):
+    """One line for a position opened and fully closed within the same week."""
+    icon = "🟢" if open_t["side"] == "Long" else "🔵"
+    exit_price = _fmt_price(exit_t.get("price"))
+    exit_str = f" @ {exit_price}" if exit_price else ""
+    notes = f" — {exit_t['notes']}" if exit_t.get("notes") else ""
+    if _is_option(open_t):
+        return (f"- {icon} {options.format_option_open(open_t)} "
+                f"→ Exit{exit_str}{_score_suffix(exit_t)}{notes}")
+    entry_price = _fmt_price(open_t.get("price"))
+    entry_str = f" @ {entry_price}" if entry_price else ""
+    return (f"- {icon} **{open_t['ticker']}**: {open_t['side']}{entry_str} "
+            f"→ Exit{exit_str}{_score_suffix(exit_t)}{notes}")
+
+
 def _weekly_line(t):
     """One line describing a trade a trader took this week."""
     if _is_option(t):
@@ -944,7 +993,13 @@ def build_summary(log, now, spot_close=options.spot_close_on, last_close=None):
         lines.append("**Trades taken this week**")
         week_trades = weekly_by_user.get(user, [])
         if week_trades:
-            lines.extend(_weekly_line(t) for t in week_trades)
+            for unit in _group_weekly(week_trades):
+                if isinstance(unit, tuple) and unit[0] == "pair":
+                    lines.append(_weekly_merged_line(unit[1], unit[2]))
+                elif isinstance(unit, tuple) and unit[0] == "still_open":
+                    lines.append(_weekly_line(unit[1]) + " _(still open)_")
+                else:
+                    lines.append(_weekly_line(unit))
         else:
             lines.append("- _no new trades this week_")
 

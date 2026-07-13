@@ -1035,6 +1035,125 @@ class ReviewFixTests(unittest.TestCase):
         self.assertEqual(set(log["messages"]), {"1", "2", "3"})
 
 
+class WeeklyGroupingTests(unittest.TestCase):
+    """Same-week Long/Short-then-full-Exit round trips render as one line."""
+
+    def _log(self, rows):
+        return {"messages": {str(mid): {"timestamp": ts, "content": c}
+                             for mid, ts, c in rows}}
+
+    def test_same_week_round_trip_merges_into_one_line(self):
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Short BMNR 14.35"),
+            (2, "2026-07-06T01:00:00+00:00",
+             "u posted a trade:\n#Exit BMNR b/e"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        self.assertEqual(sec.count("BMNR"), 1)   # one merged line, not two
+        self.assertIn("Short @ 14.35", sec)
+        self.assertIn("Exit", sec)
+        self.assertIn("b/e", sec)
+
+    def test_scored_round_trip_shows_pct_and_held_days(self):
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Long HPE 48.9"),
+            (2, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Exit HPE 49.7"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        self.assertIn("**HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%, held 0d)",
+                      summary)
+
+    def test_exit_of_a_pre_existing_position_stays_standalone(self):
+        # Opened well before the week window -> the weekly exit must NOT
+        # merge with anything (there's no matching open in week_trades).
+        log = self._log([
+            (1, "2026-05-01T00:00:00+00:00",
+             "u posted a trade:\n#Long VRT 300.00"),
+            (2, "2026-07-11T00:00:00+00:00",
+             "u posted a trade:\n#Exit VRT rest of the shares 5$"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        self.assertIn("Exit **VRT**", sec)
+        self.assertNotIn("→", sec)   # no merge arrow -- solo exit
+
+    def test_position_opened_this_week_with_no_exit_tagged_still_open(self):
+        log = self._log([
+            (1, "2026-07-10T00:00:00+00:00",
+             "u posted a trade:\n#Long DLO 15.02"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        self.assertIn("Long **DLO** @ 15.02 _(still open)_", sec)
+
+    def test_partial_exit_never_merges(self):
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Long AAA 100.00"),
+            (2, "2026-07-07T00:00:00+00:00",
+             "u posted a trade:\n#Exit partial AAA 110.00"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        self.assertIn("Long **AAA**", sec)
+        self.assertIn("Partial exit **AAA**", sec)
+        self.assertNotIn("→", sec)
+
+    def test_add_stays_standalone_around_a_merged_round_trip(self):
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Long ALAB 470.00"),
+            (2, "2026-07-07T00:00:00+00:00",
+             "u posted a trade:\n#Add Long ALAB. New avg: 450.00"),
+            (3, "2026-07-08T00:00:00+00:00",
+             "u posted a trade:\n#Exit ALAB 460.00"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        self.assertIn("➕ Add **ALAB**", sec)                # standalone
+        self.assertIn("**ALAB**: Long @ 470 → Exit @ 460", sec)  # merged
+
+    def test_superseded_same_week_open_renders_standalone_not_still_open(self):
+        # Opened, then re-opened (no close in between) -- the FIRST open was
+        # superseded, not "still open"; only the final one gets that tag.
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Long FBIN 52.00"),
+            (2, "2026-07-08T00:00:00+00:00",
+             "u posted a trade:\n#Long FBIN 55.00"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        self.assertIn("Long **FBIN** @ 52", sec)
+        self.assertNotIn("52 _(still open)_", sec)
+        self.assertIn("Long **FBIN** @ 55 _(still open)_", sec)
+
+    def test_option_round_trip_merges_too(self):
+        log = self._log([
+            (1, "2026-07-09T00:00:00+00:00",
+             "u posted a trade:\n#Long call NVDA 500c 8/15 for 12.00"),
+            (2, "2026-07-11T00:00:00+00:00",
+             "u posted a trade:\n#Exit NVDA 500c 8/15 @ 15.00"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        self.assertEqual(sec.count("NVDA"), 1)
+        self.assertIn("→ Exit @ 15", sec)
+        self.assertIn("+25.0%", sec)
+
+
 class DateFirstOptionRegressionTests(unittest.TestCase):
     """A date-first option post must never leak its date into a fake stock
     price and produce a bogus mark-to-market percentage (real symptom: a

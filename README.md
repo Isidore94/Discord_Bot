@@ -93,6 +93,11 @@ are cached in the running log so they are never refetched.
   equal size, and the position scores a single win/loss at the equal-weighted
   average return, shown as e.g. `(+5.3%, 1 partial, held 6d)`.
 - Scored exits show their % return and hold time, e.g. `(+10.0%, held 8d)`.
+- A position opened AND fully closed within the same week collapses into one
+  round-trip line instead of two separate bullets, e.g.
+  `**HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%, held 0d)`. Adds and partial
+  exits always stay on their own line; a position opened this week with no
+  closing exit yet is tagged `(still open)`.
 - Open positions are marked to market with one batched quote fetch: stocks get
   `→ 82.3 (+6.7%)`, options show the underlying spot; open options expiring
   within 7 days are tagged `⏳ expires this week`. Marking is skipped silently
