@@ -1663,7 +1663,21 @@
     "1525256921312002119": {
       "content": "1ripley posted a trade:\n#Long LITE $792.50 at close",
       "timestamp": "2026-07-10T21:46:27.944000+00:00"
+    },
+    "1526013335282253986": {
+      "content": "leebero posted a trade:\n#exit QQQ 100% PDS a while ago",
+      "timestamp": "2026-07-12T23:52:11.088000+00:00"
+    },
+    "1526013421076611122": {
+      "content": "leebero posted a trade:\n#exit BE PCS for 20% gain this past week (passive order I didn\u2019t notice)",
+      "timestamp": "2026-07-12T23:52:31.543000+00:00"
     }
   },
-  "spot_cache": {}
+  "spot_cache": {
+    "BE:2026-07-10": 244.61000061035156,
+    "MRVL:2026-07-02": 245.2899932861328,
+    "NBIS:2026-07-02": 215.6199951171875,
+    "QQQ:2026-06-26": 706.52001953125,
+    "VRT:2026-06-26": 303.95001220703125
+  }
 }
