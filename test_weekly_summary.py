@@ -1162,6 +1162,70 @@ class WeeklyGroupingTests(unittest.TestCase):
         self.assertIn("+25.0%", sec)
 
 
+class ExitSentimentTests(unittest.TestCase):
+    """Exits that describe their result in prose get the right win/loss icon."""
+
+    def test_note_outcome_classification(self):
+        cases = {
+            "for a loss at 37.60": "loss",
+            "for a 1.60 loss per share": "loss",
+            "totaly around 1 dollar per share.": "win",
+            "with 50 cents per share some support on $QQQ here": "win",
+            "with a scratch": "scratch",
+            "with 5 dollars of profit per share": "win",
+            "for a 3 dollar gain on shares.": "win",
+            "took the loss, was sized small": "loss",
+            "b/e": "scratch",
+            "just some chatter": None,
+        }
+        for text, expected in cases.items():
+            self.assertEqual(ws._note_outcome(text), expected, text)
+
+    def _log(self, rows):
+        return {"messages": {str(mid): {"timestamp": ts, "content": c}
+                             for mid, ts, c in rows}}
+
+    def test_prose_exits_get_win_loss_scratch_icons(self):
+        log = self._log([
+            (1, "2026-07-08T00:00:00+00:00", "u posted a trade:\n#Short WHR 37.03"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "u posted a trade:\n#Exit WHR for a loss at 37.60"),
+            (3, "2026-07-08T01:00:00+00:00", "u posted a trade:\n#Long TWLO 218.24"),
+            (4, "2026-07-09T01:00:00+00:00",
+             "u posted a trade:\n#Exit TWLO with 5 dollars of profit per share"),
+            (5, "2026-07-08T02:00:00+00:00", "u posted a trade:\n#Short QXO 14.19"),
+            (6, "2026-07-09T02:00:00+00:00",
+             "u posted a trade:\n#exit QXO with a scratch"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        self.assertIn("❌ **WHR**", summary)
+        self.assertIn("✅ **TWLO**", summary)
+        self.assertIn("➖ **QXO**", summary)
+        self.assertIn("Win rate this week: **50%** (1W–1L)", summary)  # scratch excluded
+
+    def test_prose_win_loss_count_in_weekly_rate(self):
+        log = self._log([
+            (1, "2026-07-08T00:00:00+00:00", "u posted a trade:\n#Long ANET 175"),
+            (2, "2026-07-09T00:00:00+00:00",
+             "u posted a trade:\n#exit ANET for a 1.60 loss per share"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        wr = ws.compute_win_rates(ws.log_to_trades(log),
+                                  week_start=now - timedelta(days=7))
+        self.assertEqual((wr["u"]["week_wins"], wr["u"]["week_losses"]), (0, 1))
+
+    def test_numeric_return_still_wins_over_prose(self):
+        # A parseable exit price is used directly (prose only fills the gap).
+        log = self._log([
+            (1, "2026-07-08T00:00:00+00:00", "u posted a trade:\n#Long HPE 48.9"),
+            (2, "2026-07-09T00:00:00+00:00", "u posted a trade:\n#Exit HPE 49.7"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        self.assertIn("✅ **HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%", summary)
+
+
 class SpreadIntegrationTests(unittest.TestCase):
     """Multi-leg spreads are tracked and scored as theta/credit plays."""
 

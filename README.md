@@ -131,6 +131,11 @@ the right sign either way (a stated `for +67%` is used directly when present).
   trade)`. A close held 0 days is a **day trade**; longer is a **swing Nd**.
   Opens, adds, and partials of a still-open position are *not* repeated here —
   they live under Open trades — so a position never shows up twice.
+- Each closed trade is marked ✅ profit / ❌ loss / ➖ scratch. When the exit
+  gives a number (a price, `for 50%`, an option premium) the sign comes from
+  that; otherwise the result is read from the exit's own words (`for a loss`,
+  `5 dollars of profit`, `with a scratch`, `1 dollar per share`). Only ✅/❌
+  count toward the weekly win rate.
 - Open positions are marked to market with one batched quote fetch: stocks get
   `→ 82.3 (+6.7%)`, options show the underlying spot; open options expiring
   within 7 days are tagged `⏳ expires this week`. A position that was trimmed

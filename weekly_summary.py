@@ -97,6 +97,33 @@ PARTIAL_HINT_RE = re.compile(
 # exit when entry/exit prices can't be compared.
 STATED_PCT_RE = re.compile(r"(?i)\bfor\s+(?:a\s+)?([+-]?\d+(?:\.\d+)?)\s*%")
 
+# Free-text profit/loss sentiment, for exits that describe the result in prose
+# instead of a clean price -- e.g. "for a loss at 37.60", "with a scratch",
+# "with 5 dollars of profit per share", "around 1 dollar per share". Checked in
+# order: scratch, then loss, then an explicit gain word, then a stated
+# per-share/dollar amount (a bare amount with no loss word reads as a gain --
+# losses are called out with "loss"/"down"/"red").
+_SCRATCH_RE = re.compile(r"(?i)\bscratch|\bb/?e\b|break\s*even|breakeven|"
+                         r"\beven\b|\bflat\b")
+_LOSS_RE = re.compile(r"(?i)\b(?:loss|lost|red)\b|stopped\s+out|took\s+the\s+loss|"
+                      r"\bdown\s+\$?\d")
+_GAIN_RE = re.compile(r"(?i)\b(?:profit|profits|gain|gains|green|winner?)\b")
+_AMOUNT_RE = re.compile(r"(?i)\$\d|\b\d+(?:\.\d+)?\s*(?:dollar|cent|buck)|"
+                        r"\bper\s+share\b")
+
+
+def _note_outcome(text):
+    """Classify an exit's free text as 'win' / 'loss' / 'scratch', or None when
+    there is no usable signal. Used only when no numeric return was parsed."""
+    t = text or ""
+    if _SCRATCH_RE.search(t):
+        return "scratch"
+    if _LOSS_RE.search(t):
+        return "loss"
+    if _GAIN_RE.search(t) or _AMOUNT_RE.search(t):
+        return "win"
+    return None
+
 
 def parse_trade_line(line, ref_date=None):
     """Parse one '#Long/Short/Exit ...' line into a dict, or None if no match.
@@ -487,6 +514,23 @@ def _blank_stats():
             "week_pct_sum": 0.0, "week_pct_n": 0}
 
 
+def _apply_note_outcome(t, stats, week_start):
+    """For a full exit with no numeric return, read profit/loss from its free
+    text. Stamp ``t["outcome"]`` ('win'/'loss'/'scratch') for the icon, and
+    count a win or loss into the weekly tally (a scratch counts as neither)."""
+    outcome = _note_outcome(t.get("notes"))
+    if not outcome:
+        return
+    t["outcome"] = outcome
+    if outcome == "scratch":
+        return
+    s = stats.setdefault(t["user"], _blank_stats())
+    s["wins" if outcome == "win" else "losses"] += 1
+    if week_start is not None and t.get("timestamp") \
+            and parse_ts(t["timestamp"]) >= week_start:
+        s["week_wins" if outcome == "win" else "week_losses"] += 1
+
+
 def compute_win_rates(trades, week_start=None):
     """Quasi win rate and return stats per user, one data point per POSITION.
 
@@ -551,6 +595,10 @@ def compute_win_rates(trades, week_start=None):
                 key = _fallback_option_key(entries, t) or key
             info = entries.get(key)
             if info is None:
+                # No tracked entry to price against, but a clear profit/loss
+                # word still sets the icon and counts as a close this week.
+                if not t["partial"]:
+                    _apply_note_outcome(t, stats, week_start)
                 continue
             econ = options.economic_side(info["side"], info.get("opt_type"))
             pct = _tranche_pct(econ, info["price"], t,
@@ -591,6 +639,9 @@ def compute_win_rates(trades, week_start=None):
                     s["week_wins" if win else "week_losses"] += 1
                     s["week_pct_sum"] += combined
                     s["week_pct_n"] += 1
+            else:
+                # No numeric return -> fall back to the exit's prose.
+                _apply_note_outcome(t, stats, week_start)
             entries.pop(key, None)
     return stats
 
@@ -826,9 +877,14 @@ def _closed_suffix(t):
 
 def _closed_icon(t):
     pct = t.get("pct")
-    if pct is None or pct == 0:
-        return "➖"          # scratch, or a close we couldn't score
-    return "✅" if pct > 0 else "❌"
+    if pct is not None:
+        if pct > 0:
+            return "✅"
+        if pct < 0:
+            return "❌"
+        return "➖"          # exactly flat
+    # No numeric return: use the profit/loss read from the exit's prose.
+    return {"win": "✅", "loss": "❌", "scratch": "➖"}.get(t.get("outcome"), "➖")
 
 
 def _closed_line(t):
