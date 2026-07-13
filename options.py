@@ -22,20 +22,18 @@ Two capabilities layered on top of the plain-stock parser in weekly_summary.py:
 
 2. Resolving an option that has reached expiration. The underlying's closing
    spot price on the expiration date (fetched with yfinance) decides the
-   outcome. The four single-leg cases:
+   outcome. This channel's put labels are inverted from textbook -- a #Long put
+   is a premium SALE (theta) and a #Short put is a bought put (directional):
 
-                 spot >= strike (call ITM / put OTM)   spot < strike (call OTM / put ITM)
-     Long call   exercised: worth spot-strike           expired worthless -> loss of premium
-     Short call  assigned: shares called away @ strike   expired worthless -> WIN (keep premium)
-     Long put    expired worthless -> loss of premium    exercised: worth strike-spot
-     Short put   expired worthless -> WIN (keep premium) assigned: buy shares @ strike
+     #Long call   directional long  -> win if spot > strike, else worthless loss
+     #Short call  sold call         -> worthless win if spot <= strike, else called away
+     #Long put    theta (sold)      -> worthless win if spot >= strike, else assigned
+     #Short put   directional short -> win if spot < strike, else worthless loss
 
-   In this channel puts are premium/theta trades regardless of the Long/Short
-   label a trader types (a put is written to collect premium, not bought for
-   downside): a put that finishes at or above its strike expires worthless for
-   a full win (premium kept); below the strike it assigns shares at a cost
-   basis of the strike minus the premium. Only calls keep buyer/seller
-   direction (a long call is a bought bet, a short call is covered/sold).
+   The "theta" plays (#Long put, #Short call) collect premium and win when the
+   option expires worthless; the "directional" plays (#Long call, #Short put)
+   pay premium and win when the option finishes in the money. See
+   economic_side() for the mapping used throughout.
 
 yfinance is imported lazily inside spot_close_on(), so parsing and the pure
 resolution logic work -- and stay unit-testable -- even where yfinance or
@@ -212,8 +210,148 @@ def parse_option(line, ref_date=None):
 
 
 # ---------------------------------------------------------------------------
+# Multi-leg spreads (treated as theta/credit plays)
+# ---------------------------------------------------------------------------
+# A spread keyword identifies these lines: PCS/PDS/CDS/CCS, "credit spread",
+# "debit spread", "spread", or the channel's "via" (as in "CRWV via 97/96").
+_SPREAD_KW = re.compile(
+    r"(?i)\b(?:pcs|pds|cds|ccs|put\s+credit\s+spread|call\s+debit\s+spread|"
+    r"credit\s+spread|debit\s+spread|spread|via)\b")
+# Two strikes separated by "/", e.g. "97/96", "124/122", "746/745". The higher
+# (first) strike is the short leg -- above it at expiry the spread is worthless.
+# The leading strike must exceed 12 so a date ("6/26") or fraction ("1/2") is
+# not mistaken for a spread.
+_SPREAD_STRIKES = re.compile(r"(?<![\d.])(\d{2,5}(?:\.\d+)?)/(\d{1,5}(?:\.\d+)?)(?![\d])")
+_SPREAD_SIDE = re.compile(r"(?i)^#\s*(?P<side>long|short|exit|add)"
+                          r"(?:\s+(?P<partial>partial))?\b")
+# Credit/debit amount: "for .25c credit", "for 90c", "$0.8", "@ $0.55", "for 37c".
+_SPREAD_CREDIT = re.compile(
+    r"(?i)(?:for|@|credit(?:\s+of)?|:)\s*\$?(?P<amt>\d*\.?\d+)\s*(?P<c>c)?"
+    r"|\$(?P<amt2>\d*\.?\d+)")
+_MONTH_DAY = re.compile(
+    r"(?i)\((?P<mon>jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+"
+    r"(?P<day>\d{1,2})\)")
+_MONTHS = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+           "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+
+
+def _spread_credit(line):
+    """Extract the net credit/debit of a spread in dollars, or None.
+
+    A bare integer with a trailing "c" is cents ("90c" -> 0.90); a decimal is
+    already dollars (".25c credit" -> 0.25, "$0.8" -> 0.8)."""
+    m = _SPREAD_CREDIT.search(line)
+    if not m:
+        return None
+    amt = m.group("amt") or m.group("amt2")
+    if amt is None:
+        return None
+    val = float(amt)
+    if m.group("c") and "." not in amt:   # "90c" -> cents
+        val /= 100.0
+    return val
+
+
+def parse_spread(line, ref_date=None):
+    """Parse a multi-leg spread trade into a theta/credit position dict, or None.
+
+    Requires a spread keyword and a two-strike ``N/M`` pattern. The whole family
+    is treated as a credit (theta) play at the higher/first strike: above it at
+    expiry the spread expires worthless for a win, and it is usually closed
+    early for a partial of the credit. Returns an option-shaped dict with
+    ``instrument="spread"`` and ``opt_type="put"`` so it flows through the same
+    theta scoring/settlement as a #Long put; opens are normalized to the theta
+    side. ``ref_date`` infers a yearless expiration.
+    """
+    line = line.strip()
+    ms = _SPREAD_SIDE.match(line)
+    if not ms or not _SPREAD_KW.search(line):
+        return None
+    strikes = _SPREAD_STRIKES.search(line)
+    if not strikes:
+        return None
+
+    rest = line[ms.end():]
+    mt = re.match(r"\s+\$?([A-Za-z][A-Za-z.]{0,6})\b", rest)
+    if not mt:
+        return None
+    ticker = mt.group(1).upper().strip(".")
+
+    s1, s2 = float(strikes.group(1)), float(strikes.group(2))
+    side = ms.group("side").capitalize()
+    credit = _spread_credit(line)
+
+    exp_iso = None
+    md = _MONTH_DAY.search(line)
+    if md:
+        exp = _resolve_month_day(_MONTHS[md.group("mon").lower()[:3]],
+                                 int(md.group("day")), ref_date)
+        exp_iso = exp.isoformat() if exp else None
+
+    return {
+        # Opens are normalized to the theta side (#Long put mechanics); an Exit
+        # keeps its side so it closes the position.
+        "side": "Exit" if side == "Exit" else "Long",
+        "partial": bool(ms.group("partial")),
+        "opt_type": PUT,
+        "instrument": "spread",
+        "ticker": ticker,
+        "strike": s1,                    # higher/short leg
+        "spread_label": f"{s1:g}/{s2:g}",
+        "expiration": exp_iso,
+        "premium": credit,               # net credit
+        "notes": line[mt.end() + ms.end():].strip(),
+    }
+
+
+def _resolve_month_day(month, day, ref_date=None):
+    ref = ref_date or date.today()
+    try:
+        cand = date(ref.year, month, day)
+    except ValueError:
+        return None
+    if cand < ref and (ref - cand).days > 30:
+        try:
+            cand = date(ref.year + 1, month, day)
+        except ValueError:
+            return None
+    return cand
+
+
+def resolve_spread(first_strike, credit, spot):
+    """Resolve a credit spread held to expiration: worthless (a win, keep the
+    credit) when spot is at or above the higher/first strike, else a loss."""
+    win = spot >= first_strike
+    if win:
+        summary = "spread expired worthless — win" + (
+            f", kept {_d(credit)} credit" if credit is not None else "")
+    else:
+        summary = (f"spread finished in the money (spot below "
+                   f"{_d(first_strike)}) — loss")
+    return {"status": "expired_worthless" if win else "spread_loss",
+            "itm": not win, "win": win, "pnl": None,
+            "pct": 1.0 if win else -1.0, "basis": None, "summary": summary}
+
+
+# ---------------------------------------------------------------------------
 # Resolution (pure -- no network)
 # ---------------------------------------------------------------------------
+def economic_side(side, opt_type):
+    """The premium-holder side used for scoring and resolution.
+
+    This channel's put labels are inverted from textbook: a ``#Long put`` is a
+    premium SALE (a theta play -- short-put mechanics) and a ``#Short put`` is a
+    bought put (a directional bearish bet -- long-put mechanics). Calls keep
+    their label (``#Long call`` bought, ``#Short call`` sold). So the
+    "long-premium" plays are #Long call and #Short put; the "short-premium"
+    (theta) plays are #Long put and #Short call.
+    """
+    side = side.capitalize()
+    if (opt_type or "").lower() == PUT:
+        return "Short" if side == "Long" else "Long"
+    return side
+
+
 def is_itm(opt_type, strike, spot):
     """In-the-money test. At-the-money (spot == strike) counts as out-of-the-
     money: a strike-pinned option is assumed to expire worthless rather than be
@@ -239,14 +377,11 @@ def resolve_option(side, opt_type, strike, premium, spot):
                   exercise), else None
       summary  -- short human-readable description of the outcome
     """
-    side = side.capitalize()
     opt_type = opt_type.lower()
-    # Puts in this channel are premium/theta trades, not downside bets: a put
-    # expiring worthless is a win (premium kept) and a put finishing in the
-    # money assigns shares -- the short-put outcome -- whether it was typed
-    # "#Long ... P" or "#Short ... P". Only calls keep long/short direction.
-    if opt_type == PUT:
-        side = "Short"
+    # Resolve by the economic side: a #Long put is theta (short-put mechanics),
+    # a #Short put is a directional bought put (long-put mechanics); calls keep
+    # their direction. See economic_side().
+    side = economic_side(side, opt_type)
     itm = is_itm(opt_type, strike, spot)
     prem = premium  # may be None when the poster omitted it
 
@@ -398,7 +533,11 @@ def _signed(x):
 
 
 def _contract(t):
-    """Compact contract label, e.g. 'SPY $400p exp 2026-07-18'."""
+    """Compact contract label, e.g. 'SPY $400p exp 2026-07-18', or for a
+    spread 'CRWV 97/96 PCS exp 2026-07-26'."""
+    if t.get("instrument") == "spread":
+        exp = f" exp {t['expiration']}" if t.get("expiration") else ""
+        return f"{t['ticker']} {t.get('spread_label', '')} PCS{exp}"
     suffix = "c" if t["opt_type"] == CALL else "p"
     strike = f"{t['strike']:g}"
     return f"{t['ticker']} ${strike}{suffix} exp {t['expiration']}"
@@ -408,11 +547,15 @@ def format_option_open(t, verb=None):
     """One line for an option position; ``verb`` overrides the leading word
     (e.g. 'Partial exit' instead of the trade's own side)."""
     prem = f" @ {_d(t['premium'])}" if t.get("premium") is not None else ""
+    if t.get("instrument") == "spread":
+        return f"{verb or 'Spread'} **{_contract(t)}**{prem}"
     return f"{verb or t['side']} {t['opt_type']} **{_contract(t)}**{prem}"
 
 
 def format_option_resolution(t, outcome, spot):
     """One line describing a resolved (expired) option and its outcome."""
     icon = {True: "✅", False: "❌"}.get(outcome["win"], "\U0001F4E5")
-    return (f"- {icon} {t['side']} {t['opt_type']} **{_contract(t)}**: "
+    lead = "Spread" if t.get("instrument") == "spread" \
+        else f"{t['side']} {t['opt_type']}"
+    return (f"- {icon} {lead} **{_contract(t)}**: "
             f"{outcome['summary']} — spot {_d(spot)} at expiry")

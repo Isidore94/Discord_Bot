@@ -67,10 +67,10 @@ TRADE_RE = re.compile(
     r"(?:\s+(?P<partial>[Pp]artial))?"             # optional "partial" (Exit)
     + options.FILLER +                             # "half of", "this add on Long", ...
     r"\s+\$?(?P<ticker>[A-Z][A-Z.]{0,6})"          # optional $, then TICKER
-    # price: not a percentage ("for 100%"), and not the numerator of a
-    # fraction ("CROX 1/2 at $133" -- "1/2" is size sold, the real price
-    # follows "at"; a bare fraction must not be misread as a $1 price).
-    r"(?:\s+(?:[Aa]t\s+|@\s*)?\$?(?P<price>\d+(?:\.\d+)?)(?!\s*%)(?!\s*/\s*\d))?"
+    # price: not a percentage ("for 100%"), and not part of an "N/M" pair
+    # ("CROX 1/2 at $133", spread strikes "97/96") -- the digit/slash lookahead
+    # blocks even a backtracked shorter match ("9" out of "97/96").
+    r"(?:\s+(?:[Aa]t\s+|@\s*)?\$?(?P<price>\d+(?:\.\d+)?)(?![\d/])(?!\s*%))?"
     r"(?P<notes>.*)$"                              # trailing free-text notes
 )
 
@@ -115,10 +115,14 @@ def parse_trade_line(line, ref_date=None):
     """
     trade = None
     opt = options.parse_option(line, ref_date=ref_date)
+    spread = options.parse_spread(line, ref_date=ref_date) if opt is None else None
     if opt:
         opt["instrument"] = "option"
         opt["price"] = opt["premium"]  # so existing price-aware helpers still work
         trade = opt
+    elif spread:
+        spread["price"] = spread["premium"]
+        trade = spread
     else:
         m = TRADE_RE.match(line.strip())
         if not m:
@@ -286,19 +290,20 @@ def fetch_after(log, now):
 
 
 def _is_option(t):
-    """True if a trade dict describes an option position."""
-    return t.get("instrument") == "option" or bool(t.get("expiration"))
+    """True if a trade dict describes an option OR spread position (both are
+    keyed and resolved through the same contract machinery)."""
+    return t.get("instrument") in ("option", "spread") or bool(t.get("expiration"))
 
 
 def _pos_key(t):
     """Identity of the position a trade acts on.
 
-    Stocks key on (user, ticker) as before. Options key on the full contract so
-    an option never clobbers -- nor is clobbered by -- a same-ticker stock
-    position or a different contract on the same underlying.
+    Stocks key on (user, ticker) as before. Options/spreads key on the full
+    contract so they never clobber -- nor are clobbered by -- a same-ticker
+    stock position or a different contract on the same underlying.
     """
     if _is_option(t):
-        return (t["user"], t["ticker"], "option",
+        return (t["user"], t["ticker"], t.get("instrument", "option"),
                 t.get("opt_type"), t.get("strike"), t.get("expiration"))
     return (t["user"], t["ticker"])
 
@@ -461,7 +466,8 @@ def compute_holdings(trades, orphan_exits=None):
                 pos = open_positions.get(key)
                 if pos is not None:
                     pos["partials"] = pos.get("partials", 0) + 1
-                    pct = _tranche_pct(pos["side"], pos.get("price"), t,
+                    econ = options.economic_side(pos["side"], pos.get("opt_type"))
+                    pct = _tranche_pct(econ, pos.get("price"), t,
                                        entry_is_option=_is_option(pos))
                     if pct is not None:
                         pos.setdefault("partial_pcts", []).append(pct)
@@ -477,7 +483,8 @@ def compute_holdings(trades, orphan_exits=None):
 
 def _blank_stats():
     return {"wins": 0, "losses": 0, "pct_sum": 0.0, "pct_n": 0,
-            "week_wins": 0, "week_losses": 0}
+            "week_wins": 0, "week_losses": 0,
+            "week_pct_sum": 0.0, "week_pct_n": 0}
 
 
 def compute_win_rates(trades, week_start=None):
@@ -518,18 +525,20 @@ def compute_win_rates(trades, week_start=None):
                     s["wins" if combined > 0 else "losses"] += 1
                     s["pct_sum"] += combined
                     s["pct_n"] += 1
-            entries[key] = {"side": t["side"], "price": t["price"],
-                            "timestamp": t.get("timestamp"), "adds": 1,
-                            "partials": partials, "partial_pcts": partial_pcts}
+            entries[key] = {"side": t["side"], "opt_type": t.get("opt_type"),
+                            "price": t["price"], "timestamp": t.get("timestamp"),
+                            "adds": 1, "partials": partials,
+                            "partial_pcts": partial_pcts,
+                            "label": options._contract(t) if _is_option(t) else None}
         elif t["side"] == "Add":
             if key not in entries and not _is_option(t):
                 key = _fallback_option_key(entries, t) or key
             info = entries.get(key)
             if info is None:
                 price = t.get("new_avg", t.get("price"))
-                entries[key] = {"side": "Long", "price": price,
-                                "timestamp": t.get("timestamp"), "adds": 1,
-                                "partials": 0, "partial_pcts": []}
+                entries[key] = {"side": "Long", "opt_type": t.get("opt_type"),
+                                "price": price, "timestamp": t.get("timestamp"),
+                                "adds": 1, "partials": 0, "partial_pcts": []}
                 continue
             if t.get("new_avg") is not None:
                 info["price"] = t["new_avg"]
@@ -543,14 +552,19 @@ def compute_win_rates(trades, week_start=None):
             info = entries.get(key)
             if info is None:
                 continue
-            pct = _tranche_pct(info["side"], info["price"], t,
+            econ = options.economic_side(info["side"], info.get("opt_type"))
+            pct = _tranche_pct(econ, info["price"], t,
                                entry_is_option=len(key) > 2)
             if pct is not None:
                 t["pct"] = pct
             # Stamp the entry onto the exit so "Closed this week" can render the
-            # whole round trip (entry → exit) even when the open predates the week.
+            # whole round trip (entry → exit) even when the open predates the week
+            # or the exit was written as a bare stock-form line.
             t["entry_side"] = info["side"]
             t["entry_price"] = info["price"]
+            if info.get("label"):
+                t["entry_contract"] = info["label"]
+                t["entry_opt_type"] = info.get("opt_type")
             if info["timestamp"] and t.get("timestamp"):
                 t["held_days"] = max(0, (parse_ts(t["timestamp"])
                                          - parse_ts(info["timestamp"])).days)
@@ -575,6 +589,8 @@ def compute_win_rates(trades, week_start=None):
                 if week_start is not None and t.get("timestamp") \
                         and parse_ts(t["timestamp"]) >= week_start:
                     s["week_wins" if win else "week_losses"] += 1
+                    s["week_pct_sum"] += combined
+                    s["week_pct_n"] += 1
             entries.pop(key, None)
     return stats
 
@@ -646,12 +662,20 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
                 continue
             if cache is not None:
                 cache[cache_key] = spot
-            outcome = options.resolve_option(
-                t["side"], t["opt_type"], t["strike"], t.get("premium"), spot
-            )
+            if t.get("instrument") == "spread":
+                # Credit spread: worthless above the first strike is a win.
+                outcome = options.resolve_spread(t["strike"], t.get("premium"), spot)
+            else:
+                outcome = options.resolve_option(
+                    t["side"], t["opt_type"], t["strike"], t.get("premium"), spot
+                )
+            # Only a theta put (economic short) ever "assigns"; a directional
+            # bought put finishing ITM is "exercised". So status + opt_type is
+            # enough -- no need to check the (inverted) Long/Short label. Spreads
+            # never assign (no shares change hands).
             assigned_put = (outcome["status"] == "assigned"
-                            and t["side"] == "Short"
-                            and t["opt_type"] == options.PUT)
+                            and t["opt_type"] == options.PUT
+                            and t.get("instrument") != "spread")
             # Were the assigned shares already sold by a later unmatched exit?
             sale, sale_pct = None, None
             if assigned_put:
@@ -814,14 +838,17 @@ def _closed_line(t):
     suffix = _closed_suffix(t)
     entry_price = t.get("entry_price")
     entry_side = t.get("entry_side", "")
-    if _is_option(t):
-        contract = options._contract(t)
-        exit_p = options._d(t["price"]) if t.get("price") is not None else "?"
+    # A contract label from either the exit itself (structured option/spread
+    # exit) or the matched entry (informal bare-stock exit of an option/spread).
+    contract = options._contract(t) if _is_option(t) else t.get("entry_contract")
+    if contract:
+        prefix = "Spread " if "PCS" in contract else f"{entry_side} "
+        exit_p = options._d(t["price"]) if t.get("price") is not None else None
+        arrow = f" → {exit_p}" if exit_p else " → Exit"
         if entry_price is not None:
-            body = (f"{entry_side} **{contract}**: "
-                    f"{options._d(entry_price)} → {exit_p}")
+            body = f"{prefix}**{contract}**: {options._d(entry_price)}{arrow}"
         else:
-            body = f"Exit **{contract}** @ {exit_p}"
+            body = f"Exit **{contract}**" + (f" @ {exit_p}" if exit_p else "")
     else:
         exit_price = _fmt_price(t.get("price"))
         exit_str = f" @ {exit_price}" if exit_price else ""
@@ -881,21 +908,22 @@ def _open_line(t, now=None, marks=None):
 
 
 def _win_rate_line(stats):
-    """'Quasi win rate' line for a trader, or None if nothing was scoreable."""
+    """Weekly win-rate line for a trader, or None if nothing closed this week.
+
+    Only this week's closed trades are scored -- tracking a longer history was
+    more than the channel wanted.
+    """
     if not stats:
         return None
-    wins, losses = stats.get("wins", 0), stats.get("losses", 0)
+    wins, losses = stats.get("week_wins", 0), stats.get("week_losses", 0)
     total = wins + losses
     if total == 0:
         return None
     pct = round(100 * wins / total)
-    parts = [f"All-time win rate: **{pct}%** ({wins}W–{losses}L, {total} scored)"]
-    if stats.get("pct_n"):
-        avg = stats["pct_sum"] / stats["pct_n"] * 100
+    parts = [f"Win rate this week: **{pct}%** ({wins}W–{losses}L)"]
+    if stats.get("week_pct_n"):
+        avg = stats["week_pct_sum"] / stats["week_pct_n"] * 100
         parts.append(f"avg {avg:+.1f}%/trade")
-    week_w, week_l = stats.get("week_wins", 0), stats.get("week_losses", 0)
-    if week_w + week_l:
-        parts.append(f"this week {week_w}W–{week_l}L")
     return "_" + " · ".join(parts) + "_"
 
 
@@ -936,11 +964,14 @@ def build_summary(log, now, spot_close=options.spot_close_on, last_close=None):
             if oc["win"] is not None:
                 s = win_rates.setdefault(user, _blank_stats())
                 s["wins" if oc["win"] else "losses"] += 1
-                if this_week:
-                    s["week_wins" if oc["win"] else "week_losses"] += 1
                 if oc.get("pct") is not None:
                     s["pct_sum"] += oc["pct"]
                     s["pct_n"] += 1
+                if this_week:
+                    s["week_wins" if oc["win"] else "week_losses"] += 1
+                    if oc.get("pct") is not None:
+                        s["week_pct_sum"] += oc["pct"]
+                        s["week_pct_n"] += 1
             if this_week:
                 settled_by_user.setdefault(user, []).append(rec)
 

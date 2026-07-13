@@ -254,8 +254,8 @@ class WinRateTests(unittest.TestCase):
         self.assertEqual(wr, {})
 
     def test_win_rate_line_formatting(self):
-        self.assertIn("67%", ws._win_rate_line({"wins": 2, "losses": 1}))
-        self.assertIsNone(ws._win_rate_line({"wins": 0, "losses": 0}))
+        self.assertIn("67%", ws._win_rate_line({"week_wins": 2, "week_losses": 1}))
+        self.assertIsNone(ws._win_rate_line({"week_wins": 0, "week_losses": 0}))
         self.assertIsNone(ws._win_rate_line(None))
 
 
@@ -410,8 +410,9 @@ class OptionIntegrationTests(unittest.TestCase):
         self.assertEqual(len(aapl), 2)   # stock did not clobber the option
         self.assertEqual({ws._is_option(t) for t in aapl}, {True, False})
 
-    def test_short_put_above_strike_settles_as_worthless_win(self):
-        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Short",
+    def test_long_put_above_strike_settles_as_worthless_win(self):
+        # #Long put = theta -> worthless above strike is a win.
+        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Long",
                            "opt_type": "put", "strike": 400.0, "premium": 3.20,
                            "instrument": "option", "expiration": "2026-07-10",
                            "timestamp": "2026-07-06T00:00:00+00:00",
@@ -423,8 +424,8 @@ class OptionIntegrationTests(unittest.TestCase):
         self.assertTrue(res["u"][0]["outcome"]["win"])
         self.assertNotIn("u", holdings)   # closed out, no longer held
 
-    def test_short_put_below_strike_assigns_and_creates_share_holding(self):
-        holdings = {"u": [{"user": "u", "ticker": "TSLA", "side": "Short",
+    def test_long_put_below_strike_assigns_and_creates_share_holding(self):
+        holdings = {"u": [{"user": "u", "ticker": "TSLA", "side": "Long",
                            "opt_type": "put", "strike": 300.0, "premium": 5.0,
                            "instrument": "option", "expiration": "2026-07-10",
                            "timestamp": "2026-07-06T00:00:00+00:00",
@@ -460,12 +461,12 @@ class OptionIntegrationTests(unittest.TestCase):
     def test_build_summary_reports_settled_options_and_folds_win_rate(self):
         log = {"messages": {
             "100": {"timestamp": "2026-07-06T00:00:00+00:00",
-                    "content": "isidore94 posted a trade:\n#Short put $SPY 400 7/10 @ 3.20"},
+                    "content": "isidore94 posted a trade:\n#Long put $SPY 400 7/10 @ 3.20"},
             "101": {"timestamp": "2026-07-06T02:00:00+00:00",
                     "content": "00sav00 posted a trade:\n#Long call NVDA 500c 7/10 for 12.00"},
         }}
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
-        spot = self._fake_spot({("SPY", "2026-07-10"): 405.0,   # short put win
+        spot = self._fake_spot({("SPY", "2026-07-10"): 405.0,   # theta put win
                                 ("NVDA", "2026-07-10"): 480.0})  # long call loss
         summary = ws.build_summary(log, now, spot_close=spot)
 
@@ -522,10 +523,11 @@ class OptionEarlyExitTests(unittest.TestCase):
         self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
         self.assertAlmostEqual(wr["u"]["pct_sum"], 0.25)  # 15 vs 12 premium
 
-    def test_short_option_buyback_below_premium_is_a_win(self):
+    def test_theta_put_buyback_below_premium_is_a_win(self):
+        # #Long put = theta (sold for premium); buying it back cheaper is a win.
         log = self._log([
             (1, "2026-07-01T00:00:00+00:00",
-             "u posted a trade:\n#Short put SPY 400p 8/21 @ 3.20"),
+             "u posted a trade:\n#Long put SPY 400p 8/21 @ 3.20"),
             (2, "2026-07-09T00:00:00+00:00",
              "u posted a trade:\n#Exit SPY 400p 8/21 @ 1.10"),
         ])
@@ -549,6 +551,7 @@ class OptionEarlyExitTests(unittest.TestCase):
 
     def test_informal_exit_closes_single_open_option(self):
         # Entry is structured; the exit is a plain '#Exit TICKER price' line.
+        # #Long put = theta: sold @ 4.00, bought back @ 2.00 -> a win.
         log = self._log([
             (1, "2026-07-02T00:00:00+00:00",
              "u posted a trade:\n#Long put AMD 160p 9/18 @ 4.00"),
@@ -558,7 +561,7 @@ class OptionEarlyExitTests(unittest.TestCase):
         trades = ws.log_to_trades(log)
         self.assertEqual(ws.compute_holdings(trades), {})
         wr = ws.compute_win_rates(trades)
-        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (0, 1))
+        self.assertEqual((wr["u"]["wins"], wr["u"]["losses"]), (1, 0))
 
     def test_informal_exit_ambiguous_between_two_contracts_is_ignored(self):
         log = self._log([
@@ -649,18 +652,21 @@ class WheelTests(unittest.TestCase):
 
 
 class StatsAndMarksTests(unittest.TestCase):
-    def test_win_rate_line_includes_avg_and_weekly_split(self):
-        line = ws._win_rate_line({"wins": 2, "losses": 1, "pct_sum": 0.10,
-                                  "pct_n": 3, "week_wins": 1, "week_losses": 0})
-        self.assertIn("67%", line)
+    def test_win_rate_line_is_weekly_with_avg(self):
+        line = ws._win_rate_line({"week_wins": 2, "week_losses": 1,
+                                  "week_pct_sum": 0.10, "week_pct_n": 3})
+        self.assertIn("Win rate this week: **67%** (2W–1L)", line)
         self.assertIn("avg +3.3%/trade", line)
-        self.assertIn("this week 1W–0L", line)
+
+    def test_win_rate_line_none_when_nothing_closed_this_week(self):
+        # All-time activity but nothing closed THIS week -> no line.
+        self.assertIsNone(ws._win_rate_line(
+            {"wins": 9, "losses": 1, "week_wins": 0, "week_losses": 0}))
 
     def test_win_rate_line_tolerates_minimal_stats(self):
-        line = ws._win_rate_line({"wins": 2, "losses": 1})
+        line = ws._win_rate_line({"week_wins": 2, "week_losses": 1})
         self.assertIn("67%", line)
         self.assertNotIn("avg", line)
-        self.assertNotIn("this week", line)
 
     def test_exits_annotated_with_pct_and_held_days(self):
         log = {"messages": {
@@ -710,7 +716,7 @@ class StatsAndMarksTests(unittest.TestCase):
 
     def test_expired_but_unsettled_option_flagged(self):
         line = ws._open_line(
-            {"user": "u", "ticker": "SPY", "side": "Short", "opt_type": "put",
+            {"user": "u", "ticker": "SPY", "side": "Long", "opt_type": "put",
              "strike": 400.0, "premium": 3.2, "instrument": "option",
              "expiration": "2026-07-10", "notes": "",
              "timestamp": "2026-07-06T00:00:00+00:00"},
@@ -924,17 +930,17 @@ class ReviewFixTests(unittest.TestCase):
     """Regressions for the confirmed code-review findings."""
 
     def test_assigned_share_sale_scores_vs_basis_not_premium(self):
-        # Short put assigns at basis 295; a later plain '#Exit TSLA 260' is
-        # the SHARE sale: it must score (260-295)/295, never 260-vs-premium.
+        # #Long put (theta) assigns at basis 295; a later plain '#Exit TSLA 260'
+        # is the SHARE sale: it must score (260-295)/295, never 260-vs-premium.
         log = {"messages": {
-            "1": {"timestamp": "2026-07-06T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Short put TSLA 300p 7/10 @ 5.00"},
-            "2": {"timestamp": "2026-07-20T00:00:00+00:00",
+            "1": {"timestamp": "2026-07-14T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long put TSLA 300p 7/17 @ 5.00"},
+            "2": {"timestamp": "2026-07-18T00:00:00+00:00",
                   "content": "u posted a trade:\n#Exit TSLA 260"},
         }}
         # The raw replay must not produce the old -5100% garbage point.
         self.assertEqual(ws.compute_win_rates(ws.log_to_trades(log)), {})
-        now = datetime(2026, 7, 22, tzinfo=timezone.utc)
+        now = datetime(2026, 7, 20, tzinfo=timezone.utc)
         summary = ws.build_summary(log, now, spot_close=lambda tk, d: 260.0)
         self.assertIn("-11.9%", summary)          # (260-295)/295 via settlement
         self.assertNotIn("5100", summary)
@@ -944,7 +950,7 @@ class ReviewFixTests(unittest.TestCase):
     def test_exit_after_expiry_never_matches_the_dead_contract(self):
         log = {"messages": {
             "1": {"timestamp": "2026-07-06T00:00:00+00:00",
-                  "content": "u posted a trade:\n#Short put TSLA 300p 7/10 @ 5.00"},
+                  "content": "u posted a trade:\n#Long put TSLA 300p 7/10 @ 5.00"},
             "2": {"timestamp": "2026-07-20T00:00:00+00:00",
                   "content": "u posted a trade:\n#Exit TSLA 260"},
         }}
@@ -1009,7 +1015,7 @@ class ReviewFixTests(unittest.TestCase):
         self.assertAlmostEqual(wr["u"]["pct_sum"], 0.10)
 
     def test_assignment_blends_earlier_partials(self):
-        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Short",
+        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Long",
                            "opt_type": "put", "strike": 400.0, "premium": 3.2,
                            "instrument": "option", "expiration": "2026-07-10",
                            "timestamp": "2026-07-06T00:00:00+00:00",
@@ -1156,6 +1162,100 @@ class WeeklyGroupingTests(unittest.TestCase):
         self.assertIn("+25.0%", sec)
 
 
+class SpreadIntegrationTests(unittest.TestCase):
+    """Multi-leg spreads are tracked and scored as theta/credit plays."""
+
+    def _log(self, rows):
+        return {"messages": {str(mid): {"timestamp": ts, "content": c}
+                             for mid, ts, c in rows}}
+
+    def test_spread_exited_for_stated_percent_scores_as_win(self):
+        log = self._log([
+            (1, "2026-07-08T00:00:00+00:00",
+             "u posted a trade:\n#Long CRWV via 97/96 (Jul 26) PCS for .25c credit"),
+            (2, "2026-07-10T00:00:00+00:00",
+             "u posted a trade:\n#Exit CRWV 97/96 for +67%"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        self.assertIn("Spread **CRWV 97/96 PCS", summary)
+        self.assertIn("+67.0%", summary)
+        wr = ws.compute_win_rates(ws.log_to_trades(log), week_start=now - timedelta(days=7))
+        self.assertEqual((wr["u"]["week_wins"], wr["u"]["week_losses"]), (1, 0))
+
+    def test_spread_settles_worthless_above_first_strike(self):
+        # Held to expiry, spot above the first strike -> a win.
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Long SPY via 400/395 (Jul 10) PCS for .50c credit"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            ws.compute_holdings(ws.log_to_trades(log)), now,
+            lambda tk, d: 410.0)   # above 400
+        oc = res["u"][0]["outcome"]
+        self.assertTrue(oc["win"])
+        self.assertIn("worthless", oc["summary"])
+
+    def test_spread_below_first_strike_settles_as_loss_no_shares(self):
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Long SPY via 400/395 (Jul 10) PCS for .50c credit"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        holdings = ws.compute_holdings(ws.log_to_trades(log))
+        res = ws.resolve_expired_options(holdings, now, lambda tk, d: 390.0)
+        self.assertFalse(res["u"][0]["outcome"]["win"])
+        self.assertNotIn("u", holdings)   # a spread never leaves shares behind
+
+
+class OptionDirectionTests(unittest.TestCase):
+    """#Long put = theta, #Short put = directional (labels inverted for puts)."""
+
+    def _log(self, rows):
+        return {"messages": {str(mid): {"timestamp": ts, "content": c}
+                             for mid, ts, c in rows}}
+
+    def test_directional_short_put_worthless_is_a_loss(self):
+        # #Short put = bought put; expiring above strike loses the premium.
+        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Short",
+                           "opt_type": "put", "strike": 400.0, "premium": 3.20,
+                           "instrument": "option", "expiration": "2026-07-10",
+                           "timestamp": "2026-07-06T00:00:00+00:00",
+                           "message_id": "1", "index": 0, "notes": ""}]}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            holdings, now, lambda tk, d: 405.0)   # above strike
+        oc = res["u"][0]["outcome"]
+        self.assertEqual(oc["status"], "expired_worthless")
+        self.assertFalse(oc["win"])
+
+    def test_directional_short_put_itm_is_a_win_not_assignment(self):
+        holdings = {"u": [{"user": "u", "ticker": "SPY", "side": "Short",
+                           "opt_type": "put", "strike": 400.0, "premium": 3.20,
+                           "instrument": "option", "expiration": "2026-07-10",
+                           "timestamp": "2026-07-06T00:00:00+00:00",
+                           "message_id": "1", "index": 0, "notes": ""}]}
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        res = ws.resolve_expired_options(
+            holdings, now, lambda tk, d: 380.0)   # below strike
+        oc = res["u"][0]["outcome"]
+        self.assertEqual(oc["status"], "exercised")
+        self.assertTrue(oc["win"])
+        self.assertNotIn("u", holdings)   # no shares assigned to a bought put
+
+    def test_theta_long_put_and_directional_short_put_score_oppositely(self):
+        # Same contract, both expiring worthless: theta wins, directional loses.
+        base = "u posted a trade:\n#{} put SPY 400p 7/10 @ 3.20"
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        lp = self._log([(1, "2026-07-06T00:00:00+00:00", base.format("Long"))])
+        sp = self._log([(1, "2026-07-06T00:00:00+00:00", base.format("Short"))])
+        lsum = ws.build_summary(lp, now, spot_close=lambda tk, d: 405.0)
+        ssum = ws.build_summary(sp, now, spot_close=lambda tk, d: 405.0)
+        self.assertIn("100%", lsum)   # theta worthless -> win
+        self.assertIn("0%", ssum)     # directional worthless -> loss
+
+
 class DateFirstOptionRegressionTests(unittest.TestCase):
     """A date-first option post must never leak its date into a fake stock
     price and produce a bogus mark-to-market percentage (real symptom: a
@@ -1184,7 +1284,7 @@ class DateFirstOptionRegressionTests(unittest.TestCase):
 
 class SpotCacheTests(unittest.TestCase):
     def _option(self, exp):
-        return {"user": "u", "ticker": "SPY", "side": "Short", "opt_type": "put",
+        return {"user": "u", "ticker": "SPY", "side": "Long", "opt_type": "put",
                 "strike": 400.0, "premium": 3.2, "instrument": "option",
                 "expiration": exp, "notes": "",
                 "timestamp": "2026-07-06T00:00:00+00:00",

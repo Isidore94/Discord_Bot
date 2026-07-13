@@ -73,33 +73,54 @@ the same ticker takes precedence, as before).
 Once an option's expiration date has passed, the bot fetches the underlying's
 closing spot price on that date (via `yfinance`) and settles it:
 
-| position   | spot ≥ strike (call ITM / put OTM) | spot < strike (call OTM / put ITM) |
-|------------|-------------------------------------|-------------------------------------|
-| Long call  | in the money (worth spot − strike)  | expired worthless → loss of premium |
-| Short call | assigned — shares called away       | expired worthless → **win** (premium kept) |
-| Put (any)  | expired worthless → **win** (premium kept) | assigned — buy shares @ strike |
+**This channel's put labels are inverted from textbook.** A `#Long put` is a
+premium **sale** (a theta play), and a `#Short put` is a **bought** put (a
+directional bearish bet). Calls keep their direction. So:
 
-**Puts are treated as premium/theta trades regardless of the `Long`/`Short`
-label** — in this channel a put is written to collect premium, so a put that
-expires at or above its strike is a **win** (premium kept) and one that
-finishes below the strike is **shares assigned** at a cost basis of the strike
-minus the premium (then tracked as an open stock position). Only calls keep
-buyer/seller direction. The wheel continues: a short call assigned while the
-trader holds tracked shares of the same ticker closes those shares at the
-effective sale price (strike + premium) and scores the share P&L. Settled
-option wins/losses fold into the win rate. If the spot price can't be fetched
-(network/`yfinance` unavailable), the position is left open (`awaiting
+| trade       | kind          | wins when… | otherwise |
+|-------------|---------------|------------|-----------|
+| `#Long call`  | directional long  | spot > strike (worth spot − strike) | worthless → loss of premium |
+| `#Short call` | sold call         | spot ≤ strike → **win** (premium kept) | assigned — shares called away |
+| `#Long put`   | theta (sold)      | spot ≥ strike → **win** (premium kept) | assigned — buy shares @ strike |
+| `#Short put`  | directional short | spot < strike (worth strike − spot) | worthless → loss of premium |
+
+The "theta" plays (`#Long put`, `#Short call`) collect premium and win when the
+option expires worthless; the "directional" plays (`#Long call`, `#Short put`)
+pay premium and win when it finishes in the money. A theta put finishing in the
+money is **shares assigned** at a cost basis of the strike minus the premium
+(then tracked as an open stock position). The wheel continues: a short call
+assigned while the trader holds tracked shares of the same ticker closes those
+shares at the effective sale price (strike + premium) and scores the share P&L.
+Settled option wins/losses fold into the win rate. If the spot price can't be
+fetched (network/`yfinance` unavailable), the position is left open (`awaiting
 settlement`) and settled on a later run; fetched settlement spots are cached in
 the running log so they are never refetched.
 
+### Multi-leg spreads
+
+Spread lines — a spread keyword (`PCS`/`PDS`/`CDS`/`via`/…) plus two strikes —
+are tracked as theta/credit plays at the higher (first) strike:
+
+```
+#Long CRWV via 97/96 (Jul 26) PCS for .25c credit
+#Short SPY lotto PDS 746/745 for 37c
+```
+
+Held to expiry, a spread is a **win** when the spot is at or above the first
+strike (it expires worthless and the credit is kept), else a loss. In practice
+these are usually closed early for a partial of the credit, scored by the
+stated return (`for +67%`) or the buy-back price. Every recognized spread is
+treated as a credit play per the channel convention; a genuine debit spread
+(rare) is the one case this over-credits.
+
 ## Summary extras
 
-- Per-trader stats line: **all-time** win rate, average %/trade, and this
-  week's W–L. **One data point per position**: partial exits don't score
-  individually — the number of partials is tracked, every tranche (each
-  partial plus the final close, or the option's expiry settlement) is assumed
-  equal size, and the position scores a single win/loss at the equal-weighted
-  average return.
+- Per-trader stats line: **this week's** win rate and average %/trade (only
+  trades that closed this week are scored). **One data point per position**:
+  partial exits don't score individually — the number of partials is tracked,
+  every tranche (each partial plus the final close, or the option's expiry
+  settlement) is assumed equal size, and the position scores a single win/loss
+  at the equal-weighted average return.
 - **"Closed this week" lists only positions that fully closed this week**, one
   round-trip line each, e.g. `**HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%, day
   trade)`. A close held 0 days is a **day trade**; longer is a **swing Nd**.

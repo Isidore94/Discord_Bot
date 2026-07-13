@@ -168,25 +168,37 @@ class IsItmTests(unittest.TestCase):
 class ResolveMatrixTests(unittest.TestCase):
     """The four single-leg cases at expiration, each ITM and OTM."""
 
-    # --- Short put: the user's headline "theta trade trying to expire" ---
-    def test_short_put_above_strike_is_worthless_win(self):
-        r = o.resolve_option("Short", "put", 400, 3.20, 405)
+    # --- #Long put = theta ("trade trying to expire"): worthless is a win,
+    #     ITM assigns shares. (This channel's put labels are inverted.) ---
+    def test_long_put_above_strike_is_worthless_win(self):
+        r = o.resolve_option("Long", "put", 400, 3.20, 405)
         self.assertEqual(r["status"], "expired_worthless")
         self.assertTrue(r["win"])
         self.assertAlmostEqual(r["pnl"], 3.20)
 
-    def test_short_put_at_strike_is_worthless_win(self):
+    def test_long_put_at_strike_is_worthless_win(self):
         # Pinned exactly at the strike -> treated as expiring worthless.
-        r = o.resolve_option("Short", "put", 400, 3.20, 400)
+        r = o.resolve_option("Long", "put", 400, 3.20, 400)
         self.assertEqual(r["status"], "expired_worthless")
         self.assertTrue(r["win"])
 
-    def test_short_put_below_strike_is_assigned_at_strike_minus_premium(self):
-        r = o.resolve_option("Short", "put", 400, 3.20, 390)
+    def test_long_put_below_strike_is_assigned_at_strike_minus_premium(self):
+        r = o.resolve_option("Long", "put", 400, 3.20, 390)
         self.assertEqual(r["status"], "assigned")
         self.assertIsNone(r["win"])          # becomes a share position, not scored
         self.assertAlmostEqual(r["basis"], 396.80)  # strike - premium
         self.assertIn("assigned", r["summary"])
+
+    # --- #Short put = directional bought put: worthless is a loss, ITM wins ---
+    def test_short_put_above_strike_is_worthless_loss(self):
+        r = o.resolve_option("Short", "put", 400, 3.20, 405)
+        self.assertEqual(r["status"], "expired_worthless")
+        self.assertFalse(r["win"])
+
+    def test_short_put_below_strike_is_directional_win(self):
+        r = o.resolve_option("Short", "put", 400, 3.20, 380)
+        self.assertEqual(r["status"], "exercised")
+        self.assertTrue(r["win"])            # intrinsic 20 > 3.20 premium
 
     # --- Long call ---
     def test_long_call_itm_scores_on_intrinsic_vs_premium(self):
@@ -232,33 +244,34 @@ class ResolveMatrixTests(unittest.TestCase):
         self.assertIsNone(r["win"])
         self.assertAlmostEqual(r["basis"], 169.5)   # strike - premium
 
-    def test_short_and_long_puts_resolve_identically(self):
-        for spot in (180, 160):
-            self.assertEqual(
-                o.resolve_option("Long", "put", 175, 5.5, spot)["status"],
-                o.resolve_option("Short", "put", 175, 5.5, spot)["status"])
+    def test_long_and_short_puts_resolve_oppositely(self):
+        # Long put = theta, Short put = directional -> opposite win/loss.
+        lp = o.resolve_option("Long", "put", 175, 5.5, 180)   # worthless
+        sp = o.resolve_option("Short", "put", 175, 5.5, 180)  # worthless
+        self.assertTrue(lp["win"])
+        self.assertFalse(sp["win"])
 
     # --- Fractional return on premium (pct) ---
     def test_pct_on_premium(self):
         self.assertAlmostEqual(
-            o.resolve_option("Short", "put", 400, 3.2, 405)["pct"], 1.0)
+            o.resolve_option("Long", "put", 400, 3.2, 405)["pct"], 1.0)  # theta win
         self.assertAlmostEqual(
             o.resolve_option("Long", "call", 500, 12.0, 480)["pct"], -1.0)
         self.assertAlmostEqual(
             o.resolve_option("Long", "call", 500, 12.0, 530)["pct"], 1.5)  # 18/12
         self.assertIsNone(
-            o.resolve_option("Short", "put", 400, 3.2, 390)["pct"])  # assigned
+            o.resolve_option("Long", "put", 400, 3.2, 390)["pct"])  # assigned
         self.assertIsNone(
-            o.resolve_option("Short", "put", 400, None, 405)["pct"])  # no premium
+            o.resolve_option("Long", "put", 400, None, 405)["pct"])  # no premium
 
-    # --- Missing premium is tolerated ---
+    # --- Missing premium is tolerated (theta = #Long put) ---
     def test_missing_premium_still_classifies(self):
-        worthless = o.resolve_option("Short", "put", 400, None, 405)
+        worthless = o.resolve_option("Long", "put", 400, None, 405)
         self.assertEqual(worthless["status"], "expired_worthless")
         self.assertTrue(worthless["win"])
         self.assertIsNone(worthless["pnl"])
 
-        assigned = o.resolve_option("Short", "put", 400, None, 390)
+        assigned = o.resolve_option("Long", "put", 400, None, 390)
         self.assertEqual(assigned["status"], "assigned")
         self.assertEqual(assigned["basis"], 400)   # no premium to subtract
 
@@ -288,15 +301,74 @@ class FormatTests(unittest.TestCase):
         self.assertTrue(line.startswith("Partial exit call"))
 
     def test_resolution_line_marks_win_and_loss(self):
-        t = o.parse_option("#Short put SPY 400p 2026-07-18 @ 3.20", date(2026, 7, 1))
-        win = o.format_option_resolution(t, o.resolve_option("Short", "put", 400, 3.2, 405), 405)
-        self.assertIn("✅", win)
+        t = o.parse_option("#Long put SPY 400p 2026-07-18 @ 3.20", date(2026, 7, 1))
+        win = o.format_option_resolution(t, o.resolve_option("Long", "put", 400, 3.2, 405), 405)
+        self.assertIn("✅", win)   # #Long put worthless = theta win
         self.assertIn("spot $405.00", win)
         # A long call expiring worthless is still a loss (calls keep direction).
         tc = o.parse_option("#Long call SPY 400c 2026-07-18 @ 3.20", date(2026, 7, 1))
         loss = o.format_option_resolution(
             tc, o.resolve_option("Long", "call", 400, 3.2, 395), 395)
         self.assertIn("❌", loss)
+
+
+class SpreadTests(unittest.TestCase):
+    REF = date(2026, 7, 12)
+
+    def test_parse_real_spread_lines(self):
+        cases = {
+            "#Short AKAM next weeks PDS 124/122 for 90c": (124.0, "124/122", 0.90),
+            "#Long CRWV via 97/96 (Jul 26) for .25c credit.": (97.0, "97/96", 0.25),
+            "#Long CRWV via 97/96 (Jul 2) PCS for .25c credit.": (97.0, "97/96", 0.25),
+            "#Short SPY lotto PDS 746/745 for 37c": (746.0, "746/745", 0.37),
+            "#long RKLB 100/112 cds $0.8": (100.0, "100/112", 0.80),
+        }
+        for line, (strike, label, credit) in cases.items():
+            s = o.parse_spread(line, self.REF)
+            self.assertIsNotNone(s, line)
+            self.assertEqual(s["instrument"], "spread")
+            self.assertEqual(s["opt_type"], o.PUT)
+            self.assertEqual(s["strike"], strike, line)
+            self.assertEqual(s["spread_label"], label, line)
+            self.assertAlmostEqual(s["premium"], credit, msg=line)
+            self.assertEqual(s["side"], "Long")   # opens normalize to theta side
+
+    def test_parse_spread_reads_month_day_expiration(self):
+        s = o.parse_spread("#Long CRWV via 97/96 (Jul 26) PCS for .25c credit",
+                           date(2026, 7, 1))
+        self.assertEqual(s["expiration"], "2026-07-26")
+
+    def test_exit_spread_keeps_exit_side(self):
+        s = o.parse_spread("#Exit CRWV via 97/96 for +67%", self.REF)
+        self.assertEqual(s["side"], "Exit")
+
+    def test_non_spread_lines_return_none(self):
+        for line in ("#Long BE 07/10/2026 235.00 P 4.9",  # single-leg option
+                     "#Long $PENG 77.15",                  # stock
+                     "#Exit CROX 1/2 at $133.46",          # fraction, no keyword
+                     "#Long AAPL via breakout"):           # keyword but no strikes
+            self.assertIsNone(o.parse_spread(line, self.REF), line)
+
+    def test_date_and_fraction_not_mistaken_for_strikes(self):
+        # "6/26" (date) and "1/2" (fraction) have a leading value <= 12.
+        self.assertIsNone(o.parse_spread("#Short QQQ PDS 6/26 for 40c", self.REF))
+
+    def test_resolve_spread_worthless_above_first_strike_is_win(self):
+        r = o.resolve_spread(97.0, 0.25, 99.0)   # spot >= 97
+        self.assertTrue(r["win"])
+        self.assertEqual(r["pct"], 1.0)
+        self.assertIn("worthless", r["summary"])
+
+    def test_resolve_spread_below_first_strike_is_loss(self):
+        r = o.resolve_spread(97.0, 0.25, 95.0)   # spot < 97
+        self.assertFalse(r["win"])
+        self.assertEqual(r["pct"], -1.0)
+
+    def test_spread_credit_cents_vs_dollars(self):
+        self.assertAlmostEqual(o._spread_credit("for 90c"), 0.90)
+        self.assertAlmostEqual(o._spread_credit("for .25c credit"), 0.25)
+        self.assertAlmostEqual(o._spread_credit("$0.8"), 0.80)
+        self.assertAlmostEqual(o._spread_credit("@ $0.55"), 0.55)
 
 
 if __name__ == "__main__":
