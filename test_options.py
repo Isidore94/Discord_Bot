@@ -217,17 +217,26 @@ class ResolveMatrixTests(unittest.TestCase):
         self.assertAlmostEqual(r["basis"], 254.0)  # strike + premium
         self.assertIn("called away", r["summary"])
 
-    # --- Long put ---
-    def test_long_put_itm_scores_on_intrinsic_vs_premium(self):
-        r = o.resolve_option("Long", "put", 175, 5.5, 160)
-        self.assertEqual(r["status"], "exercised")
-        self.assertTrue(r["win"])
-        self.assertAlmostEqual(r["pnl"], 9.5)      # (175-160) - 5.5
-
-    def test_long_put_otm_is_worthless_loss(self):
-        r = o.resolve_option("Long", "put", 175, 5.5, 180)
+    # --- Puts are theta trades regardless of the Long/Short label: a put
+    #     expiring worthless is a win, and ITM assigns shares (same as a
+    #     short/cash-secured put). This channel writes sold puts as "#Long P".
+    def test_long_put_worthless_is_a_win(self):
+        r = o.resolve_option("Long", "put", 175, 5.5, 180)  # spot >= strike
         self.assertEqual(r["status"], "expired_worthless")
-        self.assertFalse(r["win"])
+        self.assertTrue(r["win"])
+        self.assertAlmostEqual(r["pct"], 1.0)
+
+    def test_long_put_itm_assigns_shares(self):
+        r = o.resolve_option("Long", "put", 175, 5.5, 160)  # spot < strike
+        self.assertEqual(r["status"], "assigned")
+        self.assertIsNone(r["win"])
+        self.assertAlmostEqual(r["basis"], 169.5)   # strike - premium
+
+    def test_short_and_long_puts_resolve_identically(self):
+        for spot in (180, 160):
+            self.assertEqual(
+                o.resolve_option("Long", "put", 175, 5.5, spot)["status"],
+                o.resolve_option("Short", "put", 175, 5.5, spot)["status"])
 
     # --- Fractional return on premium (pct) ---
     def test_pct_on_premium(self):
@@ -283,8 +292,10 @@ class FormatTests(unittest.TestCase):
         win = o.format_option_resolution(t, o.resolve_option("Short", "put", 400, 3.2, 405), 405)
         self.assertIn("✅", win)
         self.assertIn("spot $405.00", win)
+        # A long call expiring worthless is still a loss (calls keep direction).
+        tc = o.parse_option("#Long call SPY 400c 2026-07-18 @ 3.20", date(2026, 7, 1))
         loss = o.format_option_resolution(
-            t, o.resolve_option("Long", "put", 400, 3.2, 405), 405)
+            tc, o.resolve_option("Long", "call", 400, 3.2, 395), 395)
         self.assertIn("❌", loss)
 
 

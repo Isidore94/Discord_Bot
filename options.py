@@ -30,10 +30,12 @@ Two capabilities layered on top of the plain-stock parser in weekly_summary.py:
      Long put    expired worthless -> loss of premium    exercised: worth strike-spot
      Short put   expired worthless -> WIN (keep premium) assigned: buy shares @ strike
 
-   A short (cash-secured) put -- "a theta trade trying to expire" -- that
-   finishes at or above its strike expires worthless for a full win (the
-   premium is kept); finishing below the strike assigns shares at a cost basis
-   of the strike minus the premium collected.
+   In this channel puts are premium/theta trades regardless of the Long/Short
+   label a trader types (a put is written to collect premium, not bought for
+   downside): a put that finishes at or above its strike expires worthless for
+   a full win (premium kept); below the strike it assigns shares at a cost
+   basis of the strike minus the premium. Only calls keep buyer/seller
+   direction (a long call is a bought bet, a short call is covered/sold).
 
 yfinance is imported lazily inside spot_close_on(), so parsing and the pure
 resolution logic work -- and stay unit-testable -- even where yfinance or
@@ -239,6 +241,12 @@ def resolve_option(side, opt_type, strike, premium, spot):
     """
     side = side.capitalize()
     opt_type = opt_type.lower()
+    # Puts in this channel are premium/theta trades, not downside bets: a put
+    # expiring worthless is a win (premium kept) and a put finishing in the
+    # money assigns shares -- the short-put outcome -- whether it was typed
+    # "#Long ... P" or "#Short ... P". Only calls keep long/short direction.
+    if opt_type == PUT:
+        side = "Short"
     itm = is_itm(opt_type, strike, spot)
     prem = premium  # may be None when the poster omitted it
 

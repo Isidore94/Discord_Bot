@@ -67,7 +67,10 @@ TRADE_RE = re.compile(
     r"(?:\s+(?P<partial>[Pp]artial))?"             # optional "partial" (Exit)
     + options.FILLER +                             # "half of", "this add on Long", ...
     r"\s+\$?(?P<ticker>[A-Z][A-Z.]{0,6})"          # optional $, then TICKER
-    r"(?:\s+(?:[Aa]t\s+|@\s*)?\$?(?P<price>\d+(?:\.\d+)?)(?!\s*%))?"  # price, not N%
+    # price: not a percentage ("for 100%"), and not the numerator of a
+    # fraction ("CROX 1/2 at $133" -- "1/2" is size sold, the real price
+    # follows "at"; a bare fraction must not be misread as a $1 price).
+    r"(?:\s+(?:[Aa]t\s+|@\s*)?\$?(?P<price>\d+(?:\.\d+)?)(?!\s*%)(?!\s*/\s*\d))?"
     r"(?P<notes>.*)$"                              # trailing free-text notes
 )
 
@@ -544,6 +547,10 @@ def compute_win_rates(trades, week_start=None):
                                entry_is_option=len(key) > 2)
             if pct is not None:
                 t["pct"] = pct
+            # Stamp the entry onto the exit so "Closed this week" can render the
+            # whole round trip (entry → exit) even when the open predates the week.
+            t["entry_side"] = info["side"]
+            t["entry_price"] = info["price"]
             if info["timestamp"] and t.get("timestamp"):
                 t["held_days"] = max(0, (parse_ts(t["timestamp"])
                                          - parse_ts(info["timestamp"])).days)
@@ -768,97 +775,76 @@ def _fmt_price(price):
     return f"{price:g}" if price is not None else ""
 
 
-def _score_suffix(t):
-    """' (+3.4%, 2 partials, held 12d)' for a scored exit, '' if unknown.
+def _horizon(t):
+    """'day trade' (held 0d) or 'swing Nd' (held >0d), '' if hold unknown."""
+    d = t.get("held_days")
+    if d is None:
+        return ""
+    return "day trade" if d == 0 else f"swing {d}d"
 
-    On a closing exit the pct is the whole position's equal-tranche average
-    and the partials count says how many partial exits fed into it.
-    """
+
+def _closed_suffix(t):
+    """'(+3.4%, 2 partials, swing 12d)' tail for a closed round trip."""
     bits = []
     if t.get("pct") is not None:
         bits.append(f"{t['pct'] * 100:+.1f}%")
     n = t.get("partials")
     if n:
         bits.append(f"{n} partial{'s' if n != 1 else ''}")
-    if t.get("held_days") is not None:
-        bits.append(f"held {t['held_days']}d")
+    horizon = _horizon(t)
+    if horizon:
+        bits.append(horizon)
     return f" ({', '.join(bits)})" if bits else ""
 
 
-def _group_weekly(week_trades):
-    """Fold a same-week Long/Short-then-full-Exit pair on the same position
-    into a single round-trip unit, so a closed trade reads as one line
-    instead of two separate bullets scattered through the list.
+def _closed_icon(t):
+    pct = t.get("pct")
+    if pct is None or pct == 0:
+        return "➖"          # scratch, or a close we couldn't score
+    return "✅" if pct > 0 else "❌"
 
-    Adds, partial exits, and an exit that closes a position opened before
-    this week are never merged -- they stay standalone, exactly as before.
-    A position opened this week that never got a matching exit surfaces as
-    a "still open" unit (also shown, in full, under Open trades below).
 
-    Returns a list of render units in roughly chronological order (a merged
-    pair lands at its exit's position; a still-open leftover trails at the
-    end): a plain trade dict, a ("pair", open_t, exit_t) tuple, or a
-    ("still_open", open_t) tuple.
+def _closed_line(t):
+    """One line for a position fully CLOSED this week, anchored on the exit
+    trade (compute_win_rates stamps it with entry_side/entry_price, so the
+    whole round trip renders as `entry → exit` even for a multi-week swing).
     """
-    units = []
-    open_by_key = {}
-    for t in week_trades:
-        if t["side"] in ("Long", "Short"):
-            key = _pos_key(t)
-            prev = open_by_key.get(key)
-            if prev is not None:
-                units.append(prev)  # superseded without closing -> standalone
-            open_by_key[key] = t
-        elif t["side"] == "Exit" and not t["partial"]:
-            key = _pos_key(t)
-            opened = open_by_key.pop(key, None)
-            units.append(("pair", opened, t) if opened is not None else t)
-        else:
-            units.append(t)  # Add, or partial Exit
-    units.extend(("still_open", t) for t in open_by_key.values())
-    return units
-
-
-def _weekly_merged_line(open_t, exit_t):
-    """One line for a position opened and fully closed within the same week."""
-    icon = "🟢" if open_t["side"] == "Long" else "🔵"
-    exit_price = _fmt_price(exit_t.get("price"))
-    exit_str = f" @ {exit_price}" if exit_price else ""
-    notes = f" — {exit_t['notes']}" if exit_t.get("notes") else ""
-    if _is_option(open_t):
-        return (f"- {icon} {options.format_option_open(open_t)} "
-                f"→ Exit{exit_str}{_score_suffix(exit_t)}{notes}")
-    entry_price = _fmt_price(open_t.get("price"))
-    entry_str = f" @ {entry_price}" if entry_price else ""
-    return (f"- {icon} **{open_t['ticker']}**: {open_t['side']}{entry_str} "
-            f"→ Exit{exit_str}{_score_suffix(exit_t)}{notes}")
-
-
-def _weekly_line(t):
-    """One line describing a trade a trader took this week."""
+    icon = _closed_icon(t)
+    notes = f" — {t['notes']}" if t.get("notes") else ""
+    suffix = _closed_suffix(t)
+    entry_price = t.get("entry_price")
+    entry_side = t.get("entry_side", "")
     if _is_option(t):
-        if t["side"] == "Exit":
-            icon = "🟡" if t["partial"] else "✅"
-            verb = "Partial exit" if t["partial"] else "Exit"
-            notes = f" — {t['notes']}" if t.get("notes") else ""
-            return (f"- {icon} {options.format_option_open(t, verb=verb)}"
-                    f"{_score_suffix(t)}{notes}")
-        if t["side"] == "Add":
-            return f"- ➕ {options.format_option_open(t)}"
-        icon = "🟢" if t["side"] == "Long" else "🔵"
-        return f"- {icon} {options.format_option_open(t)}"
-    price = _fmt_price(t["price"])
-    price_str = f" @ {price}" if price else ""
-    if t["side"] == "Exit":
-        icon = "🟡" if t["partial"] else "✅"
-        verb = "Partial exit" if t["partial"] else "Exit"
-        notes = f" — {t['notes']}" if t["notes"] else ""
-        return f"- {icon} {verb} **{t['ticker']}**{price_str}{_score_suffix(t)}{notes}"
-    if t["side"] == "Add":
-        avg = f" → avg {t['new_avg']:g}" if t.get("new_avg") is not None else ""
-        return f"- ➕ Add **{t['ticker']}**{price_str}{avg}"
-    icon = "🟢" if t["side"] == "Long" else "🔵"
-    return f"- {icon} {t['side']} **{t['ticker']}**{price_str}"
+        contract = options._contract(t)
+        exit_p = options._d(t["price"]) if t.get("price") is not None else "?"
+        if entry_price is not None:
+            body = (f"{entry_side} **{contract}**: "
+                    f"{options._d(entry_price)} → {exit_p}")
+        else:
+            body = f"Exit **{contract}** @ {exit_p}"
+    else:
+        exit_price = _fmt_price(t.get("price"))
+        exit_str = f" @ {exit_price}" if exit_price else ""
+        if entry_price is not None:
+            body = (f"**{t['ticker']}**: {entry_side} @ {_fmt_price(entry_price)} "
+                    f"→ Exit{exit_str}")
+        else:
+            body = f"Exit **{t['ticker']}**{exit_str}"
+    return f"- {icon} {body}{suffix}{notes}"
+
+
+def _trim_suffix(t):
+    """' · trimmed 2× (+50%, +100%)' for a still-open position that took
+    partial exits, so those trims read as one line on the position instead of
+    a separate bullet per partial post."""
+    n = t.get("partials", 0)
+    if not n:
+        return ""
+    pcts = t.get("partial_pcts") or []
+    if pcts:
+        detail = ", ".join(f"{p * 100:+.0f}%" for p in pcts)
+        return f" · trimmed {n}× ({detail})"
+    return f" · trimmed {n}×"
 
 
 def _open_line(t, now=None, marks=None):
@@ -879,7 +865,7 @@ def _open_line(t, now=None, marks=None):
                 tags += " _(awaiting settlement)_"
             elif exp <= today + timedelta(days=7):
                 tags += " ⏳ expires this week"
-        return f"- {options.format_option_open(t)}{tags}{opened}"
+        return f"- {options.format_option_open(t)}{tags}{_trim_suffix(t)}{opened}"
     price = _fmt_price(t["price"])
     price_str = f" @ {price}" if price else ""
     mtm = ""
@@ -891,7 +877,7 @@ def _open_line(t, now=None, marks=None):
     tags = f" (avg of {t['adds']})" if t.get("adds", 1) > 1 else ""
     if t.get("assigned"):
         tags += " _(assigned)_"
-    return f"- {t['side']} **{t['ticker']}**{price_str}{tags}{mtm}{opened}"
+    return f"- {t['side']} **{t['ticker']}**{price_str}{tags}{mtm}{_trim_suffix(t)}{opened}"
 
 
 def _win_rate_line(stats):
@@ -903,7 +889,7 @@ def _win_rate_line(stats):
     if total == 0:
         return None
     pct = round(100 * wins / total)
-    parts = [f"Quasi win rate: **{pct}%** ({wins}W–{losses}L, {total} scored)"]
+    parts = [f"All-time win rate: **{pct}%** ({wins}W–{losses}L, {total} scored)"]
     if stats.get("pct_n"):
         avg = stats["pct_sum"] / stats["pct_n"] * 100
         parts.append(f"avg {avg:+.1f}%/trade")
@@ -990,18 +976,17 @@ def build_summary(log, now, spot_close=options.spot_close_on, last_close=None):
         if wr_line:
             lines.append(wr_line)
 
-        lines.append("**Trades taken this week**")
+        # Closed this week: only positions that FULLY closed this week (a full
+        # exit), one round-trip line each. Opens, adds, and partials of a
+        # still-open position are not repeated here -- they live under Open
+        # trades -- so a position doesn't appear both as "taken" and "open".
         week_trades = weekly_by_user.get(user, [])
-        if week_trades:
-            for unit in _group_weekly(week_trades):
-                if isinstance(unit, tuple) and unit[0] == "pair":
-                    lines.append(_weekly_merged_line(unit[1], unit[2]))
-                elif isinstance(unit, tuple) and unit[0] == "still_open":
-                    lines.append(_weekly_line(unit[1]) + " _(still open)_")
-                else:
-                    lines.append(_weekly_line(unit))
+        closed = [t for t in week_trades if t["side"] == "Exit" and not t["partial"]]
+        lines.append("**Closed this week**")
+        if closed:
+            lines.extend(_closed_line(t) for t in closed)
         else:
-            lines.append("- _no new trades this week_")
+            lines.append("- _no closed trades this week_")
 
         settled = settled_by_user.get(user, [])
         if settled:

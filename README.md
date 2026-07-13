@@ -2,7 +2,7 @@
 
 Weekly Discord trade-summary bot. It reads trade posts from a YAGPDB-fed
 channel, keeps a persistent running log, and posts a trader-by-trader summary
-("Trades taken this week", "Options settled this week", "Open trades") with a
+("Closed this week", "Options settled this week", "Open trades") with a
 quasi win rate.
 
 ## Trade syntax
@@ -43,6 +43,14 @@ expiration date, and an optional premium:
 #Short call TSLA 250c 7/18 4.00
 ```
 
+The strike and date may also come in the other order (the channel's date-first
+shape), with a bare `c`/`p` suffix:
+
+```
+#Long BE 07/10/2026 235.00 P 4.9
+#Long DELL 07/17/2026 385.00p 3.35 this am
+```
+
 Dates may be ISO (`2026-07-18`) or US (`8/15`, `8/15/26`, `8/15/2026`); a date
 without a year infers the next occurrence. The premium may be introduced by
 `@`, `for`, `at`, `$`, or given bare.
@@ -69,39 +77,39 @@ closing spot price on that date (via `yfinance`) and settles it:
 |------------|-------------------------------------|-------------------------------------|
 | Long call  | in the money (worth spot − strike)  | expired worthless → loss of premium |
 | Short call | assigned — shares called away       | expired worthless → **win** (premium kept) |
-| Long put   | expired worthless → loss of premium | in the money (worth strike − spot)  |
-| Short put  | expired worthless → **win** (premium kept) | assigned — buy shares @ strike |
+| Put (any)  | expired worthless → **win** (premium kept) | assigned — buy shares @ strike |
 
-A short (cash-secured) put — a theta trade trying to expire — that finishes at
-or above its strike is taken off as expiring worthless for a win; finishing
-below the strike is reported as **shares assigned** at a cost basis of the
-strike minus the premium collected, and those shares are then tracked as an
-open stock position. The wheel continues: a short call that gets assigned
-while the trader holds tracked shares of the same ticker closes those shares
-at the effective sale price (strike + premium) and scores the share P&L.
-Settled option wins/losses fold into the quasi win rate. If the spot price
-can't be fetched (network/`yfinance` unavailable), the position is left open
-(`awaiting settlement`) and settled on a later run; fetched settlement spots
-are cached in the running log so they are never refetched.
+**Puts are treated as premium/theta trades regardless of the `Long`/`Short`
+label** — in this channel a put is written to collect premium, so a put that
+expires at or above its strike is a **win** (premium kept) and one that
+finishes below the strike is **shares assigned** at a cost basis of the strike
+minus the premium (then tracked as an open stock position). Only calls keep
+buyer/seller direction. The wheel continues: a short call assigned while the
+trader holds tracked shares of the same ticker closes those shares at the
+effective sale price (strike + premium) and scores the share P&L. Settled
+option wins/losses fold into the win rate. If the spot price can't be fetched
+(network/`yfinance` unavailable), the position is left open (`awaiting
+settlement`) and settled on a later run; fetched settlement spots are cached in
+the running log so they are never refetched.
 
 ## Summary extras
 
-- Per-trader stats line: quasi win rate (all-time), average %/trade, and this
+- Per-trader stats line: **all-time** win rate, average %/trade, and this
   week's W–L. **One data point per position**: partial exits don't score
   individually — the number of partials is tracked, every tranche (each
   partial plus the final close, or the option's expiry settlement) is assumed
   equal size, and the position scores a single win/loss at the equal-weighted
-  average return, shown as e.g. `(+5.3%, 1 partial, held 6d)`.
-- Scored exits show their % return and hold time, e.g. `(+10.0%, held 8d)`.
-- A position opened AND fully closed within the same week collapses into one
-  round-trip line instead of two separate bullets, e.g.
-  `**HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%, held 0d)`. Adds and partial
-  exits always stay on their own line; a position opened this week with no
-  closing exit yet is tagged `(still open)`.
+  average return.
+- **"Closed this week" lists only positions that fully closed this week**, one
+  round-trip line each, e.g. `**HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%, day
+  trade)`. A close held 0 days is a **day trade**; longer is a **swing Nd**.
+  Opens, adds, and partials of a still-open position are *not* repeated here —
+  they live under Open trades — so a position never shows up twice.
 - Open positions are marked to market with one batched quote fetch: stocks get
   `→ 82.3 (+6.7%)`, options show the underlying spot; open options expiring
-  within 7 days are tagged `⏳ expires this week`. Marking is skipped silently
-  if the quote fetch fails.
+  within 7 days are tagged `⏳ expires this week`. A position that was trimmed
+  gets a one-line `· trimmed 2× (+50%, +100%)` summary rather than a bullet per
+  partial. Marking is skipped silently if the quote fetch fails.
 
 ## Running
 

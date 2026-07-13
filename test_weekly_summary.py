@@ -305,7 +305,7 @@ class SummaryTests(unittest.TestCase):
         # Every active trader gets their own section with both headings.
         for user in ("isidore94", "00sav00", "1ripley"):
             self.assertIn(f"## {user}", summary)
-        self.assertEqual(summary.count("**Trades taken this week**"), 3)
+        self.assertEqual(summary.count("**Closed this week**"), 3)
         self.assertEqual(summary.count("**Open trades**"), 3)
 
     def test_open_positions_persist_and_partial_stays_open(self):
@@ -674,7 +674,7 @@ class StatsAndMarksTests(unittest.TestCase):
         exit_t = [t for t in trades if t["side"] == "Exit"][0]
         self.assertAlmostEqual(exit_t["pct"], 0.10)
         self.assertEqual(exit_t["held_days"], 8)
-        self.assertIn("(+10.0%, held 8d)", ws._weekly_line(exit_t))
+        self.assertIn("(+10.0%, swing 8d)", ws._closed_line(exit_t))
 
     def test_marks_annotate_open_positions(self):
         log = {"messages": {
@@ -805,14 +805,12 @@ class AddFunctionTests(unittest.TestCase):
         self.assertEqual(held["side"], "Short")
         self.assertEqual(held["price"], 110.0)
 
-    def test_add_weekly_line_shows_new_avg(self):
+    def test_add_line_parses_new_avg(self):
         t = ws.parse_trade_line("#add Long ALAB at 429.54. New avg: 449.76")
         self.assertEqual(t["side"], "Add")
         self.assertEqual(t["ticker"], "ALAB")
         self.assertEqual(t["price"], 429.54)
         self.assertEqual(t["new_avg"], 449.76)
-        line = ws._weekly_line(t)
-        self.assertIn("➕ Add **ALAB** @ 429.54 → avg 449.76", line)
 
 
 class RealWorldExitTests(unittest.TestCase):
@@ -851,6 +849,13 @@ class RealWorldExitTests(unittest.TestCase):
         t = ws.parse_trade_line("#Exit NVDA 11.70 for -32% on calls")
         self.assertFalse(t["partial"])
         self.assertAlmostEqual(t["stated_pct"], -0.32)
+
+    def test_fraction_size_is_not_read_as_price(self):
+        # "CROX 1/2 at $133.46" -> "1/2" is the size sold, NOT a $1 price.
+        # (Real bug: it produced a fabricated -99% loss.)
+        t = ws.parse_trade_line("#exit CROX 1/2 at $133.46 - 2.26 gain")
+        self.assertEqual(t["ticker"], "CROX")
+        self.assertIsNone(t["price"])   # never $1
 
     def test_plain_full_exits_stay_full(self):
         for line in ("#Exit CRWD at 187.60",
@@ -894,7 +899,7 @@ class RealWorldExitTests(unittest.TestCase):
         self.assertAlmostEqual(wr["m"]["pct_sum"], (0.5 + 1.0 + 0.2) / 3)
         final = [t for t in trades if not t["partial"] and t["side"] == "Exit"][0]
         self.assertEqual(final["partials"], 2)
-        self.assertIn("2 partials", ws._weekly_line(final))
+        self.assertIn("2 partials", ws._closed_line(final))
 
     def test_expiry_settlement_blends_partial_tranches(self):
         # Long call, partial exit at +25%, remainder expires worthless (-100%):
@@ -1042,7 +1047,10 @@ class WeeklyGroupingTests(unittest.TestCase):
         return {"messages": {str(mid): {"timestamp": ts, "content": c}
                              for mid, ts, c in rows}}
 
-    def test_same_week_round_trip_merges_into_one_line(self):
+    def _closed(self, summary):
+        return summary.split("**Closed this week**")[1].split("**Open")[0]
+
+    def test_same_week_round_trip_is_one_closed_line(self):
         log = self._log([
             (1, "2026-07-06T00:00:00+00:00",
              "u posted a trade:\n#Short BMNR 14.35"),
@@ -1050,14 +1058,12 @@ class WeeklyGroupingTests(unittest.TestCase):
              "u posted a trade:\n#Exit BMNR b/e"),
         ])
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
-        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
-        self.assertEqual(sec.count("BMNR"), 1)   # one merged line, not two
-        self.assertIn("Short @ 14.35", sec)
-        self.assertIn("Exit", sec)
+        sec = self._closed(ws.build_summary(log, now, spot_close=lambda tk, d: None))
+        self.assertEqual(sec.count("BMNR"), 1)   # one round-trip line, not two
+        self.assertIn("**BMNR**: Short @ 14.35 → Exit", sec)
         self.assertIn("b/e", sec)
 
-    def test_scored_round_trip_shows_pct_and_held_days(self):
+    def test_scored_round_trip_shows_pct_and_day_trade(self):
         log = self._log([
             (1, "2026-07-06T00:00:00+00:00",
              "u posted a trade:\n#Long HPE 48.9"),
@@ -1066,35 +1072,50 @@ class WeeklyGroupingTests(unittest.TestCase):
         ])
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        self.assertIn("**HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%, held 0d)",
+        self.assertIn("**HPE**: Long @ 48.9 → Exit @ 49.7 (+1.6%, day trade)",
                       summary)
 
-    def test_exit_of_a_pre_existing_position_stays_standalone(self):
-        # Opened well before the week window -> the weekly exit must NOT
-        # merge with anything (there's no matching open in week_trades).
+    def test_swing_label_for_multi_day_hold(self):
+        log = self._log([
+            (1, "2026-07-04T00:00:00+00:00",
+             "u posted a trade:\n#Long OKTA 131.4"),
+            (2, "2026-07-11T00:00:00+00:00",
+             "u posted a trade:\n#Exit OKTA 145.25"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        self.assertIn("swing 7d", summary)
+        self.assertNotIn("day trade", summary)
+
+    def test_exit_of_a_pre_existing_position_is_a_closed_line(self):
+        # Opened before the week; the exit still renders the full round trip
+        # (entry stamped by compute_win_rates) and is labeled a swing.
         log = self._log([
             (1, "2026-05-01T00:00:00+00:00",
              "u posted a trade:\n#Long VRT 300.00"),
             (2, "2026-07-11T00:00:00+00:00",
-             "u posted a trade:\n#Exit VRT rest of the shares 5$"),
+             "u posted a trade:\n#Exit VRT 330.00"),
         ])
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
-        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
-        self.assertIn("Exit **VRT**", sec)
-        self.assertNotIn("→", sec)   # no merge arrow -- solo exit
+        sec = self._closed(ws.build_summary(log, now, spot_close=lambda tk, d: None))
+        self.assertIn("**VRT**: Long @ 300 → Exit @ 330", sec)
+        self.assertIn("swing", sec)
 
-    def test_position_opened_this_week_with_no_exit_tagged_still_open(self):
+    def test_open_position_does_not_appear_in_closed_section(self):
+        # A position opened this week and still open shows ONLY under Open
+        # trades -- never duplicated in "Closed this week" (the DELL complaint).
         log = self._log([
             (1, "2026-07-10T00:00:00+00:00",
              "u posted a trade:\n#Long DLO 15.02"),
         ])
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
-        self.assertIn("Long **DLO** @ 15.02 _(still open)_", sec)
+        closed = self._closed(summary)
+        self.assertIn("_no closed trades this week_", closed)
+        self.assertNotIn("DLO", closed)
+        self.assertIn("Long **DLO** @ 15.02", summary.split("**Open trades**")[1])
 
-    def test_partial_exit_never_merges(self):
+    def test_partial_of_open_position_is_not_in_closed_section(self):
         log = self._log([
             (1, "2026-07-06T00:00:00+00:00",
              "u posted a trade:\n#Long AAA 100.00"),
@@ -1103,12 +1124,11 @@ class WeeklyGroupingTests(unittest.TestCase):
         ])
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
-        self.assertIn("Long **AAA**", sec)
-        self.assertIn("Partial exit **AAA**", sec)
-        self.assertNotIn("→", sec)
+        self.assertIn("_no closed trades this week_", self._closed(summary))
+        # The trim is summarized on the open position instead.
+        self.assertIn("trimmed 1× (+10%)", summary.split("**Open trades**")[1])
 
-    def test_add_stays_standalone_around_a_merged_round_trip(self):
+    def test_add_is_not_shown_in_closed_section(self):
         log = self._log([
             (1, "2026-07-06T00:00:00+00:00",
              "u posted a trade:\n#Long ALAB 470.00"),
@@ -1118,28 +1138,11 @@ class WeeklyGroupingTests(unittest.TestCase):
              "u posted a trade:\n#Exit ALAB 460.00"),
         ])
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
-        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
-        self.assertIn("➕ Add **ALAB**", sec)                # standalone
-        self.assertIn("**ALAB**: Long @ 470 → Exit @ 460", sec)  # merged
+        sec = self._closed(ws.build_summary(log, now, spot_close=lambda tk, d: None))
+        self.assertNotIn("Add", sec)                         # add not shown here
+        self.assertIn("**ALAB**: Long @ 450 → Exit @ 460", sec)  # closed vs new avg
 
-    def test_superseded_same_week_open_renders_standalone_not_still_open(self):
-        # Opened, then re-opened (no close in between) -- the FIRST open was
-        # superseded, not "still open"; only the final one gets that tag.
-        log = self._log([
-            (1, "2026-07-06T00:00:00+00:00",
-             "u posted a trade:\n#Long FBIN 52.00"),
-            (2, "2026-07-08T00:00:00+00:00",
-             "u posted a trade:\n#Long FBIN 55.00"),
-        ])
-        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
-        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
-        self.assertIn("Long **FBIN** @ 52", sec)
-        self.assertNotIn("52 _(still open)_", sec)
-        self.assertIn("Long **FBIN** @ 55 _(still open)_", sec)
-
-    def test_option_round_trip_merges_too(self):
+    def test_option_round_trip_is_one_closed_line(self):
         log = self._log([
             (1, "2026-07-09T00:00:00+00:00",
              "u posted a trade:\n#Long call NVDA 500c 8/15 for 12.00"),
@@ -1147,10 +1150,9 @@ class WeeklyGroupingTests(unittest.TestCase):
              "u posted a trade:\n#Exit NVDA 500c 8/15 @ 15.00"),
         ])
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
-        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
-        sec = summary.split("**Trades taken this week**")[1].split("**Open")[0]
+        sec = self._closed(ws.build_summary(log, now, spot_close=lambda tk, d: None))
         self.assertEqual(sec.count("NVDA"), 1)
-        self.assertIn("→ Exit @ 15", sec)
+        self.assertIn("$12.00 → $15.00", sec)
         self.assertIn("+25.0%", sec)
 
 
