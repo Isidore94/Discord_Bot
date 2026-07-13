@@ -252,16 +252,43 @@ def _spread_credit(line):
     return val
 
 
-def parse_spread(line, ref_date=None):
-    """Parse a multi-leg spread trade into a theta/credit position dict, or None.
+def _spread_type(line):
+    """Classify a spread from its keyword:
 
-    Requires a spread keyword and a two-strike ``N/M`` pattern. The whole family
-    is treated as a credit (theta) play at the higher/first strike: above it at
-    expiry the spread expires worthless for a win, and it is usually closed
-    early for a partial of the credit. Returns an option-shaped dict with
-    ``instrument="spread"`` and ``opt_type="put"`` so it flows through the same
-    theta scoring/settlement as a #Long put; opens are normalized to the theta
-    side. ``ref_date`` infers a yearless expiration.
+      PCS -- put credit spread   -> theta (win above the first strike)
+      CDS -- call debit spread   -> directional bullish (like a long call)
+      PDS -- put debit spread    -> directional bearish (like a bought put)
+
+    Debit spreads (CDS/PDS) are checked first; anything else with a credit or a
+    bare "via"/"spread" defaults to PCS (the channel's common case)."""
+    low = line.lower()
+    if re.search(r"\bcds\b|call\s+debit", low):
+        return "CDS"
+    if re.search(r"\bpds\b|put\s+debit", low):
+        return "PDS"
+    return "PCS"
+
+
+# opt_type + normalized side per spread type, chosen so economic_side() yields
+# the right premium direction: PCS collects a credit (short premium), CDS/PDS
+# pay a debit (long premium -- sell higher to win). See economic_side().
+_SPREAD_SHAPE = {
+    "PCS": (PUT, "Long"),    # economic Short (credit/theta)
+    "CDS": (CALL, "Long"),   # economic Long  (debit, bullish)
+    "PDS": (PUT, "Short"),   # economic Long  (debit, bearish)
+}
+
+
+def parse_spread(line, ref_date=None):
+    """Parse a multi-leg spread trade into a position dict, or None.
+
+    Requires a spread keyword and a two-strike ``N/M`` pattern. The type is read
+    from the keyword (see _spread_type): a PCS is a credit/theta play, while a
+    CDS/PDS is a directional debit play treated like a call/put. Returns an
+    option-shaped dict with ``instrument="spread"`` whose ``opt_type``/``side``
+    are set so it flows through the same economic_side() scoring and (via
+    resolve_spread) the type-appropriate settlement. An Exit keeps its side so
+    it closes the position. ``ref_date`` infers a yearless expiration.
     """
     line = line.strip()
     ms = _SPREAD_SIDE.match(line)
@@ -279,7 +306,8 @@ def parse_spread(line, ref_date=None):
 
     s1, s2 = float(strikes.group(1)), float(strikes.group(2))
     side = ms.group("side").capitalize()
-    credit = _spread_credit(line)
+    stype = _spread_type(line)
+    opt_type, open_side = _SPREAD_SHAPE[stype]
 
     exp_iso = None
     md = _MONTH_DAY.search(line)
@@ -289,17 +317,16 @@ def parse_spread(line, ref_date=None):
         exp_iso = exp.isoformat() if exp else None
 
     return {
-        # Opens are normalized to the theta side (#Long put mechanics); an Exit
-        # keeps its side so it closes the position.
-        "side": "Exit" if side == "Exit" else "Long",
+        "side": "Exit" if side == "Exit" else open_side,
         "partial": bool(ms.group("partial")),
-        "opt_type": PUT,
+        "opt_type": opt_type,
         "instrument": "spread",
+        "spread_type": stype,
         "ticker": ticker,
-        "strike": s1,                    # higher/short leg
+        "strike": s1,                    # the primary (first) strike
         "spread_label": f"{s1:g}/{s2:g}",
         "expiration": exp_iso,
-        "premium": credit,               # net credit
+        "premium": _spread_credit(line),  # net credit (PCS) or debit (CDS/PDS)
         "notes": line[mt.end() + ms.end():].strip(),
     }
 
@@ -318,18 +345,29 @@ def _resolve_month_day(month, day, ref_date=None):
     return cand
 
 
-def resolve_spread(first_strike, credit, spot):
-    """Resolve a credit spread held to expiration: worthless (a win, keep the
-    credit) when spot is at or above the higher/first strike, else a loss."""
-    win = spot >= first_strike
-    if win:
+def resolve_spread(first_strike, premium, spot, spread_type="PCS"):
+    """Resolve a spread held to expiration by type:
+
+      PCS -- win when spot is at or above the first strike (expired worthless).
+      CDS -- win when spot is above the first strike (bullish, finished ITM).
+      PDS -- win when spot is below the first strike (bearish, finished ITM).
+    """
+    if spread_type == "CDS":
+        win = spot > first_strike
+    elif spread_type == "PDS":
+        win = spot < first_strike
+    else:  # PCS
+        win = spot >= first_strike
+    if win and spread_type == "PCS":
         summary = "spread expired worthless — win" + (
-            f", kept {_d(credit)} credit" if credit is not None else "")
+            f", kept {_d(premium)} credit" if premium is not None else "")
+    elif win:
+        summary = f"{spread_type} finished in the money — win"
     else:
-        summary = (f"spread finished in the money (spot below "
-                   f"{_d(first_strike)}) — loss")
+        summary = f"{spread_type} finished out of the money — loss"
     return {"status": "expired_worthless" if win else "spread_loss",
-            "itm": not win, "win": win, "pnl": None,
+            "itm": win if spread_type != "PCS" else not win,
+            "win": win, "pnl": None,
             "pct": 1.0 if win else -1.0, "basis": None, "summary": summary}
 
 
@@ -537,7 +575,8 @@ def _contract(t):
     spread 'CRWV 97/96 PCS exp 2026-07-26'."""
     if t.get("instrument") == "spread":
         exp = f" exp {t['expiration']}" if t.get("expiration") else ""
-        return f"{t['ticker']} {t.get('spread_label', '')} PCS{exp}"
+        return (f"{t['ticker']} {t.get('spread_label', '')} "
+                f"{t.get('spread_type', 'PCS')}{exp}")
     suffix = "c" if t["opt_type"] == CALL else "p"
     strike = f"{t['strike']:g}"
     return f"{t['ticker']} ${strike}{suffix} exp {t['expiration']}"

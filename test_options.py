@@ -316,22 +316,31 @@ class SpreadTests(unittest.TestCase):
     REF = date(2026, 7, 12)
 
     def test_parse_real_spread_lines(self):
+        # line -> (strike, label, amount, spread_type)
         cases = {
-            "#Short AKAM next weeks PDS 124/122 for 90c": (124.0, "124/122", 0.90),
-            "#Long CRWV via 97/96 (Jul 26) for .25c credit.": (97.0, "97/96", 0.25),
-            "#Long CRWV via 97/96 (Jul 2) PCS for .25c credit.": (97.0, "97/96", 0.25),
-            "#Short SPY lotto PDS 746/745 for 37c": (746.0, "746/745", 0.37),
-            "#long RKLB 100/112 cds $0.8": (100.0, "100/112", 0.80),
+            "#Short AKAM next weeks PDS 124/122 for 90c": (124.0, "124/122", 0.90, "PDS"),
+            "#Long CRWV via 97/96 (Jul 26) for .25c credit.": (97.0, "97/96", 0.25, "PCS"),
+            "#Long CRWV via 97/96 (Jul 2) PCS for .25c credit.": (97.0, "97/96", 0.25, "PCS"),
+            "#Short SPY lotto PDS 746/745 for 37c": (746.0, "746/745", 0.37, "PDS"),
+            "#long RKLB 100/112 cds $0.8": (100.0, "100/112", 0.80, "CDS"),
         }
-        for line, (strike, label, credit) in cases.items():
+        for line, (strike, label, amt, stype) in cases.items():
             s = o.parse_spread(line, self.REF)
             self.assertIsNotNone(s, line)
             self.assertEqual(s["instrument"], "spread")
-            self.assertEqual(s["opt_type"], o.PUT)
+            self.assertEqual(s["spread_type"], stype, line)
             self.assertEqual(s["strike"], strike, line)
             self.assertEqual(s["spread_label"], label, line)
-            self.assertAlmostEqual(s["premium"], credit, msg=line)
-            self.assertEqual(s["side"], "Long")   # opens normalize to theta side
+            self.assertAlmostEqual(s["premium"], amt, msg=line)
+
+    def test_spread_type_sets_economic_premium_direction(self):
+        # PCS = credit (short premium); CDS/PDS = debit (long premium).
+        pcs = o.parse_spread("#Long X via 97/96 PCS for .25c", self.REF)
+        cds = o.parse_spread("#Long X 100/112 cds $0.8", self.REF)
+        pds = o.parse_spread("#Short X PDS 124/122 for 90c", self.REF)
+        self.assertEqual(o.economic_side(pcs["side"], pcs["opt_type"]), "Short")
+        self.assertEqual(o.economic_side(cds["side"], cds["opt_type"]), "Long")
+        self.assertEqual(o.economic_side(pds["side"], pds["opt_type"]), "Long")
 
     def test_parse_spread_reads_month_day_expiration(self):
         s = o.parse_spread("#Long CRWV via 97/96 (Jul 26) PCS for .25c credit",
@@ -353,16 +362,19 @@ class SpreadTests(unittest.TestCase):
         # "6/26" (date) and "1/2" (fraction) have a leading value <= 12.
         self.assertIsNone(o.parse_spread("#Short QQQ PDS 6/26 for 40c", self.REF))
 
-    def test_resolve_spread_worthless_above_first_strike_is_win(self):
-        r = o.resolve_spread(97.0, 0.25, 99.0)   # spot >= 97
-        self.assertTrue(r["win"])
-        self.assertEqual(r["pct"], 1.0)
-        self.assertIn("worthless", r["summary"])
+    def test_resolve_pcs_worthless_above_first_strike_is_win(self):
+        self.assertTrue(o.resolve_spread(97.0, 0.25, 99.0, "PCS")["win"])
+        self.assertFalse(o.resolve_spread(97.0, 0.25, 95.0, "PCS")["win"])
 
-    def test_resolve_spread_below_first_strike_is_loss(self):
-        r = o.resolve_spread(97.0, 0.25, 95.0)   # spot < 97
-        self.assertFalse(r["win"])
-        self.assertEqual(r["pct"], -1.0)
+    def test_resolve_cds_is_bullish_directional(self):
+        # Call debit spread wins when spot is ABOVE the first strike.
+        self.assertTrue(o.resolve_spread(100.0, 0.8, 110.0, "CDS")["win"])
+        self.assertFalse(o.resolve_spread(100.0, 0.8, 95.0, "CDS")["win"])
+
+    def test_resolve_pds_is_bearish_directional(self):
+        # Put debit spread wins when spot is BELOW the first strike.
+        self.assertTrue(o.resolve_spread(124.0, 0.9, 120.0, "PDS")["win"])
+        self.assertFalse(o.resolve_spread(124.0, 0.9, 130.0, "PDS")["win"])
 
     def test_spread_credit_cents_vs_dollars(self):
         self.assertAlmostEqual(o._spread_credit("for 90c"), 0.90)

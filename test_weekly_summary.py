@@ -1197,6 +1197,34 @@ class SpreadIntegrationTests(unittest.TestCase):
         self.assertTrue(oc["win"])
         self.assertIn("worthless", oc["summary"])
 
+    def test_debit_spread_buyback_below_debit_is_a_loss(self):
+        # Call debit spread: pay 0.80 debit, sell (buy back) at 0.55 -> loss.
+        log = self._log([
+            (1, "2026-07-09T00:00:00+00:00",
+             "u posted a trade:\n#long RKLB 100/112 cds $0.8"),
+            (2, "2026-07-11T00:00:00+00:00",
+             "u posted a trade:\n#exit RKLB 100/112 cds @ $0.55"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(log, now, spot_close=lambda tk, d: None)
+        self.assertIn("Spread **RKLB 100/112 CDS", summary)
+        self.assertIn("-31.2%", summary)   # (0.55-0.80)/0.80, a loss
+        wr = ws.compute_win_rates(ws.log_to_trades(log),
+                                  week_start=now - timedelta(days=7))
+        self.assertEqual((wr["u"]["week_wins"], wr["u"]["week_losses"]), (0, 1))
+
+    def test_pds_settles_bearish_below_first_strike(self):
+        log = self._log([
+            (1, "2026-07-06T00:00:00+00:00",
+             "u posted a trade:\n#Short AKAM PDS 124/122 (Jul 10) for 90c"),
+        ])
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        holdings = ws.compute_holdings(ws.log_to_trades(log))
+        below = ws.resolve_expired_options(dict(holdings), now, lambda tk, d: 118.0)
+        above = ws.resolve_expired_options(dict(holdings), now, lambda tk, d: 130.0)
+        self.assertTrue(below["u"][0]["outcome"]["win"])    # bearish: below wins
+        self.assertFalse(above["u"][0]["outcome"]["win"])
+
     def test_spread_below_first_strike_settles_as_loss_no_shares(self):
         log = self._log([
             (1, "2026-07-06T00:00:00+00:00",

@@ -98,20 +98,25 @@ the running log so they are never refetched.
 
 ### Multi-leg spreads
 
-Spread lines — a spread keyword (`PCS`/`PDS`/`CDS`/`via`/…) plus two strikes —
-are tracked as theta/credit plays at the higher (first) strike:
+Spread lines — a spread keyword plus two strikes — are tracked by their type,
+read from the keyword:
+
+| keyword | kind | direction | wins at expiry when… |
+|---------|------|-----------|----------------------|
+| `PCS` (put credit spread)  | credit / theta | — | spot ≥ first strike (expires worthless, keep the credit) |
+| `CDS` (call debit spread)  | debit          | bullish, like a call | spot > first strike |
+| `PDS` (put debit spread)   | debit          | bearish, like a put  | spot < first strike |
 
 ```
 #Long CRWV via 97/96 (Jul 26) PCS for .25c credit
+#Long RKLB 100/112 cds $0.80
 #Short SPY lotto PDS 746/745 for 37c
 ```
 
-Held to expiry, a spread is a **win** when the spot is at or above the first
-strike (it expires worthless and the credit is kept), else a loss. In practice
-these are usually closed early for a partial of the credit, scored by the
-stated return (`for +67%`) or the buy-back price. Every recognized spread is
-treated as a credit play per the channel convention; a genuine debit spread
-(rare) is the one case this over-credits.
+A `via`/`spread` line with no explicit type defaults to `PCS` (the common
+case). Credit spreads win by keeping the credit (buying back cheaper); debit
+spreads pay a debit and win by selling higher — so early exits are scored with
+the right sign either way (a stated `for +67%` is used directly when present).
 
 ## Summary extras
 

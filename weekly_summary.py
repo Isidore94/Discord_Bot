@@ -663,8 +663,11 @@ def resolve_expired_options(holdings, now, spot_close=options.spot_close_on,
             if cache is not None:
                 cache[cache_key] = spot
             if t.get("instrument") == "spread":
-                # Credit spread: worthless above the first strike is a win.
-                outcome = options.resolve_spread(t["strike"], t.get("premium"), spot)
+                # PCS wins above the first strike (theta); CDS/PDS are
+                # directional (win when the debit spread finishes ITM).
+                outcome = options.resolve_spread(
+                    t["strike"], t.get("premium"), spot,
+                    spread_type=t.get("spread_type", "PCS"))
             else:
                 outcome = options.resolve_option(
                     t["side"], t["opt_type"], t["strike"], t.get("premium"), spot
@@ -842,7 +845,8 @@ def _closed_line(t):
     # exit) or the matched entry (informal bare-stock exit of an option/spread).
     contract = options._contract(t) if _is_option(t) else t.get("entry_contract")
     if contract:
-        prefix = "Spread " if "PCS" in contract else f"{entry_side} "
+        is_spread = any(f" {k}" in contract for k in ("PCS", "CDS", "PDS"))
+        prefix = "Spread " if is_spread else f"{entry_side} "
         exit_p = options._d(t["price"]) if t.get("price") is not None else None
         arrow = f" → {exit_p}" if exit_p else " → Exit"
         if entry_price is not None:
