@@ -38,7 +38,7 @@ RETENTION_DAYS = 400        # prune log entries older than this (open positions 
 # Bump when the parser learns to read messages it previously skipped: the next
 # run re-fetches the full lookback window (dedup by message id) so trades that
 # never made it into the log are recovered.
-PARSER_VERSION = 2
+PARSER_VERSION = 3
 
 LOG_PATH = os.environ.get("TRADE_LOG_PATH", "trade_log.json")
 CHUNK_LIMIT = 1900       # stay under Discord's 2000-char message limit
@@ -67,6 +67,11 @@ TAG_RE = re.compile(r"#\s*(?P<side>long|short|exit|add)\b", re.I)
 _FILLER_RES = (
     re.compile(r"^\s+(?:[Ll]ong|[Ss]hort|[Pp]artial)\b"),
     re.compile(r"^\s+(?:the|rest|of|my|all|remaining|last|sold|bought|dca)\b"),
+    # Size / qualifier words that can precede the ticker ("#Add Small add Long
+    # DRAM"). Matched in lower/Title case only so an all-caps ticker (e.g. the
+    # real ticker "A") is never eaten.
+    re.compile(r"^\s+(?:[Ss]mall|[Ll]arge|[Bb]ig|[Tt]iny|[Ss]tarter"
+               r"|[Mm]ore|[Aa]dd|[Ss]ome|[Ss]izing)\b"),
 )
 TICKER_RE = re.compile(r"^\s+\$?(?P<ticker>[A-Z][A-Za-z.]{0,6})\b")
 
@@ -85,6 +90,36 @@ NOTES_PRICE_RE = re.compile(r"(?:\b[Aa]t\s+|@\s*)\$?" + _PRICE_BODY)
 # "avg is 79.91", "new avg $195.05", "#Add Short TSLA 393.41 avg 394.82"
 AVG_RE = re.compile(r"\bavg(?:\s+is)?:?\s*\$?(?P<avg>\d+(?:,\d{3})*(?:\.\d+)?)",
                     re.I)
+
+# Options. The number a trader tracks on an option is the PREMIUM, not the
+# stock price, so P&L follows the contract (long the premium unless it was
+# sold/written), NOT the directional Long/Short tag: a bearish "Short IWM via
+# 295p" is a LONG put and wins when the premium RISES. A strike token
+# ("295p", "500c", "$300p") or an option word marks the trade; a leg ratio
+# ("97/96", "75/80") or PCS/PDS/CDS/credit/debit marks a spread, whose
+# debit-vs-credit direction is too ambiguous to price -- spreads are scored
+# from the trader's stated result instead.
+OPTION_STRIKE_RE = re.compile(r"\$?\d+(?:\.\d+)?(?P<pc>[pc])\b", re.I)
+OPTIONISH_RE = re.compile(r"\bvia\b|\bputs?\b|\bcalls?\b|\bpremium\b", re.I)
+# Spread markers: an explicit type, or a two-leg strike ratio. A ratio only
+# counts when both legs are 2-4 digit strikes (or carry a p/c) so a date like
+# "7/2" or "6/18" is not mistaken for legs.
+SPREAD_KW_RE = re.compile(r"\b(?:pcs|pds|cds|ccs|spread|credit|debit)\b", re.I)
+LEG_RATIO_RE = re.compile(r"\b\d+[pc]/\d+[pc]?\b|\b\d{2,4}/\d{2,4}\b", re.I)
+PUT_RE = re.compile(r"\bputs?\b", re.I)
+CALL_RE = re.compile(r"\bcalls?\b", re.I)
+SOLD_RE = re.compile(r"\b(?:sold|wrote|writing)\b", re.I)
+# Assignment converts an option into stock ("#Long MSFT +assigned puts new avg
+# $398.55"), so the position is a stock long, not an option.
+ASSIGNED_RE = re.compile(r"\bassign(?:ed|ment)?\b", re.I)
+# A number that is really a contract expiry day ("21 AUG 26"), not a price.
+MONTH_AFTER_RE = re.compile(
+    r"^\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)", re.I)
+# Option entry premium: after the strike, introduced by for/at/@/$ (first such
+# hit, so "at 5.8" wins over a later "stops at 2"/"target 13-15"), else bare.
+_PREM_KW_RE = re.compile(r"(?:\bfor\b|\bat\b|@)\s*\$?" + _PRICE_BODY, re.I)
+_PREM_DOLLAR_RE = re.compile(r"\$" + _PRICE_BODY)
+_PREM_BARE_RE = re.compile(r"^\s*" + _PRICE_BODY)
 
 # Partial-vs-full exit cues in the free text. "swinging/trailing the rest"
 # means the rest stays ON (partial); a bare "the rest"/"remaining" means this
@@ -118,6 +153,29 @@ def _to_float(text):
     return float(text.replace(",", ""))
 
 
+def _contract_type(text, is_spread):
+    """'put' / 'call' / 'spread' / None from an option trade's text."""
+    if is_spread:
+        return "spread"
+    m = OPTION_STRIKE_RE.search(text)
+    if m:
+        return "put" if m.group("pc").lower() == "p" else "call"
+    if PUT_RE.search(text):
+        return "put"
+    if CALL_RE.search(text):
+        return "call"
+    return None
+
+
+def _option_premium(text):
+    """Pull the premium out of an option entry's text (after the strike)."""
+    for rx in (_PREM_KW_RE, _PREM_DOLLAR_RE, _PREM_BARE_RE):
+        m = rx.search(text)
+        if m:
+            return _to_float(m.group("price"))
+    return None
+
+
 def _exit_is_partial(explicit_partial, notes):
     if explicit_partial:
         return True
@@ -144,6 +202,7 @@ def _parse_tag(text, tag_match):
     """Parse a trade starting at a TAG_RE match; text after it is the body."""
     side = tag_match.group("side").capitalize()
     rest = text[tag_match.end():].split("\n", 1)[0]
+    body = rest  # full body incl. words the filler loop will strip ("sold")
 
     partial = False
     while True:
@@ -165,15 +224,41 @@ def _parse_tag(text, tag_match):
 
     price = None
     pm = PRICE_RE.match(rest)
+    if pm and MONTH_AFTER_RE.match(rest[pm.end():]):
+        pm = None  # "21 AUG 26" -- that number is an expiry day, not a price
     if pm:
         price = _to_float(pm.group("price"))
         rest = rest[pm.end():]
     notes = rest.strip()
 
+    # Options are only classified on entries; on an exit the flag is unused
+    # (episodes inherit it from their entry) and a stray "40c gain" note would
+    # trip false positives. A bare price right after the ticker means a stock
+    # trade even if a strike is mentioned in passing ("#Long DRAM 60.84 took
+    # assignment of my July 65p") -- options lead with a strike/date/"via", not
+    # a plain price -- so only look for an option when none was matched there.
+    is_option = is_spread = sold = False
+    contract = None
+    strike_m = None
+    if side != "Exit" and pm is None and not ASSIGNED_RE.search(notes):
+        strike_m = OPTION_STRIKE_RE.search(notes)
+        is_spread = bool(SPREAD_KW_RE.search(notes)) or (
+            bool(LEG_RATIO_RE.search(notes)) and strike_m is None)
+        is_option = is_spread or bool(strike_m) or bool(OPTIONISH_RE.search(notes))
+        if is_option:
+            contract = _contract_type(notes, is_spread)
+            # Scan the full body: "sold" may sit before the ticker
+            # ("#Long sold DRAM 40p"), where the filler loop strips it.
+            sold = bool(SOLD_RE.search(body))
+
     if side == "Exit" and price is None:
         nm = NOTES_PRICE_RE.search(notes)
         if nm:
             price = _to_float(nm.group("price"))
+    elif is_option and not is_spread and price is None:
+        # Option entry premium (skip spreads: their credit/debit is ambiguous).
+        after = notes[strike_m.end():] if strike_m else notes
+        price = _option_premium(after)
 
     am = AVG_RE.search(notes)
     avg = _to_float(am.group("avg")) if am else None
@@ -185,6 +270,10 @@ def _parse_tag(text, tag_match):
         "price": price,
         "avg": avg,
         "notes": notes,
+        "option": is_option,
+        "spread": is_spread,
+        "sold": sold,
+        "contract": contract,
     }
 
 
@@ -352,6 +441,10 @@ def log_to_trades(log):
             t.setdefault("avg", None)
             t.setdefault("partial", False)
             t.setdefault("notes", "")
+            t.setdefault("option", False)
+            t.setdefault("spread", False)
+            t.setdefault("sold", False)
+            t.setdefault("contract", None)
             t["message_id"] = mid
             t["timestamp"] = entry.get("timestamp")
             t["index"] = i
@@ -374,6 +467,10 @@ def _new_episode(t):
         "message_id": t["message_id"],
         "exits": [],
         "closed_ts": None,
+        "option": t.get("option", False),
+        "spread": t.get("spread", False),
+        "sold": t.get("sold", False),
+        "contract": t.get("contract"),
     }
 
 
@@ -408,10 +505,14 @@ def compute_episodes(trades):
                 _fold_add(ep, t)  # "#Long NVDA add new avg $195.05"
             elif not ep["exits"]:
                 # Correction / repost before any exit ("#Short IBM $118
-                # (corrected earlier wrong entry)"): update in place.
+                # (corrected earlier wrong entry)"): update in place, and adopt
+                # the newer post's instrument so a stale option flag from an
+                # earlier same-ticker trade can't mis-score a later stock entry.
                 ep["side"] = side
                 if t["price"] is not None:
                     ep["entry_price"] = t["price"]
+                for k in ("option", "spread", "sold", "contract"):
+                    ep[k] = t.get(k)
             else:
                 # Re-entry while partially exited: assume the remainder was
                 # closed off-log; finish the old episode and start fresh.
@@ -469,18 +570,24 @@ def score_episode(ep):
     result is 'win' / 'loss' / 'scratch' / None (unscoreable); pct is the
     signed percent move from entry to the average exit price, or None when the
     call came from the exit notes instead of prices. Exit prices wildly out of
-    proportion to the entry (option premiums, per-share P&L amounts, typos)
-    are ignored rather than trusted.
+    proportion to the entry (mismatched stock-vs-premium legs, per-share P&L
+    amounts, typos) are ignored rather than trusted.
+
+    Direction depends on the instrument: a long stock or a bought option wins
+    when the price/premium rises; a short stock or a sold/written option wins
+    when it falls. Spreads (credit vs debit is ambiguous from the text) skip
+    the price math and fall through to the trader's stated result.
     """
     entry = ep["entry_price"]
-    if entry:
+    option = ep.get("option") and not ep.get("spread")
+    if entry and not ep.get("spread"):
         sane = [e["price"] for e in ep["exits"]
                 if e["price"] is not None and 0.2 <= e["price"] / entry <= 5]
         if sane:
             avg_exit = sum(sane) / len(sane)
             pct = (avg_exit - entry) / entry * 100
-            if ep["side"] == "Short":
-                pct = -pct
+            if ep.get("sold") if option else ep["side"] == "Short":
+                pct = -pct  # falls to profit: short stock / written option
             if abs(pct) < 0.15:  # a hair off entry is a scratch, not a W/L
                 return "scratch", pct
             return ("win" if pct > 0 else "loss"), pct
@@ -527,6 +634,18 @@ def _duration_label(ep):
     return "day trade" if days == 0 else f"swing {days}d"
 
 
+def _option_label(ep):
+    """A short contract tag ('puts', 'sold calls', 'spread') or None, so the
+    tracked premium isn't mistaken for a stock price."""
+    if not ep.get("option"):
+        return None
+    if ep.get("spread"):
+        return "spread"
+    contract = ep.get("contract") or "option"
+    word = contract + "s" if contract in ("put", "call") else contract
+    return f"sold {word}" if ep.get("sold") else word
+
+
 def _closed_line(ep):
     """One line for a full round trip: entry -> partials -> final exit."""
     result, pct = score_episode(ep)
@@ -543,6 +662,9 @@ def _closed_line(ep):
         bits.append(f"{pct:+.1f}%")
     elif result:
         bits.append(result)
+    opt = _option_label(ep)
+    if opt:
+        bits.append(opt)
     partials = max(len(ep["exits"]) - 1, 0)
     if partials:
         bits.append(_plural(partials, "partial"))
@@ -572,6 +694,9 @@ def _open_line(ep):
     price = _fmt_price(ep["entry_price"])
     price_str = f" @ {price}" if price else ""
     detail = [f"opened {_fmt_date(parse_ts(ep['opened_ts']))}"]
+    opt = _option_label(ep)
+    if opt:
+        detail.append(opt)
     if ep["adds"]:
         detail.append(f"avg of {ep['adds'] + 1}")
     if ep["exits"]:

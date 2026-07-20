@@ -79,6 +79,13 @@ class ParseTradeLineTests(unittest.TestCase):
         self.assertEqual(t["ticker"], "IBM")
         self.assertEqual(t["price"], 116.40)
 
+    def test_size_word_before_ticker_is_not_the_ticker(self):
+        # "#Add Small add Long DRAM" -- ticker is DRAM, not "SMALL".
+        t = ws.parse_trade_line("#Add Small add Long DRAM. New avg: 51.29")
+        self.assertEqual(t["side"], "Add")
+        self.assertEqual(t["ticker"], "DRAM")
+        self.assertEqual(t["avg"], 51.29)
+
     def test_add_side_with_avg(self):
         t = ws.parse_trade_line("#Add PENG 79.85 avg is 79.91")
         self.assertEqual(t["side"], "Add")
@@ -99,18 +106,24 @@ class ParseTradeLineTests(unittest.TestCase):
         self.assertEqual(t["ticker"], "TSLA")
         self.assertEqual(t["avg"], 394.82)
 
-    def test_long_sold_options_strike_is_not_a_price(self):
+    def test_sold_option_strike_is_not_price_but_premium_is(self):
         t = ws.parse_trade_line(
             "#Long sold DRAM 40p November 20th expiry for 4.20"
         )
         self.assertEqual(t["side"], "Long")
         self.assertEqual(t["ticker"], "DRAM")
-        self.assertIsNone(t["price"])  # 40p is a strike, not an entry price
+        self.assertTrue(t["option"])
+        self.assertTrue(t["sold"])          # "sold" sits before the ticker
+        self.assertEqual(t["contract"], "put")
+        self.assertEqual(t["price"], 4.20)  # 40p is the strike; 4.20 the premium
 
-    def test_put_strike_is_not_a_price(self):
+    def test_bought_put_captures_premium_not_strike(self):
         t = ws.parse_trade_line("#Short IONQ 43p this week for 3.55")
         self.assertEqual(t["ticker"], "IONQ")
-        self.assertIsNone(t["price"])
+        self.assertTrue(t["option"])
+        self.assertFalse(t["sold"])
+        self.assertEqual(t["contract"], "put")
+        self.assertEqual(t["price"], 3.55)  # bearish via LONG puts, premium 3.55
 
     def test_percentage_is_not_a_price(self):
         t = ws.parse_trade_line("#Exit QQQ 100% PDS a while ago")
@@ -410,6 +423,87 @@ class ScoringTests(unittest.TestCase):
                       ws._win_rate_line(["win", "scratch", "scratch"]))
         self.assertIsNone(ws._win_rate_line(["scratch"]))
         self.assertIsNone(ws._win_rate_line([]))
+
+
+class OptionScoringTests(unittest.TestCase):
+    """Options track a premium, so P&L follows the contract, not the tag."""
+
+    def _episode(self, log_rows):
+        log = {"messages": {
+            str(mid): {"timestamp": ts, "content": content}
+            for mid, ts, content in log_rows
+        }}
+        closed, open_map, orphans = ws.compute_episodes(ws.log_to_trades(log))
+        return closed, open_map, orphans
+
+    def test_bearish_via_puts_is_a_win_when_premium_rises(self):
+        # The trade the whole options fix started from: short IWM via long puts,
+        # bought at 1.93, sold at 2.32 -- a WIN even though "exit > entry".
+        closed, _, _ = self._episode([
+            (1, "2026-07-21T13:30:00+00:00",
+             "isidore94 posted a trade:\n#Short IWM via 295p for 1.93 expires today"),
+            (2, "2026-07-21T14:01:00+00:00",
+             "isidore94 posted a trade:\n#exit IWM @ 2.32 SPY strength"),
+        ])
+        self.assertEqual(len(closed), 1)
+        result, pct = ws.score_episode(closed[0])
+        self.assertEqual(result, "win")
+        self.assertGreater(pct, 0)
+        self.assertIn("puts", ws._closed_line(closed[0]))
+
+    def test_sold_option_wins_when_premium_falls(self):
+        # Wrote a put for 4.20, bought it back at 2.00 -> keep the difference.
+        closed, _, _ = self._episode([
+            (1, "2026-07-21T13:30:00+00:00",
+             "u posted a trade:\n#Long sold DRAM 40p Nov 20th expiry for 4.20"),
+            (2, "2026-07-21T14:30:00+00:00",
+             "u posted a trade:\n#Exit DRAM 40p at 2.00"),
+        ])
+        result, pct = ws.score_episode(closed[0])
+        self.assertEqual(result, "win")
+        self.assertIn("sold puts", ws._closed_line(closed[0]))
+
+    def test_bought_call_loses_when_premium_falls(self):
+        closed, _, _ = self._episode([
+            (1, "2026-07-21T13:30:00+00:00",
+             "u posted a trade:\n#Long AVGO Sept 500c for 8.8"),
+            (2, "2026-07-22T14:30:00+00:00",
+             "u posted a trade:\n#Exit AVGO 500c at 5.0"),
+        ])
+        result, _ = ws.score_episode(closed[0])
+        self.assertEqual(result, "loss")
+
+    def test_spread_is_scored_from_notes_not_premium(self):
+        # A spread's credit/debit direction is ambiguous; trust the stated P&L.
+        closed, _, _ = self._episode([
+            (1, "2026-07-20T13:30:00+00:00",
+             "leebero posted a trade:\n#Long BE 250/245 PCS for 1.00"),
+            (2, "2026-07-21T14:30:00+00:00",
+             "leebero posted a trade:\n#Exit BE PCS for 20% gain"),
+        ])
+        ep = closed[0]
+        self.assertTrue(ep["spread"])
+        result, pct = ws.score_episode(ep)
+        self.assertEqual(result, "win")   # from "20% gain", not price math
+        self.assertIsNone(pct)            # no premium direction used
+        self.assertIn("spread", ws._closed_line(ep))
+
+    def test_assignment_is_a_stock_position_not_an_option(self):
+        # Being assigned on puts converts them to stock at the avg price.
+        t = ws.parse_trade_line("#Long MSFT +assigned puts new avg $398.55")
+        self.assertFalse(t["option"])
+        self.assertIsNone(t["contract"])
+        self.assertEqual(t["avg"], 398.55)
+
+    def test_stock_mentioning_a_strike_stays_a_stock(self):
+        # "took assignment of my July 65p" must not turn a stock long optiony.
+        closed, open_map, _ = self._episode([
+            (1, "2026-07-18T03:00:00+00:00",
+             "isidore94 posted a trade:\n#long DRAM 60.84 took assignment of my July 65p"),
+        ])
+        ep = open_map[("isidore94", "DRAM")]
+        self.assertFalse(ep["option"])
+        self.assertEqual(ep["entry_price"], 60.84)
 
 
 class SummaryTests(unittest.TestCase):
