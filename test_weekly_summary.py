@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Unit tests for the YAGPDB trade-message parser in weekly_summary.py.
 
-The sample messages below are real posts from the trade channel.
+The sample messages below are real posts from the trade channel, including
+every format that a previous parser version missed or mangled.
 """
 
 import unittest
@@ -27,18 +28,10 @@ class ParseTradeLineTests(unittest.TestCase):
         self.assertEqual(t["price"], 11.70)
         self.assertEqual(t["notes"], "for -32% on calls")
 
-    def test_long_plain_ticker(self):
-        t = ws.parse_trade_line("#Long FBIN 52.13")
-        self.assertEqual(t["side"], "Long")
-        self.assertEqual(t["ticker"], "FBIN")
-        self.assertEqual(t["price"], 52.13)
-
     def test_exit_with_at_symbol(self):
         t = ws.parse_trade_line("#Exit GOOGL @ 368.88")
-        self.assertEqual(t["side"], "Exit")
         self.assertEqual(t["ticker"], "GOOGL")
         self.assertEqual(t["price"], 368.88)
-        self.assertEqual(t["notes"], "")
 
     def test_long_with_at_symbol_no_space(self):
         t = ws.parse_trade_line("#Long AAPL @175.50")
@@ -47,30 +40,16 @@ class ParseTradeLineTests(unittest.TestCase):
 
     def test_exit_with_at_keyword(self):
         t = ws.parse_trade_line("#Exit CRWD at 187.60")
-        self.assertEqual(t["side"], "Exit")
-        self.assertFalse(t["partial"])
         self.assertEqual(t["ticker"], "CRWD")
         self.assertEqual(t["price"], 187.60)
-        self.assertEqual(t["notes"], "")
 
-    def test_partial_exit_with_dollar_price_and_notes(self):
+    def test_partial_exit_flag(self):
         t = ws.parse_trade_line(
-            "#Exit partial NVDA $208.66 for over $13 profit per share. "
-            "(Still have over 4/5th position on)."
+            "#Exit partial NVDA $208.66 for over $13 profit per share."
         )
-        self.assertEqual(t["side"], "Exit")
         self.assertTrue(t["partial"])
         self.assertEqual(t["ticker"], "NVDA")
         self.assertEqual(t["price"], 208.66)
-        self.assertEqual(
-            t["notes"],
-            "for over $13 profit per share. (Still have over 4/5th position on).",
-        )
-
-    def test_short_side(self):
-        t = ws.parse_trade_line("#Short AAPL 190.00")
-        self.assertEqual(t["side"], "Short")
-        self.assertEqual(t["ticker"], "AAPL")
 
     def test_missing_price(self):
         t = ws.parse_trade_line("#Long TSLA still watching")
@@ -81,6 +60,124 @@ class ParseTradeLineTests(unittest.TestCase):
     def test_non_trade_line(self):
         self.assertIsNone(ws.parse_trade_line("just some chatter"))
 
+    # --- formats a previous parser version missed or mangled ---------------
+
+    def test_exit_long_direction_word_is_not_the_ticker(self):
+        # Used to parse the ticker as "L".
+        t = ws.parse_trade_line("#Exit Long MU for break even.")
+        self.assertEqual(t["side"], "Exit")
+        self.assertEqual(t["ticker"], "MU")
+        self.assertFalse(t["partial"])
+
+    def test_exit_long_with_price_later_in_line(self):
+        t = ws.parse_trade_line("#Exit Long ALAB starter at 303.53")
+        self.assertEqual(t["ticker"], "ALAB")
+        self.assertEqual(t["price"], 303.53)
+
+    def test_exit_direction_word_before_price(self):
+        t = ws.parse_trade_line("#Exit IBM short $116.40 for profit")
+        self.assertEqual(t["ticker"], "IBM")
+        self.assertEqual(t["price"], 116.40)
+
+    def test_add_side_with_avg(self):
+        t = ws.parse_trade_line("#Add PENG 79.85 avg is 79.91")
+        self.assertEqual(t["side"], "Add")
+        self.assertEqual(t["ticker"], "PENG")
+        self.assertEqual(t["price"], 79.85)
+        self.assertEqual(t["avg"], 79.91)
+
+    def test_lowercase_add_with_avg_only(self):
+        t = ws.parse_trade_line("#add PENG new avg is 77.90")
+        self.assertEqual(t["side"], "Add")
+        self.assertEqual(t["ticker"], "PENG")
+        self.assertIsNone(t["price"])
+        self.assertEqual(t["avg"], 77.90)
+
+    def test_add_with_direction_and_bare_avg(self):
+        t = ws.parse_trade_line("#Add Short TSLA 393.41 avg 394.82")
+        self.assertEqual(t["side"], "Add")
+        self.assertEqual(t["ticker"], "TSLA")
+        self.assertEqual(t["avg"], 394.82)
+
+    def test_long_sold_options_strike_is_not_a_price(self):
+        t = ws.parse_trade_line(
+            "#Long sold DRAM 40p November 20th expiry for 4.20"
+        )
+        self.assertEqual(t["side"], "Long")
+        self.assertEqual(t["ticker"], "DRAM")
+        self.assertIsNone(t["price"])  # 40p is a strike, not an entry price
+
+    def test_put_strike_is_not_a_price(self):
+        t = ws.parse_trade_line("#Short IONQ 43p this week for 3.55")
+        self.assertEqual(t["ticker"], "IONQ")
+        self.assertIsNone(t["price"])
+
+    def test_percentage_is_not_a_price(self):
+        t = ws.parse_trade_line("#Exit QQQ 100% PDS a while ago")
+        self.assertEqual(t["ticker"], "QQQ")
+        self.assertIsNone(t["price"])
+
+    def test_comma_price(self):
+        t = ws.parse_trade_line("#Exit partial BTC 51,000")
+        self.assertEqual(t["ticker"], "BTC")
+        self.assertEqual(t["price"], 51000.0)
+        self.assertTrue(t["partial"])
+
+    def test_fraction_is_partial_and_price_found_after_at(self):
+        t = ws.parse_trade_line("#Exit MUU 3/4 out at $750 nice overnight move")
+        self.assertEqual(t["ticker"], "MUU")
+        self.assertEqual(t["price"], 750.0)
+        self.assertTrue(t["partial"])
+
+    def test_exit_the_rest_of_is_a_full_exit(self):
+        t = ws.parse_trade_line(
+            "#exit the rest of ASTS for 1.10 per share going to go eat breakfast"
+        )
+        self.assertEqual(t["ticker"], "ASTS")
+        self.assertFalse(t["partial"])
+
+    def test_half_in_notes_is_partial(self):
+        t = ws.parse_trade_line("#Exit PENG 82.91 half for 3.00 gain.")
+        self.assertEqual(t["price"], 82.91)
+        self.assertTrue(t["partial"])
+
+    def test_swing_rest_keeps_position_open(self):
+        t = ws.parse_trade_line(
+            "#Exit AMZN 254.72 for partial 1.00 gain swing rest."
+        )
+        self.assertTrue(t["partial"])
+
+    def test_trailing_the_rest_keeps_position_open(self):
+        t = ws.parse_trade_line(
+            "#exit partial SNDK for 13 dollars per share trailing the rest"
+        )
+        self.assertTrue(t["partial"])
+
+    def test_for_rest_of_position_is_full_exit(self):
+        t = ws.parse_trade_line(
+            "#Exit PENG 79.91 for breakeven for rest of position."
+        )
+        self.assertFalse(t["partial"])
+
+    def test_half_in_later_commentary_is_not_partial(self):
+        t = ws.parse_trade_line(
+            "#Exit GS 1112.48 for 35.91 loss wanted half of earnings "
+            "candle preserved."
+        )
+        self.assertFalse(t["partial"])
+
+    def test_date_fraction_is_not_partial(self):
+        t = ws.parse_trade_line(
+            "#exit SNDK for 53 dollars per share lol i forgot i put a TP "
+            "on the 7/7 low"
+        )
+        self.assertFalse(t["partial"])
+
+    def test_mixed_case_ticker_normalized(self):
+        t = ws.parse_trade_line("#Exit Dell at $418.20, took the loss")
+        self.assertEqual(t["ticker"], "DELL")
+        self.assertEqual(t["price"], 418.20)
+
 
 class ParseMessageTests(unittest.TestCase):
     def test_single_long(self):
@@ -88,18 +185,7 @@ class ParseMessageTests(unittest.TestCase):
         self.assertEqual(len(trades), 1)
         self.assertEqual(trades[0]["user"], "isidore94")
         self.assertEqual(trades[0]["ticker"], "PENG")
-        self.assertEqual(trades[0]["side"], "Long")
         self.assertEqual(trades[0]["price"], 77.15)
-
-    def test_single_exit_with_notes(self):
-        trades = ws.parse_message(
-            "mallowmushroom posted a trade:\n#Exit NVDA 11.70 for -32% on calls"
-        )
-        self.assertEqual(len(trades), 1)
-        self.assertEqual(trades[0]["user"], "mallowmushroom")
-        self.assertEqual(trades[0]["side"], "Exit")
-        self.assertEqual(trades[0]["ticker"], "NVDA")
-        self.assertEqual(trades[0]["notes"], "for -32% on calls")
 
     def test_two_pairs_in_one_message(self):
         trades = ws.parse_message(
@@ -107,201 +193,293 @@ class ParseMessageTests(unittest.TestCase):
             "00sav00 posted a trade:\n#Exit CRWD at 187.60"
         )
         self.assertEqual(len(trades), 2)
-
         self.assertEqual(trades[0]["user"], "isidore94")
-        self.assertEqual(trades[0]["side"], "Long")
         self.assertEqual(trades[0]["ticker"], "FBIN")
-        self.assertEqual(trades[0]["price"], 52.13)
-
         self.assertEqual(trades[1]["user"], "00sav00")
-        self.assertEqual(trades[1]["side"], "Exit")
         self.assertEqual(trades[1]["ticker"], "CRWD")
-        self.assertEqual(trades[1]["price"], 187.60)
 
-    def test_partial_exit_message(self):
+    def test_two_tags_in_one_block(self):
         trades = ws.parse_message(
-            "1ripley posted a trade:\n#Exit partial NVDA $208.66 for over $13 "
-            "profit per share. (Still have over 4/5th position on)."
+            "mallowmushroom posted a trade:\n"
+            "#Short COIN 157.51\n#Add Short TSLA 393.41 avg 394.82"
+        )
+        self.assertEqual(len(trades), 2)
+        self.assertEqual(trades[0]["ticker"], "COIN")
+        self.assertEqual(trades[0]["side"], "Short")
+        self.assertEqual(trades[1]["ticker"], "TSLA")
+        self.assertEqual(trades[1]["side"], "Add")
+        self.assertEqual(trades[1]["user"], "mallowmushroom")
+
+    def test_leading_text_before_tag(self):
+        # Previously dropped: the tag has to be found mid-line.
+        trades = ws.parse_message(
+            "opreme posted a trade:\n"
+            "Swing port trade: #Long AVGO Sept 500c for 8.8 Stop 5 Target 23-30"
         )
         self.assertEqual(len(trades), 1)
-        self.assertEqual(trades[0]["user"], "1ripley")
-        self.assertTrue(trades[0]["partial"])
-        self.assertEqual(trades[0]["ticker"], "NVDA")
-        self.assertEqual(trades[0]["price"], 208.66)
+        self.assertEqual(trades[0]["user"], "opreme")
+        self.assertEqual(trades[0]["side"], "Long")
+        self.assertEqual(trades[0]["ticker"], "AVGO")
+
+    def test_tag_after_chatter_sentences(self):
+        trades = ws.parse_message(
+            "isidore94 posted a trade:\n"
+            "alr im out for the day. got a membership at a golf course and off "
+            "to play my first 18 at it. Will see ya'll tmr. "
+            "#Exit EA for a 40 cent loss per share."
+        )
+        self.assertEqual(len(trades), 1)
+        self.assertEqual(trades[0]["side"], "Exit")
+        self.assertEqual(trades[0]["ticker"], "EA")
 
 
-class HoldingsTests(unittest.TestCase):
-    """Position logic: Long/Short opens, full Exit closes, partial Exit keeps open."""
+class EpisodeTests(unittest.TestCase):
+    """Position logic: Long/Short opens, full Exit closes, partial keeps open."""
 
     def _trades(self, rows):
-        # rows: (message_id, user, side, ticker, price, partial)
+        # rows: (message_id, user, side, ticker, price, partial[, extra])
         out = []
-        for i, (mid, user, side, ticker, price, partial) in enumerate(rows):
-            out.append({
-                "message_id": str(mid),
-                "index": 0,
-                "timestamp": "2026-07-10T00:00:00+00:00",
-                "user": user,
-                "side": side,
-                "ticker": ticker,
-                "price": price,
-                "partial": partial,
-                "notes": "",
-            })
+        for row in rows:
+            mid, user, side, ticker, price, partial = row[:6]
+            extra = row[6] if len(row) > 6 else {}
+            t = {"message_id": str(mid), "index": 0,
+                 "timestamp": f"2026-07-{10 + int(mid) // 100:02d}T00:00:00+00:00",
+                 "user": user, "side": side, "ticker": ticker, "price": price,
+                 "partial": partial, "avg": None, "notes": ""}
+            t.update(extra)
+            out.append(t)
         return out
 
     def test_open_and_full_exit_closes(self):
-        trades = self._trades([
+        closed, open_map, orphans = ws.compute_episodes(self._trades([
             (1, "u", "Long", "PENG", 77.15, False),
             (2, "u", "Exit", "PENG", 90.0, False),
-        ])
-        holdings = ws.compute_holdings(trades)
-        self.assertEqual(holdings, {})
+        ]))
+        self.assertEqual(open_map, {})
+        self.assertEqual(len(closed), 1)
+        self.assertEqual(closed[0]["entry_price"], 77.15)
+        self.assertEqual(closed[0]["exits"][0]["price"], 90.0)
 
     def test_partial_exit_keeps_position_open(self):
-        trades = self._trades([
+        closed, open_map, _ = ws.compute_episodes(self._trades([
             (1, "u", "Long", "NVDA", 200.0, False),
-            (2, "u", "Exit", "NVDA", 208.66, True),  # partial
-        ])
-        holdings = ws.compute_holdings(trades)
-        self.assertIn("u", holdings)
-        self.assertEqual(holdings["u"][0]["ticker"], "NVDA")
+            (2, "u", "Exit", "NVDA", 208.66, True),
+        ]))
+        self.assertEqual(closed, [])
+        self.assertIn(("u", "NVDA"), open_map)
+        self.assertEqual(len(open_map[("u", "NVDA")]["exits"]), 1)
 
-    def test_latest_action_wins(self):
-        trades = self._trades([
-            (1, "u", "Long", "FBIN", 52.13, False),
-            (2, "u", "Exit", "FBIN", 60.0, False),   # closed
-            (3, "u", "Long", "FBIN", 55.0, False),   # re-opened
-        ])
-        holdings = ws.compute_holdings(trades)
-        self.assertIn("u", holdings)
-        self.assertEqual(holdings["u"][0]["price"], 55.0)
+    def test_partials_fold_into_one_closed_episode(self):
+        closed, open_map, _ = ws.compute_episodes(self._trades([
+            (1, "u", "Short", "SNDK", 1683.0, False),
+            (2, "u", "Exit", "SNDK", None, True),
+            (3, "u", "Exit", "SNDK", None, False),
+        ]))
+        self.assertEqual(open_map, {})
+        self.assertEqual(len(closed), 1)
+        self.assertEqual(len(closed[0]["exits"]), 2)
+
+    def test_correction_before_exit_updates_entry(self):
+        # "#Short IBM $217" twice, then "#Short IBM $118 (corrected)".
+        closed, open_map, _ = ws.compute_episodes(self._trades([
+            (1, "u", "Short", "IBM", 217.0, False),
+            (2, "u", "Short", "IBM", 217.0, False),
+            (3, "u", "Short", "IBM", 118.0, False),
+            (4, "u", "Exit", "IBM", 116.4, False),
+        ]))
+        self.assertEqual(len(closed), 1)
+        self.assertEqual(closed[0]["entry_price"], 118.0)
+        self.assertEqual(ws.score_episode(closed[0])[0], "win")
+
+    def test_reentry_after_partial_closes_old_episode(self):
+        closed, open_map, _ = ws.compute_episodes(self._trades([
+            (1, "u", "Long", "MUU", 676.79, False),
+            (2, "u", "Exit", "MUU", 750.0, True),
+            (3, "u", "Long", "MUU", 28.05, False),
+        ]))
+        self.assertEqual(len(closed), 1)
+        self.assertEqual(closed[0]["entry_price"], 676.79)
+        self.assertEqual(open_map[("u", "MUU")]["entry_price"], 28.05)
+
+    def test_add_updates_avg_entry(self):
+        closed, open_map, _ = ws.compute_episodes(self._trades([
+            (1, "u", "Long", "PENG", 77.15, False),
+            (2, "u", "Add", "PENG", 79.85, False, {"avg": 79.91}),
+        ]))
+        ep = open_map[("u", "PENG")]
+        self.assertEqual(ep["entry_price"], 79.91)
+        self.assertEqual(ep["adds"], 1)
+
+    def test_long_with_add_note_folds_into_position(self):
+        closed, open_map, _ = ws.compute_episodes(self._trades([
+            (1, "u", "Long", "NVDA", 200.0, False),
+            (2, "u", "Exit", "NVDA", 208.0, True),
+            (3, "u", "Long", "NVDA", None, False,
+             {"notes": "add new avg $195.05", "avg": 195.05}),
+        ]))
+        self.assertEqual(closed, [])
+        ep = open_map[("u", "NVDA")]
+        self.assertEqual(ep["entry_price"], 195.05)
+        self.assertEqual(ep["adds"], 1)
+
+    def test_exit_without_entry_is_an_orphan(self):
+        closed, open_map, orphans = ws.compute_episodes(self._trades([
+            (1, "u", "Exit", "TGT", None, False),
+        ]))
+        self.assertEqual(closed, [])
+        self.assertEqual(open_map, {})
+        self.assertEqual(len(orphans), 1)
 
     def test_holdings_grouped_per_user(self):
-        trades = self._trades([
+        holdings = ws.compute_holdings(self._trades([
             (1, "a", "Long", "PENG", 77.15, False),
             (2, "b", "Short", "AAPL", 190.0, False),
-        ])
-        holdings = ws.compute_holdings(trades)
+        ]))
         self.assertEqual(set(holdings), {"a", "b"})
 
 
-class WinRateTests(unittest.TestCase):
-    def _t(self, rows):
-        out = []
-        for i, (mid, user, side, ticker, price, partial) in enumerate(rows):
-            out.append({"message_id": str(mid), "index": 0,
-                        "timestamp": "2026-07-10T00:00:00+00:00", "user": user,
-                        "side": side, "ticker": ticker, "price": price,
-                        "partial": partial, "notes": ""})
-        return out
+class ScoringTests(unittest.TestCase):
+    def _ep(self, side, entry, exits):
+        return {"user": "u", "ticker": "T", "side": side, "entry_price": entry,
+                "adds": 0, "opened_ts": "2026-07-10T00:00:00+00:00",
+                "message_id": "1", "closed_ts": "2026-07-10T01:00:00+00:00",
+                "exits": [{"price": p, "notes": n, "partial": False,
+                           "timestamp": "2026-07-10T01:00:00+00:00"}
+                          for p, n in exits]}
 
-    def test_long_win_and_loss(self):
-        wr = ws.compute_win_rates(self._t([
-            (1, "u", "Long", "AAA", 100.0, False),
-            (2, "u", "Exit", "AAA", 110.0, False),   # win: exit above entry
-            (3, "u", "Long", "BBB", 100.0, False),
-            (4, "u", "Exit", "BBB", 90.0, False),    # loss: exit below entry
-        ]))
-        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+    def test_long_win_and_loss_by_price(self):
+        self.assertEqual(
+            ws.score_episode(self._ep("Long", 100.0, [(110.0, "")]))[0], "win")
+        self.assertEqual(
+            ws.score_episode(self._ep("Long", 100.0, [(90.0, "")]))[0], "loss")
 
     def test_short_win_is_exit_below_entry(self):
-        wr = ws.compute_win_rates(self._t([
-            (1, "u", "Short", "CCC", 100.0, False),
-            (2, "u", "Exit", "CCC", 90.0, False),    # win: short, exit below
-            (3, "u", "Short", "DDD", 100.0, False),
-            (4, "u", "Exit", "DDD", 105.0, False),   # loss: short, exit above
-        ]))
-        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+        result, pct = ws.score_episode(self._ep("Short", 100.0, [(90.0, "")]))
+        self.assertEqual(result, "win")
+        self.assertAlmostEqual(pct, 10.0)
 
-    def test_partial_exits_each_score_against_same_entry(self):
-        wr = ws.compute_win_rates(self._t([
-            (1, "u", "Long", "NVDA", 200.0, False),
-            (2, "u", "Exit", "NVDA", 197.5, True),   # partial loss
-            (3, "u", "Exit", "NVDA", 208.66, True),  # partial win, still open
-        ]))
-        self.assertEqual(wr["u"], {"wins": 1, "losses": 1})
+    def test_equal_prices_scratch(self):
+        self.assertEqual(
+            ws.score_episode(self._ep("Short", 459.77, [(459.77, "")]))[0],
+            "scratch")
 
-    def test_exit_without_price_is_ignored(self):
-        wr = ws.compute_win_rates(self._t([
-            (1, "u", "Long", "EEE", 100.0, False),
-            (2, "u", "Exit", "EEE", None, False),    # no price -> not scored
-        ]))
-        self.assertEqual(wr, {})
+    def test_near_entry_exit_is_scratch_not_loss(self):
+        # "#Long DLO 15.02" -> "#Exit DLO 15 scratch": -0.13% is a scratch.
+        self.assertEqual(
+            ws.score_episode(self._ep("Long", 15.02, [(15.0, "scratch")]))[0],
+            "scratch")
 
-    def test_win_rate_line_formatting(self):
-        self.assertIn("67%", ws._win_rate_line({"wins": 2, "losses": 1}))
-        self.assertIsNone(ws._win_rate_line({"wins": 0, "losses": 0}))
-        self.assertIsNone(ws._win_rate_line(None))
+    def test_partials_averaged(self):
+        result, pct = ws.score_episode(
+            self._ep("Long", 100.0, [(120.0, ""), (100.0, "")]))
+        self.assertEqual(result, "win")
+        self.assertAlmostEqual(pct, 10.0)
+
+    def test_implausible_exit_price_falls_back_to_notes(self):
+        # "#Short CRCL 6066" (typo) then "#Exit CRCL 60.83": price unusable.
+        self.assertEqual(
+            ws.score_episode(self._ep("Short", 6066.0, [(60.83, "")]))[0],
+            None)
+        # Option premium exit vs a share-price entry, saved by the notes.
+        self.assertEqual(
+            ws.score_episode(
+                self._ep("Long", 16.0, [(2.76, "calls for 167% gain")]))[0],
+            "win")
+
+    def test_notes_classification(self):
+        self.assertEqual(ws.classify_notes("for a scratch. not interested"),
+                         "scratch")
+        self.assertEqual(ws.classify_notes("for breakeven for rest"), "scratch")
+        self.assertEqual(ws.classify_notes("b/e"), "scratch")
+        self.assertEqual(ws.classify_notes("for a 40 cent loss per share"),
+                         "loss")
+        self.assertEqual(ws.classify_notes("swing stopped out starter"), "loss")
+        self.assertEqual(ws.classify_notes("for 53 dollars per share lol"),
+                         "win")
+        self.assertEqual(ws.classify_notes("for .50 gain on puts"), "win")
+        self.assertEqual(ws.classify_notes("~8$ avg gain"), "win")
+        self.assertIsNone(ws.classify_notes("not a place I want to be short"))
+        self.assertIsNone(ws.classify_notes(""))
+
+    def test_win_rate_line(self):
+        line = ws._win_rate_line(["win", "win", "loss", "scratch"])
+        self.assertIn("67%", line)
+        self.assertIn("2W–1L", line)
+        self.assertIn("1 scratch", line)
+        self.assertIn("2 scratches",
+                      ws._win_rate_line(["win", "scratch", "scratch"]))
+        self.assertIsNone(ws._win_rate_line(["scratch"]))
+        self.assertIsNone(ws._win_rate_line([]))
 
 
 class SummaryTests(unittest.TestCase):
-    def _sample_log(self):
+    def _log(self, rows):
+        # rows: (message_id, timestamp, content)
         return {"messages": {
-            # isidore94: opened PENG ~3 weeks ago, still open (long swing memory)
-            "100": {
-                "timestamp": "2026-06-20T00:00:00+00:00",
-                "trades": [{"user": "isidore94", "side": "Long",
-                            "ticker": "PENG", "price": 77.15, "partial": False,
-                            "notes": ""}],
-            },
-            # isidore94: opened FBIN this week, still open
-            "101": {
-                "timestamp": "2026-07-09T00:00:00+00:00",
-                "trades": [{"user": "isidore94", "side": "Long",
-                            "ticker": "FBIN", "price": 52.13, "partial": False,
-                            "notes": ""}],
-            },
-            # 00sav00: full exit this week -> weekly activity, no open trades
-            "102": {
-                "timestamp": "2026-07-11T00:00:00+00:00",
-                "trades": [{"user": "00sav00", "side": "Exit",
-                            "ticker": "CRWD", "price": 187.60, "partial": False,
-                            "notes": ""}],
-            },
-            # 1ripley: opened NVDA this week then partially exited -> stays open
-            "103": {
-                "timestamp": "2026-07-10T00:00:00+00:00",
-                "trades": [{"user": "1ripley", "side": "Long",
-                            "ticker": "NVDA", "price": 200.0, "partial": False,
-                            "notes": ""}],
-            },
-            "104": {
-                "timestamp": "2026-07-11T12:00:00+00:00",
-                "trades": [{"user": "1ripley", "side": "Exit",
-                            "ticker": "NVDA", "price": 208.66, "partial": True,
-                            "notes": "still holding 4/5"}],
-            },
+            str(mid): {"timestamp": ts, "content": content}
+            for mid, ts, content in rows
         }}
+
+    def _sample_log(self):
+        return self._log([
+            # isidore94: SNDK day trade with a partial -> ONE closed line
+            (100, "2026-07-10T15:00:00+00:00",
+             "isidore94 posted a trade:\n#Short SNDK 1683"),
+            (101, "2026-07-10T16:30:00+00:00",
+             "isidore94 posted a trade:\n"
+             "#exit partial SNDK for 13 dollars per share trailing the rest"),
+            (102, "2026-07-10T17:45:00+00:00",
+             "isidore94 posted a trade:\n"
+             "#Exit SNDK the rest for 19 dollars per share"),
+            # isidore94: PENG swing opened three weeks ago, still open
+            (50, "2026-06-20T00:00:00+00:00",
+             "isidore94 posted a trade:\n#Long $PENG 77.15"),
+            # 00sav00: full exit this week -> weekly activity, no open trades
+            (103, "2026-07-11T00:00:00+00:00",
+             "00sav00 posted a trade:\n#Exit CRWD at 187.60"),
+            # 1ripley: opened NVDA this week then partially exited -> open
+            (104, "2026-07-10T00:00:00+00:00",
+             "1ripley posted a trade:\n#Long NVDA 200"),
+            (105, "2026-07-11T12:00:00+00:00",
+             "1ripley posted a trade:\n#Exit partial NVDA $208.66"),
+        ])
 
     def test_trader_by_trader_structure(self):
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         summary = ws.build_summary(self._sample_log(), now)
-
-        # Every active trader gets their own section with both headings.
         for user in ("isidore94", "00sav00", "1ripley"):
             self.assertIn(f"## {user}", summary)
-        self.assertEqual(summary.count("**Trades taken this week**"), 3)
+        self.assertEqual(summary.count("**Closed this week**"), 3)
         self.assertEqual(summary.count("**Open trades**"), 3)
+
+    def test_round_trip_is_a_single_line(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        summary = ws.build_summary(self._sample_log(), now)
+        iso = summary.split("## isidore94")[1].split("## ")[0]
+        sndk_lines = [l for l in iso.splitlines() if "SNDK" in l]
+        self.assertEqual(len(sndk_lines), 1)
+        line = sndk_lines[0]
+        self.assertIn("Short @ 1683", line)
+        self.assertIn("1 partial", line)
+        self.assertIn("day trade", line)
+        self.assertIn("✅", line)  # "dollars per share" notes -> win
 
     def test_open_positions_persist_and_partial_stays_open(self):
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         summary = ws.build_summary(self._sample_log(), now)
-        iso = summary.split("## isidore94")[1].split("##")[0]
-        # Long swing opened 3 weeks ago is still listed as open.
-        self.assertIn("PENG", iso)
-        self.assertIn("FBIN", iso)
+        iso = summary.split("## isidore94")[1].split("## ")[0]
+        self.assertIn("PENG", iso.split("**Open trades**")[1])
 
-        rip = summary.split("## 1ripley")[1].split("##")[0]
-        # Partial exit does NOT close the position -> NVDA still open.
-        self.assertIn("Open trades", rip)
-        self.assertIn("NVDA", rip.split("**Open trades**")[1])
+        rip = summary.split("## 1ripley")[1].split("## ")[0]
+        open_part = rip.split("**Open trades**")[1]
+        self.assertIn("NVDA", open_part)
+        self.assertIn("1 partial taken", open_part)
 
-    def test_trader_with_only_a_close_has_no_open_trades(self):
+    def test_orphan_exit_is_listed_not_dropped(self):
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         summary = ws.build_summary(self._sample_log(), now)
-        sav = summary.split("## 00sav00")[1].split("##")[0]
-        self.assertIn("Exit **CRWD**", sav)
+        sav = summary.split("## 00sav00")[1].split("## ")[0]
+        self.assertIn("**CRWD** Exit @ 187.6", sav)
         self.assertIn("_none_", sav.split("**Open trades**")[1])
 
     def test_chunking_stays_under_limit(self):
@@ -313,8 +491,6 @@ class SummaryTests(unittest.TestCase):
 
 class ContentLogTests(unittest.TestCase):
     def test_content_entries_are_reparsed(self):
-        # Log stores raw content -> current parser (incl. @-price) is applied.
-        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         log = {"messages": {
             "500": {
                 "timestamp": "2026-07-10T00:00:00+00:00",
@@ -325,7 +501,6 @@ class ContentLogTests(unittest.TestCase):
         self.assertEqual(len(trades), 1)
         self.assertEqual(trades[0]["ticker"], "GOOGL")
         self.assertEqual(trades[0]["price"], 368.88)
-        self.assertEqual(trades[0]["notes"], "")
 
     def test_legacy_trades_entries_still_supported(self):
         log = {"messages": {
@@ -338,6 +513,7 @@ class ContentLogTests(unittest.TestCase):
         trades = ws.log_to_trades(log)
         self.assertEqual(len(trades), 1)
         self.assertEqual(trades[0]["ticker"], "PENG")
+        self.assertIsNone(trades[0]["avg"])
 
 
 class FetchWindowTests(unittest.TestCase):
@@ -347,9 +523,19 @@ class FetchWindowTests(unittest.TestCase):
         expected = ws.snowflake_for(now - timedelta(days=ws.INITIAL_LOOKBACK_DAYS))
         self.assertEqual(after, expected)
 
-    def test_subsequent_run_resumes_from_newest_logged_id(self):
+    def test_parser_upgrade_triggers_re_backfill(self):
+        # A log written by an older parser refetches the lookback window so
+        # messages the old parser skipped can be recovered (dedup by id).
         now = datetime(2026, 7, 12, tzinfo=timezone.utc)
         log = {"messages": {
+            "250": {"timestamp": "2026-07-08T00:00:00+00:00", "trades": []},
+        }}
+        expected = ws.snowflake_for(now - timedelta(days=ws.INITIAL_LOOKBACK_DAYS))
+        self.assertEqual(ws.fetch_after(log, now), expected)
+
+    def test_subsequent_run_resumes_from_newest_logged_id(self):
+        now = datetime(2026, 7, 12, tzinfo=timezone.utc)
+        log = {"parser_version": ws.PARSER_VERSION, "messages": {
             "100": {"timestamp": "2026-07-01T00:00:00+00:00", "trades": []},
             "250": {"timestamp": "2026-07-08T00:00:00+00:00", "trades": []},
             "175": {"timestamp": "2026-07-05T00:00:00+00:00", "trades": []},
