@@ -11,22 +11,32 @@ jobs:
     steps:
       - name: Post weekly avail check to Discord
         env:
+          # One or more Discord webhook URLs, one per channel/server.
+          # Separate multiple URLs with newlines, commas, or spaces to post
+          # the same avail check to every listed channel (e.g. another server).
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           python3 << 'PYEOF'
-          import urllib.request, urllib.error, json, os, time
+          import urllib.request, urllib.error, json, os, time, re
           from datetime import datetime, timedelta, timezone
 
-          WEBHOOK_URL = os.environ["WEBHOOK_URL"]
+          # Accept one or many webhook URLs from the secret so the same check
+          # can be posted to multiple channels/servers. Discord webhook URLs
+          # never contain whitespace or commas, so this split is safe.
+          RAW = os.environ.get("WEBHOOK_URL", "")
+          WEBHOOK_URLS = [u for u in re.split(r"[\s,]+", RAW.strip()) if u]
+          if not WEBHOOK_URLS:
+              raise SystemExit("No webhook URL configured in DISCORD_WEBHOOK_URL")
+
           UA = "avail-check-bot/1.0 (+https://github.com/Isidore94/Discord_Bot)"
 
-          def post(content, ping=False):
+          def post(webhook, content, ping=False):
               payload = {"content": content}
               if ping:
                   payload["allowed_mentions"] = {"parse": ["everyone"]}
               data = json.dumps(payload).encode("utf-8")
               req = urllib.request.Request(
-                  WEBHOOK_URL, data=data,
+                  webhook, data=data,
                   headers={"Content-Type": "application/json", "User-Agent": UA},
                   method="POST",
               )
@@ -46,11 +56,16 @@ jobs:
           else:
               label = f"{next_monday.strftime('%B %-d')} - {next_sunday.strftime('%B %-d')}"
 
-          post(f"# Weekly avail check for {label}")
-          for day in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]:
-              post(f"## {day}")
-              for t in ["9","10"]:
-                  post(t)
-          post("@here", ping=True)
+          def post_avail_check(webhook):
+              post(webhook, f"# Weekly avail check for {label}")
+              for day in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]:
+                  post(webhook, f"## {day}")
+                  for t in ["9","10"]:
+                      post(webhook, t)
+              post(webhook, "@here", ping=True)
+
+          for i, webhook in enumerate(WEBHOOK_URLS, 1):
+              print(f"Posting avail check to channel {i} of {len(WEBHOOK_URLS)}...")
+              post_avail_check(webhook)
           print("Done!")
           PYEOF
