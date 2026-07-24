@@ -60,7 +60,7 @@ jobs:
               post(webhook, f"# Weekly avail check for {label}")
               for day in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]:
                   post(webhook, f"## {day}")
-                  for t in ["9","10"]:
+                  for t in ["8","9","10"]:
                       post(webhook, t)
               post(webhook, "@here", ping=True)
 
