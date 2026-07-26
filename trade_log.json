@@ -1183,6 +1183,278 @@
     "1527873207196061727": {
       "content": "isidore94 posted a trade:\n#long DRAM 60.84 took assignment of my July 65p will track this trade as its own long so its easier for the bot to manage",
       "timestamp": "2026-07-18T03:02:39.107000+00:00"
+    },
+    "1528776386389737653": {
+      "content": "isidore94 posted a trade:\n#Short IWM via 295p for 1.93 expires today",
+      "timestamp": "2026-07-20T14:51:33.807000+00:00"
+    },
+    "1528777000829976606": {
+      "content": "isidore94 posted a trade:\n#short ORCL 121.35",
+      "timestamp": "2026-07-20T14:54:00.301000+00:00"
+    },
+    "1528777933345394728": {
+      "content": "mallowmushroom posted a trade:\n#Short TSLA 373.26",
+      "timestamp": "2026-07-20T14:57:42.630000+00:00"
+    },
+    "1528778831698333876": {
+      "content": "isidore94 posted a trade:\n#exit IWM @ 2.32 SPY showing some strength off previous day high",
+      "timestamp": "2026-07-20T15:01:16.814000+00:00"
+    },
+    "1528780586960027688": {
+      "content": "isidore94 posted a trade:\n#exit ORCL 121.25 Market back and holding hte 50sma for now.",
+      "timestamp": "2026-07-20T15:08:15.301000+00:00"
+    },
+    "1528784526862585886": {
+      "content": "isidore94 posted a trade:\n#exit IONQ 52.02 for a loss cleaning up old trades that the bot missed via my journal",
+      "timestamp": "2026-07-20T15:23:54.647000+00:00"
+    },
+    "1528784702541140038": {
+      "content": "isidore94 posted a trade:\n#exit RNG @ 40.50 for a loss",
+      "timestamp": "2026-07-20T15:24:36.532000+00:00"
+    },
+    "1528791522496090114": {
+      "content": "mallowmushroom posted a trade:\n#Exit TSLA 372.26 for 1.00",
+      "timestamp": "2026-07-20T15:51:42.536000+00:00"
+    },
+    "1528795135561957579": {
+      "content": "isidore94 posted a trade:\n#Long EBAY 113.98",
+      "timestamp": "2026-07-20T16:06:03.958000+00:00"
+    },
+    "1528796403730481172": {
+      "content": "isidore94 posted a trade:\n#exit CAVA for 1.80 per share swing from last week",
+      "timestamp": "2026-07-20T16:11:06.313000+00:00"
+    },
+    "1528812302600507432": {
+      "content": "1ripley posted a trade:\n#Short TSLA $372.75",
+      "timestamp": "2026-07-20T17:14:16.899000+00:00"
+    },
+    "1528816850723409940": {
+      "content": "1ripley posted a trade:\n#Exit TSLA short $371.60 for profit",
+      "timestamp": "2026-07-20T17:32:21.256000+00:00"
+    },
+    "1528825112269291540": {
+      "content": "1ripley posted a trade:\n#Long EBAY $113.34",
+      "timestamp": "2026-07-20T18:05:10.962000+00:00"
+    },
+    "1528841365189038160": {
+      "content": "1ripley posted a trade:\n#Exit EBAY $114.15 for profit",
+      "timestamp": "2026-07-20T19:09:45.960000+00:00"
+    },
+    "1529122246323601469": {
+      "content": "1ripley posted a trade:\n#Long RDDT $185",
+      "timestamp": "2026-07-21T13:45:53.241000+00:00"
+    },
+    "1529122439622164523": {
+      "content": "1ripley posted a trade:\n#Exit RDDT $186",
+      "timestamp": "2026-07-21T13:46:39.327000+00:00"
+    },
+    "1529133238075789394": {
+      "content": "1ripley posted a trade:\n#Short COST $930",
+      "timestamp": "2026-07-21T14:29:33.879000+00:00"
+    },
+    "1529133455147925534": {
+      "content": "mallowmushroom posted a trade:\n#Long BULL 8.125",
+      "timestamp": "2026-07-21T14:30:25.633000+00:00"
+    },
+    "1529138347098771727": {
+      "content": "1ripley posted a trade:\n#Exit partial COST $926.50 for profit",
+      "timestamp": "2026-07-21T14:49:51.965000+00:00"
+    },
+    "1529144052262506699": {
+      "content": "1ripley posted a trade:\n#Long BULL $8.03 (accumulated at around VWAP)",
+      "timestamp": "2026-07-21T15:12:32.182000+00:00"
+    },
+    "1529144442685227070": {
+      "content": "opreme posted a trade:\n#Exit NBIS 1/4 out at 207.65 for 4% gain",
+      "timestamp": "2026-07-21T15:14:05.266000+00:00"
+    },
+    "1529144560217886800": {
+      "content": "1ripley posted a trade:\n#Exit BULL $8.12 for 1% profit",
+      "timestamp": "2026-07-21T15:14:33.288000+00:00"
+    },
+    "1529148610091028571": {
+      "content": "opreme posted a trade:\n#Exit MUU 1/2 out at 34.01 for 24% gain",
+      "timestamp": "2026-07-21T15:30:38.853000+00:00"
+    },
+    "1529209191988859031": {
+      "content": "isidore94 posted a trade:\n#Short DRAM 58.5p for 4.25 expires next week",
+      "timestamp": "2026-07-21T19:31:22.703000+00:00"
+    },
+    "1529481245807870072": {
+      "content": "isidore94 posted a trade:\n#exit DRAM 58.5p for 1 dollar per contract.",
+      "timestamp": "2026-07-22T13:32:25.388000+00:00"
+    },
+    "1529484710483595417": {
+      "content": "1ripley posted a trade:\n#Long MMM $172.50",
+      "timestamp": "2026-07-22T13:46:11.431000+00:00"
+    },
+    "1529485762045935797": {
+      "content": "1ripley posted a trade:\n#Exit MMM $174.50",
+      "timestamp": "2026-07-22T13:50:22.143000+00:00"
+    },
+    "1529488785807638558": {
+      "content": "1ripley posted a trade:\n#Exit COST short $925.10 for profit\n-------\nDecent short, but SPY is rising and COST is stalling. I'll move more to cash and seek better shorts after major earnings.",
+      "timestamp": "2026-07-22T14:02:23.064000+00:00"
+    },
+    "1529488932973056080": {
+      "content": "opreme posted a trade:\n#Exit NBIS 1/2 out swing at 225.54 for 13% gain",
+      "timestamp": "2026-07-22T14:02:58.151000+00:00"
+    },
+    "1529495858335453357": {
+      "content": "opreme posted a trade:\n#Exit RDDT starter swing calls for a loss at 1.51",
+      "timestamp": "2026-07-22T14:30:29.286000+00:00"
+    },
+    "1529516816182018181": {
+      "content": "mallowmushroom posted a trade:\n#Long NVDA 212.69 joining near high of day just looking for a quick buck. Bottom of 1110 candle as my stop.",
+      "timestamp": "2026-07-22T15:53:46.026000+00:00"
+    },
+    "1529519171891892294": {
+      "content": "mallowmushroom posted a trade:\n#Exit NVDA 213.69 for 1.00",
+      "timestamp": "2026-07-22T16:03:07.671000+00:00"
+    },
+    "1529569572695445605": {
+      "content": "isidore94 posted a trade:\n#Long Short QQQ 700p/712c strangle for 6.24 expires July 24",
+      "timestamp": "2026-07-22T19:23:24.159000+00:00"
+    },
+    "1529573564343386222": {
+      "content": "isidore94 posted a trade:\n#Short ORCL 130p August 8th for 9.45",
+      "timestamp": "2026-07-22T19:39:15.842000+00:00"
+    },
+    "1529843536013299803": {
+      "content": "isidore94 posted a trade:\n#exit QQQ strangle for 50%",
+      "timestamp": "2026-07-23T13:32:02.104000+00:00"
+    },
+    "1529844133030662275": {
+      "content": "isidore94 posted a trade:\n#exit ORCL 130p August 8th for 2 dollars per contract",
+      "timestamp": "2026-07-23T13:34:24.444000+00:00"
+    },
+    "1529844485079695421": {
+      "content": "isidore94 posted a trade:\n#exit DRAM 53p for July 31st for a loss of 0.40 per contract. Memory is now RS",
+      "timestamp": "2026-07-23T13:35:48.379000+00:00"
+    },
+    "1529846545132949546": {
+      "content": "isidore94 posted a trade:\n#exit QQQ 700p/712c for 3.10 per contract expires July 24th",
+      "timestamp": "2026-07-23T13:43:59.534000+00:00"
+    },
+    "1529848642645659789": {
+      "content": "isidore94 posted a trade:\n#short QQQ 700p for 6.85",
+      "timestamp": "2026-07-23T13:52:19.620000+00:00"
+    },
+    "1529850272828887121": {
+      "content": "mallowmushroom posted a trade:\n#Short LULU 110.19",
+      "timestamp": "2026-07-23T13:58:48.286000+00:00"
+    },
+    "1529853558013431868": {
+      "content": "isidore94 posted a trade:\n#short APP 404.25",
+      "timestamp": "2026-07-23T14:11:51.535000+00:00"
+    },
+    "1529853600526761984": {
+      "content": "opreme posted a trade:\n#Exit CRM starter at 2.19 for loss",
+      "timestamp": "2026-07-23T14:12:01.671000+00:00"
+    },
+    "1529855112493666365": {
+      "content": "isidore94 posted a trade:\n#exit QQQ 700p for a scratch too choppy for index trades now and a base is forming that looks like a double bottom",
+      "timestamp": "2026-07-23T14:18:02.152000+00:00"
+    },
+    "1529856008753647767": {
+      "content": "mallowmushroom posted a trade:\n#Short ADBE 215.77",
+      "timestamp": "2026-07-23T14:21:35.837000+00:00"
+    },
+    "1529856191398940914": {
+      "content": "isidore94 posted a trade:\n#exit APP 3.80 per share lets see what bulls can do here",
+      "timestamp": "2026-07-23T14:22:19.383000+00:00"
+    },
+    "1529862583887069317": {
+      "content": "mallowmushroom posted a trade:\n#Exit ADBE 214.00 for 1.77 gain",
+      "timestamp": "2026-07-23T14:47:43.471000+00:00"
+    },
+    "1529872007582453810": {
+      "content": "mallowmushroom posted a trade:\n#Exit LULU 110.19 for breakeven.",
+      "timestamp": "2026-07-23T15:25:10.255000+00:00"
+    },
+    "1529876572843016442": {
+      "content": "isidore94 posted a trade:\n#short QQQ 694p for 5 dollars basically a perfect PA setup ill just take it",
+      "timestamp": "2026-07-23T15:43:18.698000+00:00"
+    },
+    "1529886894308065523": {
+      "content": "isidore94 posted a trade:\n#exit QQQ 694p for a loss of 1.34 per contract had to step away for a bit. had a stop that executed.",
+      "timestamp": "2026-07-23T16:24:19.527000+00:00"
+    },
+    "1529892344072110130": {
+      "content": "isidore94 posted a trade:\n#short MES 7445",
+      "timestamp": "2026-07-23T16:45:58.852000+00:00"
+    },
+    "1529900982811758669": {
+      "content": "isidore94 posted a trade:\n#exit MES for a 1 point loss",
+      "timestamp": "2026-07-23T17:20:18.488000+00:00"
+    },
+    "1530217061538730004": {
+      "content": "ryderlive posted a trade:\n#Short COHR 290.37",
+      "timestamp": "2026-07-24T14:16:17.529000+00:00"
+    },
+    "1530223122807263394": {
+      "content": "mallowmushroom posted a trade:\n#Short QQQ 689p for 4.82",
+      "timestamp": "2026-07-24T14:40:22.648000+00:00"
+    },
+    "1530224981928181870": {
+      "content": "ryderlive posted a trade:\n#Exit COHR trailing stopped 285",
+      "timestamp": "2026-07-24T14:47:45.897000+00:00"
+    },
+    "1530225598461513769": {
+      "content": "mallowmushroom posted a trade:\n#Exit QQQ 4.82 for a scratch",
+      "timestamp": "2026-07-24T14:50:12.890000+00:00"
+    },
+    "1530230560562090106": {
+      "content": "isidore94 posted a trade:\n#Short ORCL 130p August 7th for 14.00 rejecting the 120 level I mentioned yesterday and has room to 100.",
+      "timestamp": "2026-07-24T15:09:55.947000+00:00"
+    },
+    "1530232549555835144": {
+      "content": "mallowmushroom posted a trade:\n#Short HIMS 29.74 off M5 8EMA",
+      "timestamp": "2026-07-24T15:17:50.160000+00:00"
+    },
+    "1530239080754057328": {
+      "content": "isidore94 posted a trade:\n#Short WOLF 23.90",
+      "timestamp": "2026-07-24T15:43:47.319000+00:00"
+    },
+    "1530242246476304464": {
+      "content": "mallowmushroom posted a trade:\n#Exit HIMS 29.24 partial for .50c gain",
+      "timestamp": "2026-07-24T15:56:22.086000+00:00"
+    },
+    "1530255854979252224": {
+      "content": "isidore94 posted a trade:\n#Exit partial WOLF @ 23.55 LOD trailing the rest",
+      "timestamp": "2026-07-24T16:50:26.606000+00:00"
+    },
+    "1530259894622748775": {
+      "content": "mallowmushroom posted a trade:\n#Exit $HIMS 28.74 for 1.00 gain",
+      "timestamp": "2026-07-24T17:06:29.732000+00:00"
+    },
+    "1530265187381411900": {
+      "content": "isidore94 posted a trade:\n#exit WOLF @ 23.39 for the rest",
+      "timestamp": "2026-07-24T17:27:31.624000+00:00"
+    },
+    "1530291941462376568": {
+      "content": "00sav00 posted a trade:\n#Exit SBUX at 103.95",
+      "timestamp": "2026-07-24T19:13:50.294000+00:00"
+    },
+    "1530292100334223360": {
+      "content": "00sav00 posted a trade:\n#Exit RDDT at 169.42",
+      "timestamp": "2026-07-24T19:14:28.172000+00:00"
+    },
+    "1530300191796760627": {
+      "content": "00sav00 posted a trade:\n#Short QQQ 100 21 AUG 26 680/675 PUT @1.79",
+      "timestamp": "2026-07-24T19:46:37.327000+00:00"
+    },
+    "1530300326966460529": {
+      "content": "00sav00 posted a trade:\n#Short IWM 21 AUG 26 285/275 PUT @2.07",
+      "timestamp": "2026-07-24T19:47:09.554000+00:00"
+    },
+    "1530301774810845214": {
+      "content": "isidore94 posted a trade:\n#exit partial ORCL 130p for 2 dollars per contract. swinging the rest",
+      "timestamp": "2026-07-24T19:52:54.747000+00:00"
+    },
+    "1530301935125532702": {
+      "content": "mallowmushroom posted a trade:\n#Short QQQ 7 Aug 680/670 for 3.45",
+      "timestamp": "2026-07-24T19:53:32.969000+00:00"
     }
   }
 }
