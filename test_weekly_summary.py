@@ -408,6 +408,15 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(j["result"]["outcome"], "loss")
         self.assertEqual(j["result"]["exit_price"], 3.66)
 
+    def test_mismatched_units_do_not_imply_an_absurd_exit(self):
+        # A $25/share gain against a $0.25 option premium is two different
+        # instruments, not a -10000% trade with a negative exit price.
+        j = self._journey("Long", 0.25, [(None, "PCS for full loss 25 per share")],
+                          option=True)
+        self.assertEqual(j["result"]["outcome"], "loss")
+        self.assertFalse(j["result"]["implied"])
+        self.assertIsNone(j["result"]["exit_price"])
+
     def test_a_flat_exit_reads_as_a_scratch_not_minus_zero_percent(self):
         j = self._journey("Short", 110.19, [(110.19, "for breakeven.")])
         self.assertEqual(j["result"]["outcome"], "flat")
@@ -512,6 +521,24 @@ class SummaryTests(unittest.TestCase):
         summary = ws.build_summary(log, self.NOW)
         self.assertIn("This week: 1W–0L–0S (100%)", summary)
         self.assertIn("1 open, 1 trimmed", summary)
+
+    def test_untouched_open_positions_collapse_to_one_line(self):
+        old = (self.NOW - timedelta(days=60)).isoformat()
+        tickers = [f"AA{chr(ord('A') + i)}" for i in range(20)]
+        messages = {
+            str(i): {"timestamp": old,
+                     "content": f"u posted a trade:\n#Long {t} 100"}
+            for i, t in enumerate(tickers)
+        }
+        # One position touched this week keeps its own line.
+        messages["99"] = {"timestamp": "2026-07-10T00:00:00+00:00",
+                          "content": "u posted a trade:\n#Long ZZZ 50"}
+        summary = ws.build_summary({"messages": messages}, self.NOW)
+        self.assertIn("- 🟠 **ZZZ**", summary)
+        self.assertIn("Also carrying 20:", summary)
+        # Only MAX_TICKERS get named; the rest are a count.
+        self.assertIn(f"+{20 - ws.MAX_TICKERS} more", summary)
+        self.assertEqual(summary.count("\n- 🟠"), 1)
 
     def test_a_stale_position_is_flagged(self):
         opened = self.NOW - timedelta(days=ws.STALE_DAYS + 5)

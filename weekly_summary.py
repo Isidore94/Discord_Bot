@@ -36,6 +36,8 @@ TARGET_CHANNEL_ID = "1525965273306235051"   # where the summary is posted
 HISTORY_DAYS = 90     # rolling history the bot keeps fetched (~3 months)
 WEEK_DAYS = 7         # "this week" window for the per-trader breakdown
 STALE_DAYS = 30       # an open position carried this long is flagged for review
+OPEN_DETAIL_DAYS = 14  # open positions untouched this long collapse to one line
+MAX_TICKERS = 6       # tickers listed before a carried book is summarised
 RETENTION_DAYS = 400  # prune log entries older than this (open positions kept)
 
 LOG_PATH = os.environ.get("TRADE_LOG_PATH", "trade_log.json")
@@ -232,7 +234,7 @@ def parse_trade_lines(line):
             premium = PREMIUM_FOR_RE.search(notes)
         price = float(premium.group(1)) if premium else None
     tickers = [
-        t.lstrip("$").upper()
+        t.lstrip("$").upper().rstrip(".")
         for t in TICKER_SPLIT_RE.split(m.group("tickers"))
         if t.strip()
     ]
@@ -472,6 +474,7 @@ def _new_journey(t):
         "exits": [],
         "closed": False,
         "closed_at": None,
+        "last_touch": t["timestamp"],
         "message_ids": [t["message_id"]],
     }
 
@@ -494,6 +497,7 @@ def build_journeys(trades):
                 current["adds"] += 1          # scaling into the same position
                 current["message_ids"].append(t["message_id"])
                 current["option"] = current["option"] or t["option"]
+                current["last_touch"] = t["timestamp"]
                 continue
             if current:                        # flipped direction: close the old
                 current["closed"] = True
@@ -511,6 +515,7 @@ def build_journeys(trades):
             else:
                 current["adds"] += 1
                 current["message_ids"].append(t["message_id"])
+                current["last_touch"] = t["timestamp"]
             continue
         # Exit
         if not current:
@@ -520,6 +525,7 @@ def build_journeys(trades):
             open_journeys[key] = current
         current["message_ids"].append(t["message_id"])
         current["option"] = current["option"] or t["option"]
+        current["last_touch"] = t["timestamp"]
         current["exits"].append(t)
         if not t["partial"]:
             current["closed"] = True
@@ -594,10 +600,14 @@ def score_journey(journey):
         # bought, so their premium always moves up on a winner; short stock is
         # covered lower.
         signed = -final["gain"] if outcome == "loss" else final["gain"]
-        pct = 100 * signed / entry
+        candidate = 100 * signed / entry
         away = journey["option"] or journey["side"] != "Short"
-        exit_price = round(entry + signed if away else entry - signed, 4)
-        implied = True
+        price = round(entry + signed if away else entry - signed, 4)
+        if price > 0 and abs(candidate) <= 300:
+            pct, exit_price, implied = candidate, price, True
+        # Otherwise the two numbers are different units -- a $25/share gain
+        # against a $0.25 option premium is not a -10000% trade -- so the
+        # outcome stands on the trader's words and no price is invented.
 
     # A computed percentage beats the trader's prose ("for profit", "the rest"),
     # but a move that rounds to nothing is better described as a scratch.
@@ -673,6 +683,27 @@ def _age(opened, now):
     """'19d', or '34d ⏳' once a position has been carried past STALE_DAYS."""
     days = max((now - opened).days, 0)
     return f"{days}d {ICON_STALE}" if days >= STALE_DAYS else f"{days}d"
+
+
+def _book_line(journeys, now):
+    """One line standing in for positions nobody has touched lately.
+
+    Ninety days of history turns an unbounded "Still open" list into a wall --
+    207 positions across the group, 192 untouched for a fortnight. The detail
+    belongs to trades that actually moved; the rest is a carried book, and a
+    book is a sentence, not a section. Oldest first, so the ones most likely to
+    need closing out are the ones that get named.
+    """
+    ordered = sorted(journeys, key=lambda j: (j["opened"] or "", j["ticker"]))
+    names = ", ".join(
+        f"{j['ticker']} ({_age(parse_ts(j['opened']), now)})" if j["opened"]
+        else f"{j['ticker']} (entry not logged)"
+        for j in ordered[:MAX_TICKERS]
+    )
+    if len(ordered) > MAX_TICKERS:
+        names += f", +{len(ordered) - MAX_TICKERS} more"
+    trimmed = sum(1 for j in ordered if j["exits"])
+    return names + (f" · {trimmed} trimmed" if trimmed else "")
 
 
 def _open_summary(open_trades):
@@ -858,9 +889,17 @@ def build_summary(log, now):
             lines.extend(_journey_line(j, now) for j in week_trades)
 
         open_trades = holdings.get(user, [])
-        if open_trades:
+        detail_cutoff = now - timedelta(days=OPEN_DETAIL_DAYS)
+        moved = [j for j in open_trades
+                 if j["last_touch"] and parse_ts(j["last_touch"]) >= detail_cutoff]
+        parked = [j for j in open_trades if j not in moved]
+        if moved:
             lines.append("**Still open**")
-            lines.extend(_journey_line(j, now) for j in open_trades)
+            lines.extend(_journey_line(j, now) for j in moved)
+        if parked:
+            lines.append(
+                f"_Also carrying {len(parked)}: {_book_line(parked, now)}_"
+            )
 
         if not week_trades and not open_trades:
             lines.append("- _no activity_")
@@ -874,12 +913,11 @@ def build_summary(log, now):
         for user in carrying:
             record = _record(tally(closed_history.get(user, [])), "")
             stats = f" _{record.strip()}_" if record else ""
-            book = ", ".join(
-                f"{j['ticker']} ({_age(parse_ts(j['opened']), now)})"
-                if j["opened"] else f"{j['ticker']} (entry not logged)"
-                for j in holdings[user]
+            book = holdings[user]
+            lines.append(
+                f"- **{user}**{stats} — {len(book)} open: "
+                f"{_book_line(book, now)}"
             )
-            lines.append(f"- **{user}**{stats} — {book}")
 
     return "\n".join(lines).rstrip() + "\n"
 
