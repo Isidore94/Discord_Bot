@@ -182,15 +182,26 @@ PARTIAL_RE = re.compile(
     r"|\bhalf\s+(?:out|left)\b",
     re.IGNORECASE,
 )
+# Everything that is not called a loss is treated as a win (see score_journey),
+# which puts the whole weight of the record on this pattern. "stopped .45" is
+# how a stop-out is written 47 times in the log and only "stopped out" used to
+# be caught, so every one of them would have flipped to a win.
 LOSS_RE = re.compile(
-    r"\bloss(?:es)?\b|\blost\b|stopped out|stop out|took the l\b|\bthe L\b"
-    r"|\bfor L\b",   # ryderlive marks a losing exit "for L 32%"
+    r"\bloss(?:es)?\b|\blost\b|\bworthless\b"
+    # "stopped .45" is how a stop-out is written 64 times in the log. A
+    # *trailing* stop often banks a gain, so it is left for the prices to judge.
+    r"|(?<!trailing )\bstopp?ed\b|\bhit (?:my |the )?stops?\b"
+    r"|took the l\b|\bthe L\b|\bfor L\b",   # "for L 32%"
     re.IGNORECASE,
 )
+# "-$168" is a loss; "at $28.69 - 56c gain" is a dash between two figures, so
+# the minus has to be tight against the number to count.
+NEG_MONEY_RE = re.compile(r"(?<![\d/.])-\$?\d")
 WIN_RE = re.compile(
-    r"\bprofits?\b|\bgains?\b|\bwin(?:s|ner|ning)?\b", re.IGNORECASE
+    r"\bprofits?\b|\bgains?\b|\bwin(?:s|ner|ning)?\b|\breturns?\b",
+    re.IGNORECASE,
 )
-SIGNED_PCT_RE = re.compile(r"(?<![\d.])([-+])\s?(\d+(?:\.\d+)?)\s*%")
+SIGNED_PCT_RE = re.compile(r"(?<![\d.])([-+])(\d+(?:\.\d+)?)\s*%")
 
 # "for 2 dollars per contract", "3.80 per share": the number is what the trade
 # *made*, not what it closed at -- pay 14 for a contract, take a dollar, and you
@@ -209,6 +220,9 @@ GAIN_IS_PRICE_RE = re.compile(
 # means it was taken in the green; losses in this channel are always said out
 # loud, and LOSS_RE has already had its turn by the time this is checked.
 FOR_PCT_RE = re.compile(r"\bfor\s+(?:an?\s+)?(\d+(?:\.\d+)?)\s*%")
+# "puts .35 70%", "other half 61%" -- a percentage on its own says how much the
+# trade made. Only reached when nothing on the line called it a loss.
+BARE_PCT_RE = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)\s*%")
 
 
 def _classify_notes(notes):
@@ -221,12 +235,17 @@ def _classify_notes(notes):
         return "loss", _trim_note(notes)
     if WIN_RE.search(notes):
         return "win", _trim_note(notes)
+    if NEG_MONEY_RE.search(notes):
+        return "loss", _trim_note(notes)
     m = SIGNED_PCT_RE.search(notes)
     if m:
         pct = f"{m.group(1)}{m.group(2)}%"
         return ("loss" if m.group(1) == "-" else "win"), pct
-    m = FOR_PCT_RE.search(notes)
+    m = FOR_PCT_RE.search(notes) or BARE_PCT_RE.search(notes)
     if m:
+        # A percentage with no loss word on the line is a gain -- losses in
+        # this channel are always said out loud, and FLAT_RE and LOSS_RE have
+        # both already had their turn above.
         return "win", f"+{m.group(1)}%"
     return None, ""
 
@@ -539,6 +558,7 @@ def _new_journey(t):
         "opened": t["timestamp"],
         "option": t["option"],
         "credit": bool(CREDIT_RE.search(t["notes"])),
+        "swept": False,
         "adds": 0,
         "exits": [],
         "closed": False,
@@ -564,6 +584,7 @@ def _apply_sweep(open_journeys, t):
         if not journey["opened"] or journey["opened"][:10] != day:
             continue
         journey["exits"].append(dict(t, ticker=ticker))
+        journey["swept"] = True
         journey["closed"] = True
         journey["closed_at"] = t["timestamp"]
         journey["last_touch"] = t["timestamp"]
@@ -693,7 +714,13 @@ def score_journey(journey):
         outcome = stated[-1]
     elif pct is not None:
         outcome = "flat" if abs(pct) < 0.05 else ("win" if pct > 0 else "loss")
+    elif journey["exits"] and not journey["swept"]:
+        # Nothing called it a loss and nothing priced it, so the channel
+        # convention decides: a result that goes unmentioned is a good one.
+        outcome = "win"
     else:
+        # No exit event at all, or a MOC sweep that named no result per
+        # ticker -- silence from the trader, not a claim of profit.
         return {"outcome": "unknown", "pct": None, "text": text,
                 "exit_price": exit_price, "implied": False}
 

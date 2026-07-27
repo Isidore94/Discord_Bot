@@ -204,15 +204,17 @@ class GainTests(unittest.TestCase):
         near = self._score(1.50, "for $1.85")
         self.assertEqual(near["outcome"], "win")
         self.assertEqual(near["exit_price"], 1.85)
-        # 3.49 against a 391 entry is a gain, not a fill -- rejected.
+        # 3.49 against a 391 entry is a gain, not a fill -- no price is taken
+        # from it, even though the trade still counts as a win by convention.
         far = self._score(391.0, "for 3.49")
-        self.assertEqual(far["outcome"], "unknown")
+        self.assertIsNone(far["exit_price"])
+        self.assertIsNone(far["pct"])
 
     def _score(self, entry, notes):
         exit_trade = ws.parse_trade_line(f"#Exit AAA {notes}")
         j = {"user": "u", "ticker": "AAA", "side": "Long", "entry_price": entry,
              "opened": "2026-07-10T00:00:00+00:00", "option": False,
-             "credit": False, "adds": 0, "exits": [exit_trade], "closed": True,
+             "credit": False, "swept": False, "adds": 0, "exits": [exit_trade], "closed": True,
              "closed_at": "2026-07-11T00:00:00+00:00", "message_ids": []}
         return ws.score_journey(j)
 
@@ -303,8 +305,14 @@ class OutcomeTests(unittest.TestCase):
         self.assertEqual(self._classify("strangle for 50%"), "win")
         self.assertEqual(self._classify("PCS for 140% loss."), "loss")
 
-    def test_bare_percentage_is_not_guessed(self):
-        self.assertIsNone(self._classify("puts .02 99%"))
+    def test_a_bare_percentage_is_a_gain(self):
+        # Channel convention: losses are always said out loud, so a percentage
+        # standing on its own is what the trade made.
+        self.assertEqual(self._classify("puts .02 99%"), "win")
+        self.assertEqual(self._classify("other half 61%"), "win")
+        # ...unless the line does call it a loss.
+        self.assertEqual(self._classify("calls 2.05 -53%"), "loss")
+        self.assertEqual(self._classify("stopped .45"), "loss")
 
     def test_no_signal(self):
         self.assertIsNone(self._classify(""))
@@ -419,7 +427,7 @@ class ScoringTests(unittest.TestCase):
         j = {
             "user": "u", "ticker": "T", "side": side, "entry_price": entry,
             "opened": "2026-07-10T00:00:00+00:00", "option": option,
-            "credit": False, "adds": 0,
+            "credit": False, "swept": False, "adds": 0,
             "exits": [], "closed": closed, "closed_at":
                 "2026-07-11T00:00:00+00:00" if closed else None,
             "message_ids": [],
@@ -461,8 +469,8 @@ class ScoringTests(unittest.TestCase):
     def test_incomparable_prices_are_not_scored(self):
         # 200 strike in, 11.70 premium out -- not a 94% loss.
         j = self._journey("Long", 200.0, [(11.70, "")])
-        self.assertEqual(j["result"]["outcome"], "unknown")
         self.assertIsNone(j["result"]["pct"])
+        self.assertIsNone(j["result"]["exit_price"])
 
     def test_options_score_on_premium_direction(self):
         # The trader is long the contract either way, so premium down is a
@@ -482,7 +490,7 @@ class ScoringTests(unittest.TestCase):
         j = self._journey("Long", 0.36, [(0.50, "PCS closed")], option=True)
         j["credit"] = True
         j["result"] = ws.score_journey(j)
-        self.assertEqual(j["result"]["outcome"], "unknown")
+        self.assertIsNone(j["result"]["pct"])
 
     def test_last_word_decides_when_exits_disagree(self):
         j = self._journey("Long", 100.0, [(101.0, "for profit"),
