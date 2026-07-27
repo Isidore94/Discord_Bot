@@ -84,7 +84,10 @@ DIRECTION = r"(?:\s+(?:[Ll]ong|[Ss]hort))?"
 TRADE_RE = re.compile(
     r"^#\s*"
     r"(?P<side>[Ll]ong|[Ss]hort|[Ee]xit|[Aa]dd)"        # what happened
-    r"(?:\s+(?P<partial>[Pp]artial))?"                  # optional "partial"
+    # "#exit Trim long ERX 97.85" -- without "trim" here the ticker match lands
+    # on the "T" of "Trim" and the real ticker is swallowed into the notes.
+    r"(?:\s+(?P<partial>[Pp]artial|[Tt]rim(?:med)?))?"
+    r"(?:\s+\d/\d(?:th)?)?"                             # "Trim 1/4 Long PENG"
     + DIRECTION +
     rf"\s+(?P<tickers>{TICKER}(?:\s*(?:,|&|and)\s*{TICKER})*)"
     + DIRECTION +
@@ -110,6 +113,10 @@ BULK_SIGNAL_RE = re.compile(
 )
 EXCEPT_RE = re.compile(r"\bexcept\b(?P<rest>[^(]*)", re.IGNORECASE)
 TICKER_TOKEN_RE = re.compile(r"\b[A-Z]{1,6}\b")
+# A credit spread is sold, not bought, so its premium moves the opposite way
+# to a plain long call or put. PDS/CDS are debit spreads and behave normally.
+CREDIT_RE = re.compile(r"\b(?:pcs|ccs|credit)\b", re.IGNORECASE)
+
 # Uppercase words that turn up in these lines but are not tickers.
 NOT_TICKERS = {"MOC", "DT", "DTS", "EOD", "AND", "OF", "THE", "ALL", "TP", "SL",
                "OPEN", "CLOSE", "PM", "AM", "ET", "EST"}
@@ -176,7 +183,8 @@ PARTIAL_RE = re.compile(
     re.IGNORECASE,
 )
 LOSS_RE = re.compile(
-    r"\bloss(?:es)?\b|\blost\b|stopped out|stop out|took the l\b|\bthe L\b",
+    r"\bloss(?:es)?\b|\blost\b|stopped out|stop out|took the l\b|\bthe L\b"
+    r"|\bfor L\b",   # ryderlive marks a losing exit "for L 32%"
     re.IGNORECASE,
 )
 WIN_RE = re.compile(
@@ -284,10 +292,16 @@ def parse_trade_lines(line):
         for t in TICKER_SPLIT_RE.split(m.group("tickers"))
         if t.strip()
     ]
-    gain = None
+    gain = candidate = None
     outcome, result_text = None, ""
     if side == "Exit":
         gain, price = _extract_gain(price, notes)
+        if price is None and gain is None:
+            # "#Exit XLP for $1.85" -- no fill was captured, but the trader
+            # named a number. Scoring accepts it only if it sits close enough
+            # to the entry to be the same instrument.
+            m2 = PREMIUM_RE.search(notes) or PREMIUM_FOR_RE.search(notes)
+            candidate = float(m2.group(1)) if m2 else None
         outcome, result_text = _classify_notes(notes)
         if outcome is None and gain is not None:
             # Taking an amount off a position means it was taken in the green;
@@ -300,6 +314,7 @@ def parse_trade_lines(line):
             or (side == "Exit" and bool(PARTIAL_RE.search(notes))),
             "ticker": ticker,
             "price": price,
+            "candidate_price": candidate,
             "gain": gain,
             "option": is_option,
             "notes": notes,
@@ -500,6 +515,7 @@ def log_to_trades(log):
             t = dict(tr)
             t.setdefault("option", False)
             t.setdefault("gain", None)
+            t.setdefault("candidate_price", None)
             t.setdefault("excluding", [])
             t.setdefault("outcome", None)
             t.setdefault("result_text", "")
@@ -522,6 +538,7 @@ def _new_journey(t):
         "entry_price": t["price"] if t["side"] in ("Long", "Short") else None,
         "opened": t["timestamp"],
         "option": t["option"],
+        "credit": bool(CREDIT_RE.search(t["notes"])),
         "adds": 0,
         "exits": [],
         "closed": False,
@@ -603,6 +620,7 @@ def build_journeys(trades):
             open_journeys[key] = current
         current["message_ids"].append(t["message_id"])
         current["option"] = current["option"] or t["option"]
+        current["credit"] = current["credit"] or bool(CREDIT_RE.search(t["notes"]))
         current["last_touch"] = t["timestamp"]
         current["exits"].append(t)
         if not t["partial"]:
@@ -652,13 +670,21 @@ def score_journey(journey):
     final = journey["exits"][-1] if journey["exits"] else None
     entry = journey["entry_price"]
     pct, exit_price = None, None
-    if final is not None and _comparable(entry, final["price"]):
+    posted = final["price"] if final is not None else None
+    if posted is None and final is not None:
+        posted = final.get("candidate_price")
+    if final is not None and _comparable(entry, posted):
         # Both sides are plausibly the same instrument, so the move is real.
-        # Option legs are excluded: "Short QQQ 700p" is a long put, and the
-        # posted direction says nothing about which way the premium moved.
-        exit_price = final["price"]
-        if journey["side"] and not journey["option"] and not final["option"]:
-            move = (exit_price - entry) / entry
+        exit_price = posted
+        move = (exit_price - entry) / entry
+        if journey["option"]:
+            # The trader is long the contract either way -- "#Short QQQ 700p"
+            # is a bought put -- so premium up is a winner. Credit spreads run
+            # the other way, and telling which is which from an abbreviation is
+            # not something to guess at, so they stay unscored.
+            if not journey["credit"]:
+                pct = 100 * move
+        elif journey["side"]:
             pct = 100 * (move if journey["side"] == "Long" else -move)
 
     if stated:

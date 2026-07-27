@@ -81,6 +81,19 @@ class ParseTradeLineTests(unittest.TestCase):
         self.assertEqual(t["ticker"], "ARM")
         self.assertEqual(t["price"], 351.56)
 
+    def test_trim_before_the_ticker_is_not_the_ticker(self):
+        # "#exit Trim long ERX 97.85" used to parse as ticker "T" with the real
+        # ticker left in the notes, inventing a phantom "T" position.
+        t = ws.parse_trade_line("#exit Trim long ERX 97.85")
+        self.assertEqual(t["ticker"], "ERX")
+        self.assertEqual(t["price"], 97.85)
+        self.assertTrue(t["partial"])
+
+    def test_trim_with_a_fraction_before_the_ticker(self):
+        t = ws.parse_trade_line("#exit Trim 1/4 Long PENG 70.90")
+        self.assertEqual(t["ticker"], "PENG")
+        self.assertEqual(t["price"], 70.90)
+
     def test_direction_word_after_ticker_is_not_the_price(self):
         t = ws.parse_trade_line("#Exit COST short $925.10 for profit")
         self.assertEqual(t["ticker"], "COST")
@@ -180,6 +193,28 @@ class GainTests(unittest.TestCase):
         t = ws.parse_trade_line("#exit QQQ 694p for a loss of 1.34 per contract")
         self.assertEqual(t["gain"], 1.34)
         self.assertEqual(t["outcome"], "loss")
+
+    def test_bare_for_amount_is_kept_as_a_candidate_fill(self):
+        # 00sav00 posts exits as "#Exit XLP for $1.85" with no fill captured.
+        t = ws.parse_trade_line("#Exit XLP for $1.85")
+        self.assertIsNone(t["price"])
+        self.assertEqual(t["candidate_price"], 1.85)
+
+    def test_a_candidate_fill_is_used_only_when_it_fits_the_entry(self):
+        near = self._score(1.50, "for $1.85")
+        self.assertEqual(near["outcome"], "win")
+        self.assertEqual(near["exit_price"], 1.85)
+        # 3.49 against a 391 entry is a gain, not a fill -- rejected.
+        far = self._score(391.0, "for 3.49")
+        self.assertEqual(far["outcome"], "unknown")
+
+    def _score(self, entry, notes):
+        exit_trade = ws.parse_trade_line(f"#Exit AAA {notes}")
+        j = {"user": "u", "ticker": "AAA", "side": "Long", "entry_price": entry,
+             "opened": "2026-07-10T00:00:00+00:00", "option": False,
+             "credit": False, "adds": 0, "exits": [exit_trade], "closed": True,
+             "closed_at": "2026-07-11T00:00:00+00:00", "message_ids": []}
+        return ws.score_journey(j)
 
     def test_a_posted_fill_beats_a_gain_in_the_notes(self):
         t = ws.parse_trade_line("#Exit RDDT 205.61 for 4.00 profit per share.")
@@ -383,7 +418,8 @@ class ScoringTests(unittest.TestCase):
     def _journey(self, side, entry, exits, option=False, closed=True):
         j = {
             "user": "u", "ticker": "T", "side": side, "entry_price": entry,
-            "opened": "2026-07-10T00:00:00+00:00", "option": option, "adds": 0,
+            "opened": "2026-07-10T00:00:00+00:00", "option": option,
+            "credit": False, "adds": 0,
             "exits": [], "closed": closed, "closed_at":
                 "2026-07-11T00:00:00+00:00" if closed else None,
             "message_ids": [],
@@ -394,7 +430,8 @@ class ScoringTests(unittest.TestCase):
             if outcome is None and gain is not None:
                 outcome, text = "win", ws._trim_note(notes)
             j["exits"].append({
-                "price": price, "gain": gain, "partial": False, "notes": notes,
+                "price": price, "gain": gain, "candidate_price": None,
+                "partial": False, "notes": notes,
                 "outcome": outcome, "result_text": text, "option": option,
             })
         j["result"] = ws.score_journey(j)
@@ -427,8 +464,24 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(j["result"]["outcome"], "unknown")
         self.assertIsNone(j["result"]["pct"])
 
-    def test_option_journeys_are_never_scored_arithmetically(self):
-        j = self._journey("Long", 6.24, [(5.0, "")], option=True)
+    def test_options_score_on_premium_direction(self):
+        # The trader is long the contract either way, so premium down is a
+        # loss even on a position posted as a Short.
+        self.assertEqual(
+            self._journey("Long", 6.24, [(5.0, "")], option=True)["result"]["outcome"],
+            "loss",
+        )
+        self.assertEqual(
+            self._journey("Short", 5.0, [(6.24, "")], option=True)["result"]["outcome"],
+            "win",
+        )
+
+    def test_credit_spreads_are_left_unscored(self):
+        # A sold spread moves the other way, and the abbreviations are too
+        # ambiguous to bet a trader's record on.
+        j = self._journey("Long", 0.36, [(0.50, "PCS closed")], option=True)
+        j["credit"] = True
+        j["result"] = ws.score_journey(j)
         self.assertEqual(j["result"]["outcome"], "unknown")
 
     def test_last_word_decides_when_exits_disagree(self):
