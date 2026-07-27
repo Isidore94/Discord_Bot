@@ -214,7 +214,7 @@ class GainTests(unittest.TestCase):
         exit_trade = ws.parse_trade_line(f"#Exit AAA {notes}")
         j = {"user": "u", "ticker": "AAA", "side": "Long", "entry_price": entry,
              "opened": "2026-07-10T00:00:00+00:00", "option": False,
-             "credit": False, "swept": False, "adds": 0, "exits": [exit_trade], "closed": True,
+             "credit": False, "swept": False, "superseded": False, "adds": 0, "exits": [exit_trade], "closed": True,
              "closed_at": "2026-07-11T00:00:00+00:00", "message_ids": []}
         return ws.score_journey(j)
 
@@ -384,15 +384,35 @@ class JourneyTests(unittest.TestCase):
         self.assertFalse(journeys[0]["closed"])
         self.assertEqual(journeys[0]["result"]["outcome"], "open")
 
-    def test_same_side_reentry_scales_in(self):
+    def test_a_reentry_that_says_it_is_an_add_scales_in(self):
         journeys = ws.build_journeys(self._trades([
             (1, "u", "Long", "MU", 900.0, False, ""),
-            (2, "u", "Long", "MU", 940.0, False, ""),
+            (2, "u", "Long", "MU", 940.0, False, "adding here, new avg 920"),
             (3, "u", "Add", "MU", 950.0, False, ""),
         ]))
         self.assertEqual(len(journeys), 1)
         self.assertEqual(journeys[0]["adds"], 2)
         self.assertEqual(journeys[0]["entry_price"], 900.0)
+
+    def test_a_reentry_that_does_not_closes_the_earlier_position(self):
+        # Neither an add nor a trim, so the first position is gone even though
+        # its exit was never posted.
+        journeys = ws.build_journeys(self._trades([
+            (1, "u", "Long", "SBUX", None, False, "1.00"),
+            (2, "u", "Long", "SBUX", None, False, ".28 lotto"),
+        ]))
+        self.assertEqual(len(journeys), 2)
+        self.assertTrue(journeys[0]["closed"])
+        self.assertTrue(journeys[0]["superseded"])
+        self.assertFalse(journeys[1]["closed"])
+
+    def test_a_superseded_position_claims_no_result(self):
+        journeys = ws.build_journeys(self._trades([
+            (1, "u", "Long", "SBUX", None, False, "1.00"),
+            (2, "u", "Long", "SBUX", None, False, ".28 lotto"),
+        ]))
+        self.assertEqual(journeys[0]["result"]["outcome"], "unknown")
+        self.assertIn("replaced", journeys[0]["result"]["text"])
 
     def test_reopening_after_a_close_is_a_new_journey(self):
         journeys = ws.build_journeys(self._trades([
@@ -427,7 +447,7 @@ class ScoringTests(unittest.TestCase):
         j = {
             "user": "u", "ticker": "T", "side": side, "entry_price": entry,
             "opened": "2026-07-10T00:00:00+00:00", "option": option,
-            "credit": False, "swept": False, "adds": 0,
+            "credit": False, "swept": False, "superseded": False, "adds": 0,
             "exits": [], "closed": closed, "closed_at":
                 "2026-07-11T00:00:00+00:00" if closed else None,
             "message_ids": [],

@@ -113,6 +113,15 @@ BULK_SIGNAL_RE = re.compile(
 )
 EXCEPT_RE = re.compile(r"\bexcept\b(?P<rest>[^(]*)", re.IGNORECASE)
 TICKER_TOKEN_RE = re.compile(r"\b[A-Z]{1,6}\b")
+# Scaling into a position is said out loud. A second entry on a ticker that
+# does not say so is a new trade at a new strike -- opreme posts "June 105c
+# @ 4.6" then ".29 lotto" weeks later -- so the earlier position is gone even
+# though its exit was never posted. 317 of the 341 repeat entries in the log
+# carry no add language.
+ADD_RE = re.compile(
+    r"\badd(?:ed|ing|s)?\b|\bavg\b|\baverage|\bscal(?:e|ing)\s*in\b", re.IGNORECASE
+)
+
 # A credit spread is sold, not bought, so its premium moves the opposite way
 # to a plain long call or put. PDS/CDS are debit spreads and behave normally.
 CREDIT_RE = re.compile(r"\b(?:pcs|ccs|credit)\b", re.IGNORECASE)
@@ -577,6 +586,7 @@ def _new_journey(t):
         "option": t["option"],
         "credit": bool(CREDIT_RE.search(t["notes"])),
         "swept": False,
+        "superseded": False,
         "adds": 0,
         "exits": [],
         "closed": False,
@@ -628,11 +638,18 @@ def build_journeys(trades):
         current = open_journeys.get(key)
         if t["side"] in ("Long", "Short"):
             if current and current["side"] == t["side"]:
-                current["adds"] += 1          # scaling into the same position
-                current["message_ids"].append(t["message_id"])
-                current["option"] = current["option"] or t["option"]
-                current["last_touch"] = t["timestamp"]
-                continue
+                if ADD_RE.search(t["notes"]):
+                    current["adds"] += 1      # scaling into the same position
+                    current["message_ids"].append(t["message_id"])
+                    current["option"] = current["option"] or t["option"]
+                    current["last_touch"] = t["timestamp"]
+                    continue
+                # Neither an add nor a trim, so the old position is closed and
+                # this is a fresh one. No result was ever posted for it.
+                current["closed"] = True
+                current["closed_at"] = t["timestamp"]
+                current["superseded"] = True
+                open_journeys.pop(key, None)
             if current:                        # flipped direction: close the old
                 current["closed"] = True
                 current["closed_at"] = t["timestamp"]
@@ -694,6 +711,12 @@ def score_journey(journey):
     """
     if not journey["closed"]:
         return {"outcome": "open", "pct": None, "text": "",
+                "exit_price": None, "implied": False}
+    if journey["superseded"] and not journey["exits"]:
+        # Closed only because a later entry replaced it; the trader never said
+        # how it went, so nothing is claimed either way.
+        return {"outcome": "unknown", "pct": None,
+                "text": "replaced by a later entry",
                 "exit_price": None, "implied": False}
 
     # The trader's last word on the position decides, so ordering is kept:
