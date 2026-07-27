@@ -142,12 +142,49 @@ class OptionParsingTests(unittest.TestCase):
         self.assertFalse(t["option"])
         self.assertEqual(t["price"], 29.24)
 
+    def test_put_as_a_verb_is_not_an_option(self):
+        # "i put a TP on the low" is prose; flagging it flips the direction
+        # the implied exit price is derived in.
+        t = ws.parse_trade_line(
+            "#exit SNDK for 53 dollars per share lol i put a TP on the 7/7 low"
+        )
+        self.assertFalse(t["option"])
+
     def test_exit_for_amount_is_not_read_as_an_option_fill(self):
         # On an exit "for 3.10" is as likely the gain as the fill, so it is
         # not trusted as a price.
         t = ws.parse_trade_line("#exit QQQ 700p/712c for 3.10 per contract")
         self.assertTrue(t["option"])
         self.assertIsNone(t["price"])
+
+
+class GainTests(unittest.TestCase):
+    """"Took a dollar per contract" is what the trade made, not what it closed at."""
+
+    def test_gain_stated_in_the_notes(self):
+        t = ws.parse_trade_line("#Exit ORCL 130p August 8th for 2 dollars per contract")
+        self.assertEqual(t["gain"], 2.0)
+        self.assertIsNone(t["price"])
+        self.assertEqual(t["outcome"], "win")   # taking an amount is a win
+
+    def test_gain_captured_as_the_price(self):
+        t = ws.parse_trade_line("#Exit APP 3.80 per share lets see what bulls do")
+        self.assertEqual(t["gain"], 3.80)
+        self.assertIsNone(t["price"])           # 3.80 was never a fill
+
+    def test_cents_are_converted_to_dollars(self):
+        t = ws.parse_trade_line("#exit $QRVO with 50 cents per share")
+        self.assertEqual(t["gain"], 0.50)
+
+    def test_a_stated_loss_amount_stays_a_loss(self):
+        t = ws.parse_trade_line("#exit QQQ 694p for a loss of 1.34 per contract")
+        self.assertEqual(t["gain"], 1.34)
+        self.assertEqual(t["outcome"], "loss")
+
+    def test_a_posted_fill_beats_a_gain_in_the_notes(self):
+        t = ws.parse_trade_line("#Exit RDDT 205.61 for 4.00 profit per share.")
+        self.assertEqual(t["price"], 205.61)
+        self.assertIsNone(t["gain"])
 
 
 class OutcomeTests(unittest.TestCase):
@@ -229,7 +266,7 @@ class JourneyTests(unittest.TestCase):
                 "timestamp": f"2026-07-{10 + int(mid):02d}T00:00:00+00:00",
                 "user": user, "side": side, "ticker": ticker, "price": price,
                 "partial": partial, "notes": notes, "option": False,
-                "outcome": outcome, "result_text": text,
+                "gain": None, "outcome": outcome, "result_text": text,
             })
         return out
 
@@ -299,9 +336,12 @@ class ScoringTests(unittest.TestCase):
             "message_ids": [],
         }
         for price, notes in exits:
+            gain, price = ws._extract_gain(price, notes)
             outcome, text = ws._classify_notes(notes)
+            if outcome is None and gain is not None:
+                outcome, text = "win", ws._trim_note(notes)
             j["exits"].append({
-                "price": price, "partial": False, "notes": notes,
+                "price": price, "gain": gain, "partial": False, "notes": notes,
                 "outcome": outcome, "result_text": text, "option": option,
             })
         j["result"] = ws.score_journey(j)
@@ -346,6 +386,27 @@ class ScoringTests(unittest.TestCase):
     def test_open_journey_is_open(self):
         j = self._journey("Long", 100.0, [], closed=False)
         self.assertEqual(j["result"]["outcome"], "open")
+
+    def test_gain_implies_the_exit_price(self):
+        # Bought the contract at 14, took a dollar -> exited at 15.
+        j = self._journey("Long", 14.0, [(None, "for 1 dollar per contract")],
+                          option=True)
+        self.assertEqual(j["result"]["outcome"], "win")
+        self.assertEqual(j["result"]["exit_price"], 15.0)
+        self.assertTrue(j["result"]["implied"])
+        self.assertAlmostEqual(j["result"]["pct"], 100 / 14, places=4)
+
+    def test_a_short_covers_lower_on_a_gain(self):
+        j = self._journey("Short", 404.25, [(None, "for 3.80 per share")])
+        self.assertEqual(j["result"]["exit_price"], 400.45)
+        self.assertEqual(j["result"]["outcome"], "win")
+
+    def test_an_option_loses_premium_on_a_losing_trade(self):
+        j = self._journey("Short", 5.0,
+                          [(None, "for a loss of 1.34 per contract")],
+                          option=True)
+        self.assertEqual(j["result"]["outcome"], "loss")
+        self.assertEqual(j["result"]["exit_price"], 3.66)
 
     def test_a_flat_exit_reads_as_a_scratch_not_minus_zero_percent(self):
         j = self._journey("Short", 110.19, [(110.19, "for breakeven.")])
@@ -426,8 +487,8 @@ class SummaryTests(unittest.TestCase):
 
     def test_per_trader_records(self):
         summary = ws.build_summary(self._sample_log(), self.NOW)
-        self.assertIn("This week: 1W–0L (100%)", summary)   # isidore94
-        self.assertIn("This week: 0W–1L (0%)", summary)     # 00sav00
+        self.assertIn("This week: 1W–0L–0S (100%)", summary)   # isidore94
+        self.assertIn("This week: 0W–1L–0S (0%)", summary)     # 00sav00
         self.assertIn("1 open", summary)
 
     def test_community_header(self):

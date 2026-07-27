@@ -100,8 +100,10 @@ TICKER_SPLIT_RE = re.compile(r"\s*(?:,|&|\band\b)\s*")
 # by a decimal point so "50c" (a strike) matches but ".50c" (fifty cents) does
 # not.
 OPTION_RE = re.compile(
-    r"\b(?:calls?|puts?|contracts?|premium|pcs|pds|spread|strangle|straddle|"
+    r"\b(?:calls|puts|contracts?|premium|pcs|pds|spread|strangle|straddle|"
     r"lottos?)\b"
+    r"|\d\s*(?:call|put)\b"          # "675 PUT" -- singular only after a strike,
+                                     # so "i put a TP on the low" stays prose
     r"|(?<![.\d])\d{2,5}[cp]\b"      # a strike: "700p", but not ".50c"
     r"|\b\d{2,5}/\d{2,5}\b",         # spread strikes: "680/670", "700p/712c"
     re.IGNORECASE,
@@ -134,6 +136,20 @@ WIN_RE = re.compile(
     r"\bprofits?\b|\bgains?\b|\bwin(?:s|ner|ning)?\b", re.IGNORECASE
 )
 SIGNED_PCT_RE = re.compile(r"(?<![\d.])([-+])\s?(\d+(?:\.\d+)?)\s*%")
+
+# "for 2 dollars per contract", "3.80 per share": the number is what the trade
+# *made*, not what it closed at -- pay 14 for a contract, take a dollar, and you
+# exited at 15. The amount can sit in the notes, or be the only number on the
+# line and so get captured as the price.
+GAIN_IN_NOTES_RE = re.compile(
+    r"(\d+(?:\.\d+)?)\s*(dollars?|cents?|c)?\s*(?:\w+\s+)?(?:per|a)\s+"
+    r"(?:contract|share)",
+    re.IGNORECASE,
+)
+GAIN_IS_PRICE_RE = re.compile(
+    r"^(dollars?|cents?)?\s*(?:\w+\s+)?(?:per|on)\s+(?:contract|share)s?\b",
+    re.IGNORECASE,
+)
 # "exit QQQ strangle for 50%" -- a bare percentage the trade was taken *for*
 # means it was taken in the green; losses in this channel are always said out
 # loud, and LOSS_RE has already had its turn by the time this is checked.
@@ -158,6 +174,29 @@ def _classify_notes(notes):
     if m:
         return "win", f"+{m.group(1)}%"
     return None, ""
+
+
+def _to_dollars(amount, unit):
+    """Normalise a posted amount to dollars ('50 cents' -> 0.5)."""
+    return amount / 100 if unit and unit.lower().startswith("c") else amount
+
+
+def _extract_gain(price, notes):
+    """Return (gain_per_unit, price) for an exit, in dollars.
+
+    ``price`` comes back as None when the number turned out to be the gain
+    rather than a fill. A gain stated in the notes is only trusted when no fill
+    was posted -- "#Exit RDDT 205.61 for 4.00 profit per share" has both, and
+    the fill is the better number.
+    """
+    m = GAIN_IS_PRICE_RE.match(notes)
+    if m and price is not None:
+        return _to_dollars(price, m.group(1)), None
+    if price is None:
+        m = GAIN_IN_NOTES_RE.search(notes)
+        if m:
+            return _to_dollars(float(m.group(1)), m.group(2)), None
+    return None, price
 
 
 def _trim_note(notes, limit=52):
@@ -195,7 +234,15 @@ def parse_trade_lines(line):
         for t in TICKER_SPLIT_RE.split(m.group("tickers"))
         if t.strip()
     ]
-    outcome, result_text = _classify_notes(notes) if side == "Exit" else (None, "")
+    gain = None
+    outcome, result_text = None, ""
+    if side == "Exit":
+        gain, price = _extract_gain(price, notes)
+        outcome, result_text = _classify_notes(notes)
+        if outcome is None and gain is not None:
+            # Taking an amount off a position means it was taken in the green;
+            # a loss is always said out loud and caught above.
+            outcome, result_text = "win", _trim_note(notes)
     return [
         {
             "side": side,
@@ -203,6 +250,7 @@ def parse_trade_lines(line):
             or (side == "Exit" and bool(PARTIAL_RE.search(notes))),
             "ticker": ticker,
             "price": price,
+            "gain": gain,
             "option": is_option,
             "notes": notes,
             "outcome": outcome,
@@ -396,6 +444,7 @@ def log_to_trades(log):
         for i, tr in enumerate(parsed):
             t = dict(tr)
             t.setdefault("option", False)
+            t.setdefault("gain", None)
             t.setdefault("outcome", None)
             t.setdefault("result_text", "")
             t["message_id"] = mid
@@ -493,7 +542,7 @@ def _comparable(entry_price, exit_price):
 
 
 def score_journey(journey):
-    """Return {'outcome', 'pct', 'text'} for a journey.
+    """Return {'outcome', 'pct', 'text', 'exit_price', 'implied'} for a journey.
 
     Outcome is 'open' while the position is live, otherwise it is taken from
     what the trader wrote on the exit ('for a loss', '+53%', 'for a scratch'),
@@ -501,7 +550,8 @@ def score_journey(journey):
     and 'unknown' when neither is available.
     """
     if not journey["closed"]:
-        return {"outcome": "open", "pct": None, "text": ""}
+        return {"outcome": "open", "pct": None, "text": "",
+                "exit_price": None, "implied": False}
 
     stated = [e["outcome"] for e in journey["exits"] if e["outcome"]]
     text = next(
@@ -512,17 +562,18 @@ def score_journey(journey):
         # Nothing scoreable was written, so carry the trader's own words through
         # rather than posting a line that says nothing at all.
         text = _trim_note(journey["exits"][-1]["notes"])
-    pct = None
+
     final = journey["exits"][-1] if journey["exits"] else None
-    if (
-        journey["side"]
-        and not journey["option"]
-        and final is not None
-        and not final["option"]
-        and _comparable(journey["entry_price"], final["price"])
-    ):
-        move = (final["price"] - journey["entry_price"]) / journey["entry_price"]
-        pct = 100 * (move if journey["side"] == "Long" else -move)
+    entry = journey["entry_price"]
+    pct, exit_price = None, None
+    if final is not None and _comparable(entry, final["price"]):
+        # Both sides are plausibly the same instrument, so the move is real.
+        # Option legs are excluded: "Short QQQ 700p" is a long put, and the
+        # posted direction says nothing about which way the premium moved.
+        exit_price = final["price"]
+        if journey["side"] and not journey["option"] and not final["option"]:
+            move = (exit_price - entry) / entry
+            pct = 100 * (move if journey["side"] == "Long" else -move)
 
     if stated:
         # Several exits can disagree (a partial for profit, the runner for a
@@ -531,7 +582,20 @@ def score_journey(journey):
     elif pct is not None:
         outcome = "flat" if abs(pct) < 0.05 else ("win" if pct > 0 else "loss")
     else:
-        return {"outcome": "unknown", "pct": None, "text": text}
+        return {"outcome": "unknown", "pct": None, "text": text,
+                "exit_price": exit_price, "implied": False}
+
+    implied = False
+    if pct is None and entry and final is not None and final.get("gain") is not None:
+        # No fill was posted, but the trader said what the trade made: pay 14
+        # for a contract, take a dollar, and the exit was 15. Options are
+        # bought, so their premium always moves up on a winner; short stock is
+        # covered lower.
+        signed = -final["gain"] if outcome == "loss" else final["gain"]
+        pct = 100 * signed / entry
+        away = journey["option"] or journey["side"] != "Short"
+        exit_price = round(entry + signed if away else entry - signed, 4)
+        implied = True
 
     # A computed percentage beats the trader's prose ("for profit", "the rest"),
     # but a move that rounds to nothing is better described as a scratch.
@@ -539,7 +603,8 @@ def score_journey(journey):
         text = f"{pct:+.1f}%"
     elif not text and outcome == "flat":
         text = "scratch"
-    return {"outcome": outcome, "pct": pct, "text": text}
+    return {"outcome": outcome, "pct": pct, "text": text,
+            "exit_price": exit_price, "implied": implied}
 
 
 def compute_holdings(journeys):
@@ -614,20 +679,14 @@ def _journey_line(j, now):
     if j["option"]:
         head.append("opts")
 
-    entry_price = j["entry_price"]
-    final_price = j["exits"][-1]["price"] if j["closed"] and j["exits"] else None
-    if (
-        entry_price is not None
-        and final_price is not None
-        and not j["option"]
-        and not _comparable(entry_price, final_price)
-    ):
-        # "#Exit APP 3.80 per share" against an entry of 404.25 -- the exit
-        # number is a gain, not a fill. Printing "404.25 → 3.8" would read as a
-        # catastrophic loss, so only the entry is shown and the trader's own
-        # words carry the result.
-        final_price = None
-    entry, exit_price = _fmt_price(entry_price), _fmt_price(final_price)
+    # score_journey already discarded numbers that are not fills -- an exit of
+    # 3.80 against an entry of 404.25 is a gain per share, and printing
+    # "404.25 → 3.8" would read as a catastrophic loss. A "~" marks an exit
+    # derived from a stated gain rather than one the trader posted.
+    entry = _fmt_price(j["entry_price"])
+    exit_price = _fmt_price(j["result"]["exit_price"])
+    if exit_price and j["result"]["implied"]:
+        exit_price = "~" + exit_price
     if entry and exit_price:
         head.append(f"{entry} → {exit_price}")
     elif exit_price:
@@ -673,26 +732,23 @@ def _span(j, now):
 
 
 def _record(counts, label, verbose=False):
-    """'This week: 3W-2L (60%)', or None when there is nothing to report.
+    """'This week: 3W–1L–1S (75%)', or None when there is nothing to report.
 
-    ``verbose`` appends the trades that could not be scored -- scratches and
-    exits whose result was never stated -- which is worth surfacing for the
-    current week but only clutters the longer-run number.
+    Wins, losses and scratches each get a column; the percentage is wins over
+    wins-plus-losses, so scratches are reported without dragging the win rate
+    down. ``verbose`` also counts exits whose result was never stated, which is
+    worth surfacing for the current week but only clutters the longer run.
     """
-    wins, losses = counts["win"], counts["loss"]
+    wins, losses, scratches = counts["win"], counts["loss"], counts["flat"]
     scored = wins + losses
-    extra = []
-    if verbose and counts["flat"]:
-        extra.append(f"{counts['flat']} scratch")
-    if verbose and counts["unknown"]:
-        extra.append(f"{counts['unknown']} unclear")
-    if not scored and not extra:
+    unclear = counts["unknown"] if verbose else 0
+    if not (scored or scratches or unclear):
         return None
-    text = f"{label} {wins}W–{losses}L"
+    text = f"{label} {wins}W–{losses}L–{scratches}S"
     if scored:
         text += f" ({round(100 * wins / scored)}%)"
-    if extra:
-        text += ", " + " and ".join(extra)
+    if unclear:
+        text += f", {unclear} unclear"
     return text
 
 
@@ -731,6 +787,9 @@ def build_summary(log, now):
         f"_{ICON_WIN} win · {ICON_LOSS} loss · {ICON_OPEN} still open "
         f"· {ICON_FLAT} scratch · {ICON_UNKNOWN} result unclear — "
         f"one line per trade, entry through exit._",
+        "_Records read W–L–S: wins, losses, scratches. Scratches are counted "
+        "but left out of the win rate; a `~` exit is derived from a stated "
+        "gain rather than a posted fill._",
     ]
 
     users = sorted(set(closed_week) | set(holdings), key=str.lower)
