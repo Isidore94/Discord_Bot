@@ -5,6 +5,11 @@ on:
     # 16:00 UTC every Sunday == 9:00am US Pacific (PDT)
     - cron: "0 16 * * 0"
   workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Re-fetch the full history window instead of resuming"
+        type: boolean
+        default: false
 
 permissions:
   contents: write  # allow committing the updated running log back to the repo
@@ -27,7 +32,9 @@ jobs:
       - name: Post weekly trade summary
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-        run: python weekly_summary.py
+        run: |
+          python weekly_summary.py \
+            ${{ inputs.backfill && '--backfill' || '' }}
 
       - name: Commit updated running log
         run: |
