@@ -187,6 +187,59 @@ class GainTests(unittest.TestCase):
         self.assertIsNone(t["gain"])
 
 
+class BulkExitTests(unittest.TestCase):
+    """'Exit all DTs at MOC except X Y' closes the day's trades in one line."""
+
+    def test_parses_the_except_list(self):
+        b = ws.parse_bulk_exit(
+            "#Exit all DTs at moc except FUTU CRML and remainder of AMD "
+            "(too quick to post but still have 1/2 open of the 570c 1.38 +28%)"
+        )
+        self.assertEqual(b["excluding"], ["AMD", "CRML", "FUTU"])
+
+    def test_parses_the_form_posted_without_a_hash(self):
+        b = ws.parse_bulk_exit(
+            "Exited all DTs at MOC except META BE and remainder of AAPL CRML DAL"
+        )
+        self.assertEqual(b["excluding"], ["AAPL", "BE", "CRML", "DAL", "META"])
+
+    def test_a_normal_exit_is_not_a_sweep(self):
+        self.assertIsNone(ws.parse_bulk_exit("#Exit NBIS all out +43%"))
+
+    def test_a_vague_exit_all_is_not_a_sweep(self):
+        # No MOC/DT/except signal -- too vague to close positions on.
+        self.assertIsNone(ws.parse_bulk_exit("#Exit all"))
+
+    def test_sweep_closes_the_days_trades_and_spares_the_except_list(self):
+        log = {"messages": {
+            # Two day trades plus a swing opened a week earlier.
+            "1": {"timestamp": "2026-05-14T00:00:00+00:00",
+                  "content": "opreme posted a trade:\n#Long SWING 100"},
+            "2": {"timestamp": "2026-05-21T14:00:00+00:00",
+                  "content": "opreme posted a trade:\n#Long AAPL 200\n#Long META 300"},
+            "3": {"timestamp": "2026-05-21T20:00:00+00:00",
+                  "content": "opreme posted a trade:\n"
+                             "#Exit all DTs at moc except META"},
+        }}
+        journeys = ws.build_journeys(ws.log_to_trades(log))
+        state = {j["ticker"]: j["closed"] for j in journeys}
+        self.assertTrue(state["AAPL"])     # swept
+        self.assertFalse(state["META"])    # named after "except"
+        self.assertFalse(state["SWING"])   # opened a week before, not a day trade
+
+    def test_a_swept_position_closes_unscored(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-05-21T14:00:00+00:00",
+                  "content": "opreme posted a trade:\n#Long AAPL 200"},
+            "2": {"timestamp": "2026-05-21T20:00:00+00:00",
+                  "content": "opreme posted a trade:\n#Exit all DTs at moc"},
+        }}
+        j = ws.build_journeys(ws.log_to_trades(log))[0]
+        self.assertTrue(j["closed"])
+        # No per-ticker result was posted, so none is invented.
+        self.assertEqual(j["result"]["outcome"], "unknown")
+
+
 class OutcomeTests(unittest.TestCase):
     def _classify(self, notes):
         return ws._classify_notes(notes)[0]

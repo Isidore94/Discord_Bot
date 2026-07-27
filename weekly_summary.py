@@ -97,6 +97,49 @@ TRADE_RE = re.compile(
 
 TICKER_SPLIT_RE = re.compile(r"\s*(?:,|&|\band\b)\s*")
 
+# A sweep that closes the day's trades in one line, named tickers surviving:
+#   #Exit all DTs at moc except FUTU CRML and remainder of AMD (...)
+#   Exited all DTs at MOC except META BE and remainder of AAPL CRML DAL
+# Only the day's trades go: 55 tickers opened before one of these sweeps are
+# still being posted about afterwards, so "all" means the day trades, never
+# the whole book. The MOC/DT/except signal is required -- a bare "exit all"
+# is too vague to close positions on.
+BULK_EXIT_RE = re.compile(r"^#?\s*exit(?:ed)?\s+all\b(?P<rest>.*)$", re.IGNORECASE)
+BULK_SIGNAL_RE = re.compile(
+    r"\bmoc\b|\bdts?\b|\bday ?trades?\b|\bexcept\b", re.IGNORECASE
+)
+EXCEPT_RE = re.compile(r"\bexcept\b(?P<rest>[^(]*)", re.IGNORECASE)
+TICKER_TOKEN_RE = re.compile(r"\b[A-Z]{1,6}\b")
+# Uppercase words that turn up in these lines but are not tickers.
+NOT_TICKERS = {"MOC", "DT", "DTS", "EOD", "AND", "OF", "THE", "ALL", "TP", "SL",
+               "OPEN", "CLOSE", "PM", "AM", "ET", "EST"}
+
+
+def parse_bulk_exit(line):
+    """Parse an 'exit all ... except X Y' sweep, or None if the line is not one."""
+    m = BULK_EXIT_RE.match(line.strip())
+    if not m or not BULK_SIGNAL_RE.search(m.group("rest")):
+        return None
+    kept = EXCEPT_RE.search(m.group("rest"))
+    excluded = set()
+    if kept:
+        excluded = {
+            tok for tok in TICKER_TOKEN_RE.findall(kept.group("rest"))
+            if tok not in NOT_TICKERS
+        }
+    return {
+        "side": "ExitAll",
+        "ticker": "*",
+        "excluding": sorted(excluded),
+        "partial": False,
+        "price": None,
+        "gain": None,
+        "option": False,
+        "notes": m.group("rest").strip(),
+        "outcome": None,
+        "result_text": "closed in a MOC sweep",
+    }
+
 # Free text that tells us the position was an options trade. On those lines the
 # leading number is a strike, an expiry day or a contract count -- never a fill
 # price -- so it must not be compared against the share price on the other side
@@ -218,6 +261,9 @@ def parse_trade_lines(line):
     A line may name several tickers ("#Exit FTNT, DELL for a scratch."), which
     yields one dict per ticker. Returns [] when the line is not a trade.
     """
+    bulk = parse_bulk_exit(line)
+    if bulk:
+        return [bulk]
     m = TRADE_RE.match(line.strip())
     if not m:
         return []
@@ -285,7 +331,12 @@ def parse_message(content):
         if header:
             user = header.group("user").strip()
             continue
-        if not user or not line.startswith("#"):
+        if not user:
+            continue
+        # Sweeps are sometimes posted without the "#" ("Exited all DTs at MOC
+        # except META BE ..."), so they are matched on their own before the
+        # "#" requirement that every other trade line has to meet.
+        if not line.startswith("#") and not parse_bulk_exit(line):
             continue
         for trade in parse_trade_lines(line):
             trade["user"] = user
@@ -449,6 +500,7 @@ def log_to_trades(log):
             t = dict(tr)
             t.setdefault("option", False)
             t.setdefault("gain", None)
+            t.setdefault("excluding", [])
             t.setdefault("outcome", None)
             t.setdefault("result_text", "")
             t["message_id"] = mid
@@ -479,6 +531,29 @@ def _new_journey(t):
     }
 
 
+def _apply_sweep(open_journeys, t):
+    """Close the poster's day trades on an 'exit all at MOC' line.
+
+    Only positions opened the same calendar day are swept -- those are the day
+    trades the line is talking about -- and any ticker named after "except"
+    survives. No result is stated per position, so each one closes unscored
+    rather than being guessed at.
+    """
+    day = (t["timestamp"] or "")[:10]
+    for key, journey in list(open_journeys.items()):
+        user, ticker = key
+        if user != t["user"] or ticker in t["excluding"]:
+            continue
+        if not journey["opened"] or journey["opened"][:10] != day:
+            continue
+        journey["exits"].append(dict(t, ticker=ticker))
+        journey["closed"] = True
+        journey["closed_at"] = t["timestamp"]
+        journey["last_touch"] = t["timestamp"]
+        journey["message_ids"].append(t["message_id"])
+        open_journeys.pop(key)
+
+
 def build_journeys(trades):
     """Stitch chronological trade events into one journey per round trip.
 
@@ -490,6 +565,9 @@ def build_journeys(trades):
     open_journeys = {}  # (user, ticker) -> journey
     journeys = []
     for t in trades:
+        if t["side"] == "ExitAll":
+            _apply_sweep(open_journeys, t)
+            continue
         key = (t["user"], t["ticker"])
         current = open_journeys.get(key)
         if t["side"] in ("Long", "Short"):
