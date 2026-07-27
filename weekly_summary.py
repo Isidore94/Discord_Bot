@@ -35,6 +35,7 @@ TARGET_CHANNEL_ID = "1525965273306235051"   # where the summary is posted
 
 HISTORY_DAYS = 90     # rolling history the bot keeps fetched (~3 months)
 WEEK_DAYS = 7         # "this week" window for the per-trader breakdown
+STALE_DAYS = 30       # an open position carried this long is flagged for review
 RETENTION_DAYS = 400  # prune log entries older than this (open positions kept)
 
 LOG_PATH = os.environ.get("TRADE_LOG_PATH", "trade_log.json")
@@ -52,6 +53,7 @@ ICON_LOSS = "🔴"      # closed, losing
 ICON_OPEN = "🟠"      # still open, including "only partials taken"
 ICON_FLAT = "⚪"      # closed at scratch / breakeven
 ICON_UNKNOWN = "❔"   # closed, result neither stated nor computable
+ICON_STALE = "⏳"     # open position carried past STALE_DAYS
 
 # ---------------------------------------------------------------------------
 # Parsing
@@ -667,6 +669,27 @@ def _plural(count, word):
     return f"{count} {word}{'s' if count > 1 else ''}"
 
 
+def _age(opened, now):
+    """'19d', or '34d ⏳' once a position has been carried past STALE_DAYS."""
+    days = max((now - opened).days, 0)
+    return f"{days}d {ICON_STALE}" if days >= STALE_DAYS else f"{days}d"
+
+
+def _open_summary(open_trades):
+    """'5 open, 3 trimmed' -- how much of a record is still unresolved.
+
+    A position that was trimmed but never fully exited stays open forever and
+    so never scores. A trader who only closes their winners therefore shows a
+    win rate with nothing to drag it down; the trimmed count is what makes that
+    visible instead of silent.
+    """
+    if not open_trades:
+        return None
+    trimmed = sum(1 for j in open_trades if j["exits"])
+    text = f"{len(open_trades)} open"
+    return f"{text}, {trimmed} trimmed" if trimmed else text
+
+
 def _journey_line(j, now):
     """The whole life of one trade -- entry, adds, partials, exit -- on one line.
 
@@ -724,7 +747,7 @@ def _span(j, now):
             return f"exited {_fmt_date(closed)}, entry not logged"
         return ""
     if opened:
-        return f"open since {_fmt_date(opened)} ({max((now - opened).days, 0)}d)"
+        return f"open since {_fmt_date(opened)} ({_age(opened, now)})"
     if j["exits"]:
         last = parse_ts(j["exits"][-1]["timestamp"])
         return f"trimmed {_fmt_date(last)}, entry not logged"
@@ -744,6 +767,8 @@ def _record(counts, label, verbose=False):
     unclear = counts["unknown"] if verbose else 0
     if not (scored or scratches or unclear):
         return None
+    if not scored and not scratches:
+        return f"{label} {unclear} unclear"   # a bare 0W-0L-0S says nothing
     text = f"{label} {wins}W–{losses}L–{scratches}S"
     if scored:
         text += f" ({round(100 * wins / scored)}%)"
@@ -766,7 +791,10 @@ def build_summary(log, now):
 
     closed_week = {}
     closed_history = {}
+    opened_week = set()
     for j in journeys:
+        if j["opened"] and parse_ts(j["opened"]) >= week_start:
+            opened_week.add(j["user"])
         if not j["closed"] or not j["closed_at"]:
             continue
         closed_at = parse_ts(j["closed_at"])
@@ -784,16 +812,19 @@ def build_summary(log, now):
 
     lines = [
         f"# \U0001F4CA Weekly Trader Review — {label}",
-        f"_{ICON_WIN} win · {ICON_LOSS} loss · {ICON_OPEN} still open "
-        f"· {ICON_FLAT} scratch · {ICON_UNKNOWN} result unclear — "
-        f"one line per trade, entry through exit._",
-        "_Records read W–L–S: wins, losses, scratches. Scratches are counted "
-        "but left out of the win rate; a `~` exit is derived from a stated "
-        "gain rather than a posted fill._",
+        f"_{ICON_WIN} win · {ICON_LOSS} loss · {ICON_OPEN} open · "
+        f"{ICON_FLAT} scratch · {ICON_UNKNOWN} unclear · {ICON_STALE} carried "
+        f"{STALE_DAYS}d+ — one line per trade, entry through exit._",
+        "_Records read W–L–S (wins–losses–scratches); scratches are counted but "
+        "left out of the win rate. A `~` exit is derived from a stated gain "
+        "rather than a posted fill. A trimmed position stays open and never "
+        "scores, so the trimmed count shows how much of a record is still "
+        "unresolved._",
     ]
 
-    users = sorted(set(closed_week) | set(holdings), key=str.lower)
-    if not users:
+    active = sorted(set(closed_week) | opened_week, key=str.lower)
+    carrying = sorted(set(holdings) - set(active), key=str.lower)
+    if not active and not carrying:
         lines.append("")
         lines.append("_No trades closed this week and no open positions._")
         return "\n".join(lines) + "\n"
@@ -807,7 +838,7 @@ def build_summary(log, now):
             f"{len(closed_week)} trader(s)."
         )
 
-    for user in users:
+    for user in active:
         lines.append("")
         lines.append(f"## {user}")
 
@@ -815,9 +846,8 @@ def build_summary(log, now):
             _record(tally(closed_week.get(user, [])), "This week:", verbose=True),
             _record(tally(closed_history.get(user, [])),
                     f"Last {HISTORY_DAYS}d:"),
+            _open_summary(holdings.get(user, [])),
         ]
-        open_count = len(holdings.get(user, []))
-        stats.append(f"{open_count} open" if open_count else None)
         stat_line = " · ".join(s for s in stats if s)
         if stat_line:
             lines.append(f"_{stat_line}_")
@@ -834,6 +864,22 @@ def build_summary(log, now):
 
         if not week_trades and not open_trades:
             lines.append("- _no activity_")
+
+    if carrying:
+        # A trader who neither opened nor closed anything this week has no
+        # review to give, so their book collapses to a single line instead of
+        # a section of its own.
+        lines.append("")
+        lines.append("## Carrying — nothing traded this week")
+        for user in carrying:
+            record = _record(tally(closed_history.get(user, [])), "")
+            stats = f" _{record.strip()}_" if record else ""
+            book = ", ".join(
+                f"{j['ticker']} ({_age(parse_ts(j['opened']), now)})"
+                if j["opened"] else f"{j['ticker']} (entry not logged)"
+                for j in holdings[user]
+            )
+            lines.append(f"- **{user}**{stats} — {book}")
 
     return "\n".join(lines).rstrip() + "\n"
 

@@ -496,6 +496,57 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("Community this week:", summary)
         self.assertIn("2 trade(s) closed by 2 trader(s)", summary)
 
+    def test_trimmed_positions_are_counted_as_unresolved(self):
+        # 1ripley's real pattern: full exits on winners, trims left open. The
+        # win rate cannot show a loss, so the exposure has to be visible.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 100"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit AAA 110 for profit"},
+            "3": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long BBB 100"},
+            "4": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit BBB 90 partial, holding rest"},
+        }}
+        summary = ws.build_summary(log, self.NOW)
+        self.assertIn("This week: 1W–0L–0S (100%)", summary)
+        self.assertIn("1 open, 1 trimmed", summary)
+
+    def test_a_stale_position_is_flagged(self):
+        opened = self.NOW - timedelta(days=ws.STALE_DAYS + 5)
+        log = {"messages": {"1": {
+            "timestamp": opened.isoformat(),
+            "content": "u posted a trade:\n#Long AAA 100",
+        }}}
+        summary = ws.build_summary(log, self.NOW)
+        self.assertIn(f"{ws.STALE_DAYS + 5}d {ws.ICON_STALE}", summary)
+
+    def test_a_trader_who_did_not_trade_collapses_to_one_line(self):
+        log = {"messages": {
+            # Opened well before the week and untouched since.
+            "1": {"timestamp": "2026-06-01T00:00:00+00:00",
+                  "content": "quiet posted a trade:\n#Long AAA 100"},
+            # Someone who did trade this week keeps a full section.
+            "2": {"timestamp": "2026-07-10T00:00:00+00:00",
+                  "content": "busy posted a trade:\n#Long BBB 50"},
+        }}
+        summary = ws.build_summary(log, self.NOW)
+        self.assertIn("## busy", summary)
+        self.assertNotIn("## quiet", summary)
+        self.assertIn("Carrying — nothing traded this week", summary)
+        self.assertIn("**quiet**", summary)
+        self.assertIn("AAA (41d", summary)
+
+    def test_a_trader_who_only_opened_this_week_keeps_a_section(self):
+        log = {"messages": {"1": {
+            "timestamp": "2026-07-10T00:00:00+00:00",
+            "content": "u posted a trade:\n#Long AAA 100",
+        }}}
+        summary = ws.build_summary(log, self.NOW)
+        self.assertIn("## u", summary)
+        self.assertNotIn("Carrying", summary)
+
     def test_empty_log(self):
         summary = ws.build_summary({"messages": {}}, self.NOW)
         self.assertIn("No trades closed this week", summary)
