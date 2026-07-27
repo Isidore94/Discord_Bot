@@ -144,6 +144,7 @@ def parse_bulk_exit(line):
         "option": False,
         "notes": m.group("rest").strip(),
         "outcome": None,
+        "firm": True,
         "result_text": "closed in a MOC sweep",
     }
 
@@ -188,11 +189,16 @@ PARTIAL_RE = re.compile(
 # be caught, so every one of them would have flipped to a win.
 LOSS_RE = re.compile(
     r"\bloss(?:es)?\b|\blost\b|\bworthless\b"
-    # "stopped .45" is how a stop-out is written 64 times in the log. A
-    # *trailing* stop often banks a gain, so it is left for the prices to judge.
-    r"|(?<!trailing )\bstopp?ed\b|\bhit (?:my |the )?stops?\b"
     r"|took the l\b|\bthe L\b|\bfor L\b",   # "for L 32%"
     re.IGNORECASE,
+)
+# Being stopped does not say which way the trade went -- a trailing stop banks
+# a gain -- so the word only decides when there is no price to compare. The
+# amount is posted right after it: "stopped .45", "stopped out at 2.44",
+# "stopped starter at 49.25".
+STOP_RE = re.compile(r"\bstopp?ed\b|\bhit (?:my |the )?stops?\b", re.IGNORECASE)
+STOP_PRICE_RE = re.compile(
+    r"stopp?ed\s+(?:[\w']+\s+){0,2}(?:at\s+)?\$?(\d*\.?\d+)", re.IGNORECASE
 )
 # "-$168" is a loss; "at $28.69 - 56c gain" is a dash between two figures, so
 # the minus has to be tight against the number to count.
@@ -226,28 +232,37 @@ BARE_PCT_RE = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)\s*%")
 
 
 def _classify_notes(notes):
-    """Return ('win'|'loss'|'flat'|None, display_text) read from free text."""
+    """Return ('win'|'loss'|'flat'|None, display_text, firm) read from free text.
+
+    ``firm`` is False for a verdict that should give way to the prices -- being
+    stopped out is the only one: the word says the trade ended, not whether it
+    ended up or down.
+    """
     if not notes:
-        return None, ""
+        return None, "", True
     if FLAT_RE.search(notes):
-        return "flat", "scratch"
+        return "flat", "scratch", True
     if LOSS_RE.search(notes):
-        return "loss", _trim_note(notes)
+        return "loss", _trim_note(notes), True
     if WIN_RE.search(notes):
-        return "win", _trim_note(notes)
+        return "win", _trim_note(notes), True
     if NEG_MONEY_RE.search(notes):
-        return "loss", _trim_note(notes)
+        return "loss", _trim_note(notes), True
     m = SIGNED_PCT_RE.search(notes)
     if m:
         pct = f"{m.group(1)}{m.group(2)}%"
-        return ("loss" if m.group(1) == "-" else "win"), pct
+        return ("loss" if m.group(1) == "-" else "win"), pct, True
+    if STOP_RE.search(notes):
+        # Checked before the bare-percentage rule: a figure on a stop line is
+        # the size of the move, not proof it was a gain.
+        return "loss", _trim_note(notes), False
     m = FOR_PCT_RE.search(notes) or BARE_PCT_RE.search(notes)
     if m:
         # A percentage with no loss word on the line is a gain -- losses in
         # this channel are always said out loud, and FLAT_RE and LOSS_RE have
         # both already had their turn above.
-        return "win", f"+{m.group(1)}%"
-    return None, ""
+        return "win", f"+{m.group(1)}%", True
+    return None, "", True
 
 
 def _to_dollars(amount, unit):
@@ -312,16 +327,17 @@ def parse_trade_lines(line):
         if t.strip()
     ]
     gain = candidate = None
-    outcome, result_text = None, ""
+    outcome, result_text, firm = None, "", True
     if side == "Exit":
         gain, price = _extract_gain(price, notes)
         if price is None and gain is None:
             # "#Exit XLP for $1.85" -- no fill was captured, but the trader
             # named a number. Scoring accepts it only if it sits close enough
             # to the entry to be the same instrument.
-            m2 = PREMIUM_RE.search(notes) or PREMIUM_FOR_RE.search(notes)
+            m2 = (PREMIUM_RE.search(notes) or PREMIUM_FOR_RE.search(notes)
+                  or STOP_PRICE_RE.search(notes))
             candidate = float(m2.group(1)) if m2 else None
-        outcome, result_text = _classify_notes(notes)
+        outcome, result_text, firm = _classify_notes(notes)
         if outcome is None and gain is not None:
             # Taking an amount off a position means it was taken in the green;
             # a loss is always said out loud and caught above.
@@ -338,6 +354,7 @@ def parse_trade_lines(line):
             "option": is_option,
             "notes": notes,
             "outcome": outcome,
+            "firm": firm,
             "result_text": result_text,
         }
         for ticker in tickers
@@ -535,6 +552,7 @@ def log_to_trades(log):
             t.setdefault("option", False)
             t.setdefault("gain", None)
             t.setdefault("candidate_price", None)
+            t.setdefault("firm", True)
             t.setdefault("excluding", [])
             t.setdefault("outcome", None)
             t.setdefault("result_text", "")
@@ -678,7 +696,10 @@ def score_journey(journey):
         return {"outcome": "open", "pct": None, "text": "",
                 "exit_price": None, "implied": False}
 
-    stated = [e["outcome"] for e in journey["exits"] if e["outcome"]]
+    # The trader's last word on the position decides, so ordering is kept:
+    # a partial taken for profit does not outrank the stop that ended it.
+    verdicts = [e for e in journey["exits"] if e["outcome"]]
+    last = verdicts[-1] if verdicts else None
     text = next(
         (e["result_text"] for e in reversed(journey["exits"]) if e["result_text"]),
         "",
@@ -708,12 +729,14 @@ def score_journey(journey):
         elif journey["side"]:
             pct = 100 * (move if journey["side"] == "Long" else -move)
 
-    if stated:
-        # Several exits can disagree (a partial for profit, the runner for a
-        # loss); the trader's last word on the position decides.
-        outcome = stated[-1]
+    if last is not None and last.get("firm", True):
+        outcome = last["outcome"]
     elif pct is not None:
         outcome = "flat" if abs(pct) < 0.05 else ("win" if pct > 0 else "loss")
+    elif last is not None:
+        # Stopped out with no price to check it against: the word is all there
+        # is, and a stop usually means the trade went the wrong way.
+        outcome = last["outcome"]
     elif journey["exits"] and not journey["swept"]:
         # Nothing called it a loss and nothing priced it, so the channel
         # convention decides: a result that goes unmentioned is a good one.

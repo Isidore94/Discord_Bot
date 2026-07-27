@@ -355,8 +355,8 @@ class JourneyTests(unittest.TestCase):
         # rows: (message_id, user, side, ticker, price, partial, notes)
         out = []
         for mid, user, side, ticker, price, partial, notes in rows:
-            outcome, text = ws._classify_notes(notes) if side == "Exit" \
-                else (None, "")
+            outcome, text = (ws._classify_notes(notes)[:2] if side == "Exit"
+                             else (None, ""))
             out.append({
                 "message_id": str(mid), "index": 0,
                 "timestamp": f"2026-07-{10 + int(mid):02d}T00:00:00+00:00",
@@ -434,12 +434,17 @@ class ScoringTests(unittest.TestCase):
         }
         for price, notes in exits:
             gain, price = ws._extract_gain(price, notes)
-            outcome, text = ws._classify_notes(notes)
+            candidate = None
+            if price is None and gain is None:
+                m = (ws.PREMIUM_RE.search(notes) or ws.PREMIUM_FOR_RE.search(notes)
+                     or ws.STOP_PRICE_RE.search(notes))
+                candidate = float(m.group(1)) if m else None
+            outcome, text, firm = ws._classify_notes(notes)
             if outcome is None and gain is not None:
                 outcome, text = "win", ws._trim_note(notes)
             j["exits"].append({
-                "price": price, "gain": gain, "candidate_price": None,
-                "partial": False, "notes": notes,
+                "price": price, "gain": gain, "candidate_price": candidate,
+                "firm": firm, "partial": False, "notes": notes,
                 "outcome": outcome, "result_text": text, "option": option,
             })
         j["result"] = ws.score_journey(j)
@@ -530,6 +535,31 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(j["result"]["outcome"], "loss")
         self.assertFalse(j["result"]["implied"])
         self.assertIsNone(j["result"]["exit_price"])
+
+    def test_a_stop_out_is_judged_on_the_amount_not_the_word(self):
+        # Contracts: stopped below what was paid is a loss, above it is a win.
+        self.assertEqual(
+            self._journey("Long", 1.00, [(None, "stopped .45")],
+                          option=True)["result"]["outcome"], "loss")
+        self.assertEqual(
+            self._journey("Long", 0.20, [(None, "stopped .45")],
+                          option=True)["result"]["outcome"], "win")
+        # Shares: same logic, and a short covered lower is a winner.
+        self.assertEqual(
+            self._journey("Long", 100.0, [(None, "stopped out at 90")]
+                          )["result"]["outcome"], "loss")
+        self.assertEqual(
+            self._journey("Short", 290.37, [(None, "trailing stopped 285")]
+                          )["result"]["outcome"], "win")
+
+    def test_a_stop_out_with_no_entry_price_falls_back_to_the_word(self):
+        j = self._journey("Long", None, [(None, "stopped .10")], option=True)
+        self.assertEqual(j["result"]["outcome"], "loss")
+
+    def test_a_stated_loss_still_beats_the_prices(self):
+        # "stopped" defers to the amount; "for a loss" does not.
+        j = self._journey("Long", 100.0, [(110.0, "stopped out for a loss")])
+        self.assertEqual(j["result"]["outcome"], "loss")
 
     def test_a_flat_exit_reads_as_a_scratch_not_minus_zero_percent(self):
         j = self._journey("Short", 110.19, [(110.19, "for breakeven.")])
