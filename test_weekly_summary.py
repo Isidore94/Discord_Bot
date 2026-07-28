@@ -179,6 +179,20 @@ class OptionParsingTests(unittest.TestCase):
             ws.parse_trade_line("#Exit ORCL calls this am 8.25 24%")["candidate_price"],
             8.25)
 
+    def test_a_percentage_is_never_read_as_a_fill(self):
+        # "for 50%" backtracked to "5" and slipped past the percent guard, so a
+        # strangle closed for +50% was reported as a fill of 5 -- a 20% loss on
+        # a 6.24 entry, with a win icon beside it.
+        t = ws.parse_trade_line("#exit QQQ strangle for 50%")
+        self.assertIsNone(t["candidate_price"])
+        self.assertEqual(t["outcome"], "win")
+        self.assertEqual(t["result_text"], "+50%")
+
+    def test_an_amount_in_cents_is_not_a_fill(self):
+        t = ws.parse_trade_line("#Exit NKE for 80 cents of profit on 2x size")
+        self.assertIsNone(t["candidate_price"])
+        self.assertEqual(t["outcome"], "win")
+
     def test_out_one_half_is_a_partial(self):
         for line in ("#Exit TSLA swing trade here out 1/2 at 10.05",
                      "#Exit INTC 1/2 out swing trade"):

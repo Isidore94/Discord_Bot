@@ -177,23 +177,28 @@ OPTION_RE = re.compile(
 # The cost of an option leg is the premium, posted as "@1.79", "@ .36" or
 # "for 3.45". On an exit "for 3.45" is just as likely to be the gain as the
 # fill, so the looser form is only trusted when a position is being opened.
-PREMIUM_RE = re.compile(r"@\s*\$?(\d*\.?\d+)")
+# A price must be captured whole. "(\d*\.?\d+)" happily backtracks to the "5"
+# of "50%", which is how a strangle closed for +50% came to read as a fill of 5.
+PRICE = r"(\d+(?:\.\d+)?|\.\d+)\b(?!\d)"
+NOT_A_FILL = r"(?!\s*(?:%|cents?\b|c\b|dollars?\b))"
+PREMIUM_RE = re.compile(r"@\s*\$?" + PRICE)
 # "#Long QCOM 170c 1.53" -- the strike takes the price slot, so the premium is
 # the first thing left in the notes. Rejected when a "/" follows, which makes
 # it a date: "#Long NFLX 5/01/26 93 C .73".
-PREMIUM_LEADING_RE = re.compile(r"^\$?(\d*\.?\d+)(?![\d/])")
+PREMIUM_LEADING_RE = re.compile(r"^\$?" + PRICE + r"(?![/%])")
 # "#Long NFLX 5/01/26 93 C .73" -- expiry, then strike, then the premium per
 # contract. The premium is whatever follows the strike's C or P.
 PREMIUM_AFTER_STRIKE_RE = re.compile(
-    r"\b\d+(?:\.\d+)?\s*[CP]\b\s*\$?(\d*\.?\d+)", re.IGNORECASE
+    r"\b\d+(?:\.\d+)?\s*[CP]\b\s*\$?" + PRICE, re.IGNORECASE
 )
 # (2) "puts 4.05", "calls this am 8.25" -- for a position taken via contracts,
 # the number after the instrument is the price it filled at.
 INSTRUMENT_PRICE_RE = re.compile(
-    r"^(?:puts?|calls?|shares?)\s+(?:[\w']+\s+){0,2}\$?(\d*\.?\d+)", re.IGNORECASE
+    r"^(?:puts?|calls?|shares?)\s+(?:[\w']+\s+){0,2}\$?" + PRICE + r"(?!\s*%)",
+    re.IGNORECASE
 )
-AT_PRICE_RE = re.compile(r"\bat\s+\$?(\d*\.?\d+)", re.IGNORECASE)
-PREMIUM_FOR_RE = re.compile(r"\bfor\s+\$?(\d*\.?\d+)(?!\s*%)")
+AT_PRICE_RE = re.compile(r"\bat\s+\$?" + PRICE + NOT_A_FILL, re.IGNORECASE)
+PREMIUM_FOR_RE = re.compile(r"\bfor\s+\$?" + PRICE + NOT_A_FILL)
 
 # Traders state the result of a trade in plain English far more reliably than
 # the posted numbers allow it to be computed, so the words win over arithmetic.
@@ -224,7 +229,8 @@ LOSS_RE = re.compile(
 # "stopped starter at 49.25".
 STOP_RE = re.compile(r"\bstopp?ed\b|\bhit (?:my |the )?stops?\b", re.IGNORECASE)
 STOP_PRICE_RE = re.compile(
-    r"stopp?ed\s+(?:[\w']+\s+){0,2}(?:at\s+)?\$?(\d*\.?\d+)", re.IGNORECASE
+    r"stopp?ed\s+(?:[\w']+\s+){0,2}(?:at\s+)?\$?" + PRICE + r"(?!\s*%)",
+    re.IGNORECASE
 )
 # "-$168" is a loss; "at $28.69 - 56c gain" is a dash between two figures, so
 # the minus has to be tight against the number to count.
