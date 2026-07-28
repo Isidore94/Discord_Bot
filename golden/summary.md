@@ -4,20 +4,20 @@ _An open position shows `now` at its latest close, unrealised. Records read W–
 **Community this week:** 19W–10L–4S (66%) — 33 trade(s) closed by 6 trader(s).
 
 ## 00sav00
-_This week: 0W–2L–0S (0%) · Last 90d: 14W–11L–0S (56%) · 6 open_
+_This week: 0W–2L–0S (0%) · Last 90d: 13W–13L–0S (50%) · 6 open_
 **Closed this week**
 - 🔴 **SBUX** Long 108.18 → 103.95 · -3.9% · Jul 13→24
-- 🔴 **RDDT** Long 198.81 → 169.42 · 1 add · -14.8% · Jul 9→24
+- 🔴 **RDDT** Long avg 200.03 → 169.42 · 1 add · -15.3% · Jul 9→24
 **Still open**
 - 🟠 **TLT** Long opts 0.4 · open since Jul 6 (21d)
-- 🟠 **GLD** Long 381.04 · now 374.63 (-1.7%) · 1 add · open since Jul 6 (21d)
+- 🟠 **GLD** Long avg 378.73 · now 374.63 (-1.1%) · 1 add · open since Jul 6 (21d)
 - 🟠 **HPW** Long 48.92 · open since Jul 9 (18d)
-- 🟠 **MU** Long 980.08 · now 900.2 (-8.2%) · 1 add · open since Jul 14 (13d)
+- 🟠 **MU** Long avg 969.41 · now 900.2 (-7.1%) · 1 add · open since Jul 14 (13d)
 - 🟠 **QQQ** Short opts 1.79 · open since Jul 24 (3d)
 - 🟠 **IWM** Short opts 2.07 · open since Jul 24 (3d)
 
 ## 1ripley
-_This week: 4W–0L–0S (100%) · Last 90d: 45W–0L–0S (100%) · 5 open, 3 trimmed_
+_This week: 4W–0L–0S (100%) · Last 90d: 48W–0L–0S (100%) · 5 open, 3 trimmed_
 **Closed this week**
 - ✅ **RDDT** Long 185 → 186 · +0.5% · Jul 21
 - ✅ **BULL** Long 8.03 → 8.12 · +1.1% · Jul 21
@@ -25,10 +25,10 @@ _This week: 4W–0L–0S (100%) · Last 90d: 45W–0L–0S (100%) · 5 open, 3 t
 - ✅ **COST** Short 930 → 925.1 · 1 partial · +0.5% · Jul 21→22
 **Still open**
 - 🟠 **QBTS** Long · 3 partials taken · open since May 28 (60d ⏳)
-- 🟠 **NVDA** Long · 1 add · 7 partials taken · open since May 29 (59d ⏳)
-- 🟠 **ORCL** Long opts 145 · 3 adds · open since Jun 2 (55d ⏳)
-- 🟠 **MSFT** Long opts 2.4 · 1 add · open since Jun 2 (55d ⏳)
-- 🟠 **PLTR** Long opts 180 · 1 add · 1 partial taken · open since Jun 2 (55d ⏳)
+- 🟠 **NVDA** Long avg 195.05 · 1 add · 7 partials taken · open since May 29 (59d ⏳)
+- 🟠 **ORCL** Long opts avg 149.35 · 3 adds · open since Jun 2 (55d ⏳)
+- 🟠 **MSFT** Long opts avg 398.55 · 1 add · open since Jun 2 (55d ⏳)
+- 🟠 **PLTR** Long opts avg 131.85 · 1 add · 1 partial taken · open since Jun 2 (55d ⏳)
 
 ## isidore94
 _This week: 7W–3L–1S (70%) · Last 90d: 77W–48L–14S (62%) · 8 open, 4 trimmed_
@@ -67,8 +67,8 @@ _This week: 4W–2L–3S (67%) · Last 90d: 41W–10L–9S (80%) · 5 open_
 - ✅ **IREN** Short 36.09 → 35.09 · +2.8% · Jul 27
 - 🔴 **LRCX** Short 281.11 → 292.94 · -4.2% · Jul 27
 **Still open**
-- 🟠 **STX** Long 711.14 · now 816.99 (+14.9%) · 4 adds · open since May 1 (87d ⏳)
-- 🟠 **MRVL** Long 300.86 · now 189.17 (-37.1%) · 2 adds · open since Jun 8 (49d ⏳)
+- 🟠 **STX** Long avg 899.58 · now 816.99 (-9.2%) · 4 adds · open since May 1 (87d ⏳)
+- 🟠 **MRVL** Long avg 306.26 · now 189.17 (-38.2%) · 2 adds · open since Jun 8 (49d ⏳)
 - 🟠 **BE** Long opts · open since Jun 17 (40d ⏳)
 - 🟠 **BULL** Long 8.125 · now 7.54 (-7.2%) · open since Jul 21 (6d)
 - 🟠 **QQQ** Short opts 3.45 · open since Jul 24 (3d)
@@ -76,9 +76,9 @@ _This week: 4W–2L–3S (67%) · Last 90d: 41W–10L–9S (80%) · 5 open_
 ## opreme
 _This week: 3W–3L–0S (50%) · Last 90d: 110W–80L–1S (58%) · 33 open, 10 trimmed_
 **Closed this week**
-- 🟠 **NBIS** Long 189.69 → 207.65 · partial taken · now 187.88 (-1.0%) · 1 add · +9.5% · Jul 20→21
+- 🟠 **NBIS** Long avg 196.165 → 207.65 · partial taken · now 187.88 (-4.2%) · 1 add · +5.9% · Jul 20→21
 - 🟠 **MUU** Long · partial taken · 1/2 out at 34.01 for 24% gain · Jul 16→21
-- 🟠 **NBIS** Long 189.69 → 225.54 · partial taken · now 187.88 (-1.0%) · 1 add · +18.9% · Jul 20→22
+- 🟠 **NBIS** Long avg 196.165 → 225.54 · partial taken · now 187.88 (-4.2%) · 1 add · +15.0% · Jul 20→22
 - 🔴 **RDDT** Long opts 5.8 · starter swing calls for a loss at 1.51 · Jun 22→Jul 22
 - 🔴 **CRM** Long opts · starter at 2.19 for loss · Jul 17→23
 - 🔴 **VCX** Long 67.27 → 49.25 · -26.8% · Jul 9→27
@@ -86,8 +86,8 @@ _This week: 3W–3L–0S (50%) · Last 90d: 110W–80L–1S (58%) · 33 open, 10
 - 🟠 **AVGO** Long opts 8.8 · open since Jul 14 (13d)
 - 🟠 **ADBE** Long opts 4.78 · open since Jul 15 (12d)
 - 🟠 **MUU** Long · 1 partial taken · open since Jul 16 (11d)
-- 🟠 **NBIS** Long 189.69 · now 187.88 (-1.0%) · 1 add · 2 partials taken · open since Jul 20 (7d)
-- 🟠 **SMCI** Long opts 2.5 · 1 add · open since Jul 22 (5d)
+- 🟠 **NBIS** Long avg 196.165 · now 187.88 (-4.2%) · 1 add · 2 partials taken · open since Jul 20 (7d)
+- 🟠 **SMCI** Long opts avg 2.462 · 1 add · open since Jul 22 (5d)
 _+28 carried: AMD (42d ⏳), SNOW (42d ⏳), QCOM (42d ⏳), UNH (42d ⏳), SHOP (42d ⏳), MSFT (42d ⏳), +22 more · 8 trimmed_
 
 ## ryderlive
@@ -109,6 +109,6 @@ _This week: 1W–0L–0S (100%) · Last 90d: 59W–8L–6S (88%) · 1 open, 1 tr
 - 🟠 **NBIS** Long opts 2.4 · open since Jun 22 (35d ⏳)
 - 🟠 **MRVL** Long opts 9.15 · open since Jun 30 (27d)
 **the_prophet_1** _10W–9L–3S (53%)_
-- 🟠 **DRAM** · 2 adds · open since Jun 3 (54d ⏳)
-- 🟠 **S** · 1 add · open since Jun 30 (27d)
-- 🟠 **MU** Long 987.22 · now 900.2 (-8.8%) · 4 adds · open since Jul 14 (13d)
+- 🟠 **DRAM** avg 53.38 · 2 adds · open since Jun 3 (54d ⏳)
+- 🟠 **S** avg 51.29 · 1 add · open since Jun 30 (27d)
+- 🟠 **MU** Long avg 971.32 · now 900.2 (-7.3%) · 4 adds · open since Jul 14 (13d)

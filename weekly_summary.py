@@ -128,6 +128,12 @@ TICKER_TOKEN_RE = re.compile(r"\b[A-Z]{1,6}\b")
 ADD_RE = re.compile(
     r"\badd(?:ed|ing|s)?\b|\bavg\b|\baverage|\bscal(?:e|ing)\s*in\b", re.IGNORECASE
 )
+# Traders who scale in state their own running average -- "adding to position.
+# Average is 772.65", "for an avg of 899.58 on 5x swing" -- and that number is
+# better than anything computable here, since it accounts for size.
+AVG_PRICE_RE = re.compile(
+    r"\bav(?:g|erage)\b[^0-9]{0,20}?(\d+(?:\.\d+)?)", re.IGNORECASE
+)
 
 # A credit spread is sold, not bought, so its premium moves the opposite way
 # to a plain long call or put. PDS/CDS are debit spreads and behave normally.
@@ -709,9 +715,10 @@ def apply_marks(journeys, marks):
         if j["closed"] or j["option"] or not j["entry_price"] or not j["side"]:
             continue
         last = marks.get(j["ticker"])
-        if last is None or not _comparable(j["entry_price"], last):
+        basis = cost_basis(j)
+        if last is None or not _comparable(basis, last):
             continue
-        move = (last - j["entry_price"]) / j["entry_price"]
+        move = (last - basis) / basis
         j["mark"] = {
             "price": last,
             "pct": 100 * (move if j["side"] == "Long" else -move),
@@ -756,6 +763,8 @@ def _new_journey(t):
         "entry_notes": t["notes"],
         "instrument": instrument_of(t["notes"]),
         "credit": bool(CREDIT_RE.search(t["notes"])),
+        "add_prices": [],
+        "stated_avg": None,
         "swept": False,
         "superseded": False,
         "adds": 0,
@@ -765,6 +774,35 @@ def _new_journey(t):
         "last_touch": t["timestamp"],
         "message_ids": [t["message_id"]],
     }
+
+
+def _note_add(journey, t):
+    """Fold an add into the journey's cost basis."""
+    journey["adds"] += 1
+    journey["message_ids"].append(t["message_id"])
+    journey["last_touch"] = t["timestamp"]
+    if t["price"] is not None:
+        journey["add_prices"].append(t["price"])
+    stated = AVG_PRICE_RE.search(t["notes"])
+    if stated:
+        journey["stated_avg"] = float(stated.group(1))
+
+
+def cost_basis(journey):
+    """What the position actually cost per unit, adds included.
+
+    The trader's own stated average wins; otherwise the posted fills are
+    averaged equal-weight, which on the one book that states both agrees to
+    within two cents (899.60 computed vs 899.58 stated). With no add prices at
+    all, the first entry is all there is.
+    """
+    if journey["stated_avg"] is not None:
+        return journey["stated_avg"]
+    prices = [p for p in [journey["entry_price"], *journey["add_prices"]]
+              if p is not None]
+    if len(prices) > 1:
+        return round(sum(prices) / len(prices), 4)
+    return journey["entry_price"]
 
 
 def _apply_sweep(open_journeys, t):
@@ -810,10 +848,8 @@ def build_journeys(trades):
         if t["side"] in ("Long", "Short"):
             if current and current["side"] == t["side"]:
                 if ADD_RE.search(t["notes"]):
-                    current["adds"] += 1      # scaling into the same position
-                    current["message_ids"].append(t["message_id"])
+                    _note_add(current, t)     # scaling into the same position
                     current["option"] = current["option"] or t["option"]
-                    current["last_touch"] = t["timestamp"]
                     continue
                 # Neither an add nor a trim, so the old position is closed and
                 # this is a fresh one. No result was ever posted for it.
@@ -835,9 +871,7 @@ def build_journeys(trades):
                 journeys.append(current)
                 open_journeys[key] = current
             else:
-                current["adds"] += 1
-                current["message_ids"].append(t["message_id"])
-                current["last_touch"] = t["timestamp"]
+                _note_add(current, t)
             continue
         # Exit
         if not current:
@@ -906,7 +940,7 @@ def score_journey(journey):
         text = _trim_note(journey["exits"][-1]["notes"])
 
     final = journey["exits"][-1] if journey["exits"] else None
-    entry = journey["entry_price"]
+    entry = cost_basis(journey)
     pct, exit_price = None, None
     posted = final["price"] if final is not None else None
     if posted is None and final is not None:
@@ -1172,7 +1206,13 @@ def _journey_line(j, now):
     # 3.80 against an entry of 404.25 is a gain per share, and printing
     # "404.25 → 3.8" would read as a catastrophic loss. A "~" marks an exit
     # derived from a stated gain rather than one the trader posted.
-    entry = _fmt_price(j["entry_price"])
+    # A scaled-in position is priced at its average, labelled so nobody reads
+    # it as a single fill: STX entered at 711.14 and added to four times is
+    # "avg 899.58", not a +15% trade that is actually under water.
+    basis = cost_basis(j)
+    entry = _fmt_price(basis)
+    if entry and basis != j["entry_price"]:
+        entry = f"avg {entry}"
     exit_price = _fmt_price(j["result"]["exit_price"])
     if exit_price and j["result"]["implied"]:
         exit_price = "~" + exit_price

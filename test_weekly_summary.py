@@ -274,7 +274,8 @@ class GainTests(unittest.TestCase):
         j = {"user": "u", "ticker": "AAA", "side": "Long", "entry_price": entry,
              "opened": "2026-07-10T00:00:00+00:00", "option": False,
              "credit": False, "swept": False, "superseded": False,
-            "entry_notes": "", "instrument": None, "adds": 0, "exits": [exit_trade], "closed": True,
+            "entry_notes": "", "instrument": None,
+            "add_prices": [], "stated_avg": None, "adds": 0, "exits": [exit_trade], "closed": True,
              "closed_at": "2026-07-11T00:00:00+00:00", "message_ids": []}
         return ws.score_journey(j)
 
@@ -454,6 +455,39 @@ class JourneyTests(unittest.TestCase):
         self.assertEqual(journeys[0]["adds"], 2)
         self.assertEqual(journeys[0]["entry_price"], 900.0)
 
+    def test_adds_build_a_cost_basis(self):
+        # mallowmushroom's STX: in at 711.14, added to four times, own stated
+        # average 899.58. The stated number wins over anything computed.
+        journeys = ws.build_journeys(self._trades([
+            (1, "u", "Long", "STX", 711.14, False, ""),
+            (2, "u", "Long", "STX", 834.17, False,
+             "adding to position. Average is 772.65"),
+            (3, "u", "Add", "STX", 919.55, False, "for avg 821.61."),
+            (4, "u", "Add", "STX", 1016.01, False,
+             "for an avg of 899.58 on 5x swing."),
+        ]))
+        self.assertEqual(len(journeys), 1)
+        self.assertEqual(ws.cost_basis(journeys[0]), 899.58)
+        self.assertEqual(journeys[0]["entry_price"], 711.14)  # first fill kept
+
+    def test_unstated_average_is_computed_from_the_fills(self):
+        journeys = ws.build_journeys(self._trades([
+            (1, "u", "Long", "GEV", 1090.0, False, ""),
+            (2, "u", "Add", "GEV", 1082.0, False, ""),
+        ]))
+        self.assertEqual(ws.cost_basis(journeys[0]), 1086.0)
+
+    def test_marks_and_scores_measure_from_the_basis(self):
+        journeys = ws.build_journeys(self._trades([
+            (1, "u", "Long", "STX", 700.0, False, ""),
+            (2, "u", "Add", "STX", 900.0, False, "avg 800"),
+        ]))
+        ws.mark_unreadable(journeys,
+                           datetime(2026, 7, 20, tzinfo=timezone.utc))
+        ws.apply_marks(journeys, {"STX": 816.0})
+        # +16.6% from the first fill, but +2% from what it actually cost.
+        self.assertAlmostEqual(journeys[0]["mark"]["pct"], 2.0, places=4)
+
     def test_a_reentry_that_does_not_closes_the_earlier_position(self):
         # Neither an add nor a trim, so the first position is gone even though
         # its exit was never posted.
@@ -508,7 +542,8 @@ class ScoringTests(unittest.TestCase):
             "user": "u", "ticker": "T", "side": side, "entry_price": entry,
             "opened": "2026-07-10T00:00:00+00:00", "option": option,
             "credit": False, "swept": False, "superseded": False,
-            "entry_notes": "", "instrument": None, "adds": 0,
+            "entry_notes": "", "instrument": None,
+            "add_prices": [], "stated_avg": None, "adds": 0,
             "exits": [], "closed": closed, "closed_at":
                 "2026-07-11T00:00:00+00:00" if closed else None,
             "message_ids": [],
