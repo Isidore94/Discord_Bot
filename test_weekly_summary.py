@@ -263,7 +263,8 @@ class GainTests(unittest.TestCase):
         exit_trade = ws.parse_trade_line(f"#Exit AAA {notes}")
         j = {"user": "u", "ticker": "AAA", "side": "Long", "entry_price": entry,
              "opened": "2026-07-10T00:00:00+00:00", "option": False,
-             "credit": False, "swept": False, "superseded": False, "adds": 0, "exits": [exit_trade], "closed": True,
+             "credit": False, "swept": False, "superseded": False,
+            "entry_notes": "", "instrument": None, "adds": 0, "exits": [exit_trade], "closed": True,
              "closed_at": "2026-07-11T00:00:00+00:00", "message_ids": []}
         return ws.score_journey(j)
 
@@ -496,7 +497,8 @@ class ScoringTests(unittest.TestCase):
         j = {
             "user": "u", "ticker": "T", "side": side, "entry_price": entry,
             "opened": "2026-07-10T00:00:00+00:00", "option": option,
-            "credit": False, "swept": False, "superseded": False, "adds": 0,
+            "credit": False, "swept": False, "superseded": False,
+            "entry_notes": "", "instrument": None, "adds": 0,
             "exits": [], "closed": closed, "closed_at":
                 "2026-07-11T00:00:00+00:00" if closed else None,
             "message_ids": [],
@@ -629,6 +631,42 @@ class ScoringTests(unittest.TestCase):
         # "stopped" defers to the amount; "for a loss" does not.
         j = self._journey("Long", 100.0, [(110.0, "stopped out for a loss")])
         self.assertEqual(j["result"]["outcome"], "loss")
+
+    def test_sold_puts_win_when_the_premium_falls(self):
+        # "#Long puts" is a theta play: sell at 5, buy back at 2, win of 3.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long VRT 5 puts"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit VRT puts 2"},
+        }}
+        j = ws.build_journeys(ws.log_to_trades(log))[0]
+        self.assertEqual(j["instrument"], "put")
+        self.assertFalse(ws.bought_the_contract(j["side"], j["instrument"]))
+        self.assertEqual(j["result"]["outcome"], "win")
+        self.assertEqual(j["result"]["pct"], 60.0)
+
+    def test_bought_puts_win_when_the_premium_rises(self):
+        # "#Short ... puts" is the bearish bet taken by buying the contract.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Short QQQ 5 puts"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit QQQ puts 8"},
+        }}
+        j = ws.build_journeys(ws.log_to_trades(log))[0]
+        self.assertTrue(ws.bought_the_contract(j["side"], j["instrument"]))
+        self.assertEqual(j["result"]["outcome"], "win")
+
+    def test_calls_run_the_other_way(self):
+        self.assertTrue(ws.bought_the_contract("Long", "call"))   # bought calls
+        self.assertFalse(ws.bought_the_contract("Short", "call"))  # sold calls
+        self.assertTrue(ws.bought_the_contract("Short", "put"))   # bought puts
+        self.assertFalse(ws.bought_the_contract("Long", "put"))   # sold puts
+        # A strangle names both contracts, so nothing is assumed but the
+        # ordinary case of premium having been paid.
+        self.assertIsNone(ws.instrument_of("700p/712c strangle"))
+        self.assertTrue(ws.bought_the_contract("Long", None))
 
     def test_a_verdict_fighting_the_prices_is_unreadable(self):
         # "puts .8 64%" is +64% on a sold put and -64% on a bought one. The

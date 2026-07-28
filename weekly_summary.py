@@ -127,6 +127,32 @@ ADD_RE = re.compile(
 # to a plain long call or put. PDS/CDS are debit spreads and behave normally.
 CREDIT_RE = re.compile(r"\b(?:pcs|ccs|credit)\b", re.IGNORECASE)
 
+# Which contract a leg is written on. "#Long QCOM 170c" is a call, "#Long VRT
+# 5p" a put.
+CALL_RE = re.compile(r"\bcalls?\b|(?<![.\d])\d{1,5}\s*c\b", re.IGNORECASE)
+PUT_RE = re.compile(r"\bputs?\b|(?<![.\d])\d{1,5}\s*p\b", re.IGNORECASE)
+
+
+def instrument_of(text):
+    """'call', 'put', or None when the text names both or neither."""
+    call, put = bool(CALL_RE.search(text)), bool(PUT_RE.search(text))
+    if call == put:
+        return None          # a strangle names both; plain shares name neither
+    return "call" if call else "put"
+
+
+def bought_the_contract(side, instrument):
+    """True when the trader is long premium, False when they sold it.
+
+    The side is the directional bet and the contract says how it was taken.
+    Bullish is a bought call or a sold put -- "#Long puts" is a theta play, so
+    selling puts at 5 and buying them back at 2 is a three dollar win, not a
+    loss. Bearish is a bought put or a sold call.
+    """
+    if instrument is None:
+        return True          # nothing says otherwise; assume premium was paid
+    return (side == "Long") == (instrument == "call")
+
 # Uppercase words that turn up in these lines but are not tickers.
 NOT_TICKERS = {"MOC", "DT", "DTS", "EOD", "AND", "OF", "THE", "ALL", "TP", "SL",
                "OPEN", "CLOSE", "PM", "AM", "ET", "EST"}
@@ -614,6 +640,8 @@ def _new_journey(t):
         "entry_price": t["price"] if t["side"] in ("Long", "Short") else None,
         "opened": t["timestamp"],
         "option": t["option"],
+        "entry_notes": t["notes"],
+        "instrument": instrument_of(t["notes"]),
         "credit": bool(CREDIT_RE.search(t["notes"])),
         "swept": False,
         "superseded": False,
@@ -707,6 +735,8 @@ def build_journeys(trades):
         current["message_ids"].append(t["message_id"])
         current["option"] = current["option"] or t["option"]
         current["credit"] = current["credit"] or bool(CREDIT_RE.search(t["notes"]))
+        if current["instrument"] is None:
+            current["instrument"] = instrument_of(t["notes"])
         current["last_touch"] = t["timestamp"]
         current["exits"].append(t)
         if not t["partial"]:
@@ -773,12 +803,12 @@ def score_journey(journey):
         exit_price = posted
         move = (exit_price - entry) / entry
         if journey["option"]:
-            # The trader is long the contract either way -- "#Short QQQ 700p"
-            # is a bought put -- so premium up is a winner. Credit spreads run
-            # the other way, and telling which is which from an abbreviation is
-            # not something to guess at, so they stay unscored.
+            # Premium up wins when the contract was bought and loses when it
+            # was sold. Credit spreads are left alone: telling which way one
+            # runs from an abbreviation is not something to guess at.
             if not journey["credit"]:
-                pct = 100 * move
+                paid = bought_the_contract(journey["side"], journey["instrument"])
+                pct = 100 * (move if paid else -move)
         elif journey["side"]:
             pct = 100 * (move if journey["side"] == "Long" else -move)
 
@@ -804,7 +834,10 @@ def score_journey(journey):
         # covered lower.
         signed = -final["gain"] if outcome == "loss" else final["gain"]
         candidate = 100 * signed / entry
-        away = journey["option"] or journey["side"] != "Short"
+        if journey["option"]:
+            away = bought_the_contract(journey["side"], journey["instrument"])
+        else:
+            away = journey["side"] != "Short"
         price = round(entry + signed if away else entry - signed, 4)
         if price > 0 and abs(candidate) <= 300:
             pct, exit_price, implied = candidate, price, True
