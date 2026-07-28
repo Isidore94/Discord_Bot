@@ -149,6 +149,21 @@ class OptionParsingTests(unittest.TestCase):
         self.assertTrue(t["option"])
         self.assertEqual(t["price"], 3.45)
 
+    def test_premium_sitting_after_the_strike_is_the_price(self):
+        # "#Long QCOM 170c 1.53" -- the strike takes the price slot, so the
+        # premium is left as the first thing in the notes. 388 entries in the
+        # log are written this way and were all going through unpriced.
+        for line, want in (("#Long QCOM 170c 1.53", 1.53),
+                           ("#Long AAPL 272.5c .28", 0.28),
+                           ("#Long TSLA 380c .58 lotto", 0.58)):
+            t = ws.parse_trade_line(line)
+            self.assertTrue(t["option"], line)
+            self.assertEqual(t["price"], want, line)
+
+    def test_a_date_after_the_ticker_is_not_the_premium(self):
+        t = ws.parse_trade_line("#Long NFLX  5/01/26 93 C .73")
+        self.assertIsNone(t["price"])
+
     def test_cents_note_is_not_an_option(self):
         # ".50c" is fifty cents of gain, not a 50 strike.
         t = ws.parse_trade_line("#Exit HIMS 29.24 partial for .50c gain")

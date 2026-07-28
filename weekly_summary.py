@@ -177,6 +177,10 @@ OPTION_RE = re.compile(
 # "for 3.45". On an exit "for 3.45" is just as likely to be the gain as the
 # fill, so the looser form is only trusted when a position is being opened.
 PREMIUM_RE = re.compile(r"@\s*\$?(\d*\.?\d+)")
+# "#Long QCOM 170c 1.53" -- the strike takes the price slot, so the premium is
+# the first thing left in the notes. Rejected when a "/" follows, which makes
+# it a date: "#Long NFLX 5/01/26 93 C .73".
+PREMIUM_LEADING_RE = re.compile(r"^\$?(\d*\.?\d+)(?![\d/])")
 PREMIUM_FOR_RE = re.compile(r"\bfor\s+\$?(\d*\.?\d+)(?!\s*%)")
 
 # Traders state the result of a trade in plain English far more reliably than
@@ -326,7 +330,7 @@ def parse_trade_lines(line):
         # "#Long NVDA 200p July 17th for 17.10", "#Short QQQ 100 21 AUG 26
         # 680/675 PUT @1.79": the captured number is a strike or a contract
         # count. The premium is what the trade actually cost.
-        premium = PREMIUM_RE.search(notes)
+        premium = PREMIUM_RE.search(notes) or PREMIUM_LEADING_RE.match(notes)
         if premium is None and side != "Exit":
             premium = PREMIUM_FOR_RE.search(notes)
         price = float(premium.group(1)) if premium else None
