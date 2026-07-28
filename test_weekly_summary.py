@@ -126,9 +126,19 @@ class ParseTradeLineTests(unittest.TestCase):
         ):
             self.assertTrue(ws.parse_trade_line(line)["partial"], line)
 
+    def test_holding_the_rest_is_a_partial(self):
+        for line in (
+            "#Exit NVDA 203.85 for 5.50 swinging the rest.",
+            "#exit AMD for 30 dollars holding the rest looking to redd",
+            "#exit ASTS For 1 dollar per share trailing the rest",
+        ):
+            self.assertTrue(ws.parse_trade_line(line)["partial"], line)
+
     def test_a_full_exit_is_not_mistaken_for_a_partial(self):
         for line in (
             "#Exit SNDK the rest for a lot per share",
+            "#exit WOLF @ 23.39 for the rest",
+            "#Exit AMKR exit the rest as well here 6.4 47%",
             "#Exit ORCL 165.16 for 4.29 gain on runner. Fully out.",
         ):
             self.assertFalse(ws.parse_trade_line(line)["partial"], line)
@@ -737,8 +747,8 @@ class SummaryTests(unittest.TestCase):
 
     def test_one_line_per_trade(self):
         summary = ws.build_summary(self._sample_log(), self.NOW)
-        # Four journeys in the log -> four bullet lines, no more.
-        self.assertEqual(summary.count("\n- "), 4)
+        # Four journeys plus the trim banked on one of them.
+        self.assertEqual(summary.count("\n- "), 5)
 
     def test_win_loss_and_open_icons(self):
         summary = ws.build_summary(self._sample_log(), self.NOW)
@@ -773,7 +783,7 @@ class SummaryTests(unittest.TestCase):
     def test_community_header(self):
         summary = ws.build_summary(self._sample_log(), self.NOW)
         self.assertIn("Community this week:", summary)
-        self.assertIn("2 trade(s) closed by 2 trader(s)", summary)
+        self.assertIn("3 trade(s) closed by 3 trader(s)", summary)
 
     def test_trimmed_positions_are_counted_as_unresolved(self):
         # 1ripley's real pattern: full exits on winners, trims left open. The
@@ -789,8 +799,11 @@ class SummaryTests(unittest.TestCase):
                   "content": "u posted a trade:\n#Exit BBB 90 partial, holding rest"},
         }}
         summary = ws.build_summary(log, self.NOW)
-        self.assertIn("This week: 1W–0L–0S (100%)", summary)
+        # The trim on BBB banked a loss, so it scores even though the
+        # position is still running.
+        self.assertIn("This week: 1W–1L–0S (50%)", summary)
         self.assertIn("1 open, 1 trimmed", summary)
+        self.assertIn("🟠 **BBB** Long 100 → 90 · partial taken · -10.0%", summary)
 
     def test_a_small_book_is_listed_in_full(self):
         # Under the threshold every carried position is spelled out, however
@@ -870,6 +883,35 @@ class SummaryTests(unittest.TestCase):
         self.assertNotIn("Unreadable posts", summary)
         # Only the one entered inside the week is counted.
         self.assertIn("1 unreadable", summary)
+
+    def test_a_trim_taken_this_week_shows_and_scores(self):
+        # isidore94's ORCL: short at 14, took two dollars a contract, swung
+        # the rest. It scores as a win but stays orange -- not finished.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Short ORCL 130p August 8th for 14.00"},
+            "2": {"timestamp": "2026-07-10T00:00:00+00:00",
+                  "content": "u posted a trade:\n#exit partial ORCL 130p "
+                             "for 2 dollars per contract. swinging the rest"},
+        }}
+        summary = ws.build_summary(log, self.NOW)
+        self.assertIn(f"{ws.ICON_OPEN} **ORCL**", summary)
+        self.assertIn("partial taken", summary)
+        self.assertIn("This week: 1W–0L–0S (100%)", summary)
+        # ...and the position is still listed as held.
+        self.assertIn("**Still open**", summary)
+
+    def test_a_trim_from_an_earlier_week_does_not_show_again(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-06-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 100"},
+            "2": {"timestamp": "2026-06-02T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit AAA 110 partial, holding rest"},
+        }}
+        summary = ws.build_summary(log, self.NOW)
+        self.assertNotIn("Closed this week", summary)
+        # It still counts in the longer-run record, shown in the carrying block.
+        self.assertIn("**u** _1W–0L–0S (100%)_", summary)
 
     def test_a_stale_position_is_flagged(self):
         opened = self.NOW - timedelta(days=ws.STALE_DAYS + 5)

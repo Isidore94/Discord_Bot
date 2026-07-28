@@ -239,7 +239,10 @@ PARTIAL_RE = re.compile(
     r"\bpartial(?:ly)?\b|\btrim(?:med|ming)?\b|\bstill (?:have|holding|hold|in)\b"
     r"|\bleaving a runner\b|\b\d/\d(?:th)?\s+(?:out|left)\b"
     r"|\b(?:out|left)\s+\d/\d(?:th)?\b"
-    r"|\bhalf\s+(?:out|left)\b",
+    r"|\bhalf\s+(?:out|left)\b"
+    # "swinging the rest" keeps a position; a bare "the rest" closes it, as in
+    # "#exit WOLF @ 23.39 for the rest", so a holding verb is required.
+    r"|\b(?:swinging|holding|keeping|riding|trailing)\s+the\s+rest\b",
     re.IGNORECASE,
 )
 # Everything that is not called a loss is treated as a win (see score_journey),
@@ -999,6 +1002,31 @@ def mark_unreadable(journeys, now):
     return unreadable
 
 
+def partial_events(journeys, since):
+    """Profit banked since ``since`` on positions the trader is still holding.
+
+    A trim is a real result -- isidore94 took two dollars a contract on ORCL
+    and swung the rest -- but it used to be invisible until the position
+    finally closed, which could be months. Each one is scored on its own as a
+    slice of the journey it came from, and stays orange because the trade is
+    not finished.
+    """
+    events = []
+    for j in journeys:
+        if j["closed"] or j.get("unreadable"):
+            continue
+        for exit_event in j["exits"]:
+            stamp = exit_event.get("timestamp")
+            if not exit_event["partial"] or not stamp or parse_ts(stamp) < since:
+                continue
+            taken = dict(j, exits=[exit_event], closed=True, closed_at=stamp,
+                         partial_event=True)
+            taken["result"] = score_journey(taken)
+            if taken["result"]["outcome"] in ("win", "loss", "flat"):
+                events.append(taken)
+    return events
+
+
 def compute_holdings(journeys):
     """Return {user: [open journeys]}, oldest first."""
     holdings = {}
@@ -1128,7 +1156,9 @@ def _journey_line(j, now):
     Anything that was never posted is left out rather than rendered as a
     placeholder, so a sparse trade still reads as a sentence.
     """
-    head = [ICONS[j["result"]["outcome"]], f"**{j['ticker']}**"]
+    # A banked partial keeps the open marker: it scored, but it is not done.
+    icon = ICON_OPEN if j.get("partial_event") else ICONS[j["result"]["outcome"]]
+    head = [icon, f"**{j['ticker']}**"]
     if j["side"]:
         head.append(j["side"])
     if j["option"]:
@@ -1150,13 +1180,17 @@ def _journey_line(j, now):
         head.append(entry)
 
     detail = []
+    if j.get("partial_event"):
+        detail.append("partial taken")
     if j.get("mark"):
         detail.append(f"now {_fmt_price(j['mark']['price'])} "
                       f"({j['mark']['pct']:+.1f}%)")
     if j["adds"]:
         detail.append(_plural(j["adds"], "add"))
     partials = sum(1 for e in j["exits"] if e["partial"])
-    if partials and not j["closed"]:
+    if j.get("partial_event"):
+        pass                              # "partial taken" already said it
+    elif partials and not j["closed"]:
         detail.append(_plural(partials, "partial") + " taken")
     elif partials:
         detail.append(_plural(partials, "partial"))
@@ -1236,6 +1270,12 @@ def build_summary(log, now):
             closed_history.setdefault(j["user"], []).append(j)
         if closed_at >= week_start:
             closed_week.setdefault(j["user"], []).append(j)
+    # Trims count as results in whichever window they fall in, so the weekly
+    # and 90-day records measure the same thing.
+    for taken in partial_events(journeys, horizon):
+        closed_history.setdefault(taken["user"], []).append(taken)
+        if parse_ts(taken["closed_at"]) >= week_start:
+            closed_week.setdefault(taken["user"], []).append(taken)
     for items in closed_week.values():
         items.sort(key=lambda j: j["closed_at"])
 
