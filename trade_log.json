@@ -9,7 +9,6 @@
     "FBIN": 51.48,
     "FCEL": 21.49,
     "GLD": 374.63,
-    "LRCX": 291.61,
     "MRVL": 189.17,
     "MU": 900.2,
     "NBIS": 187.88,
@@ -7962,6 +7961,11 @@
     "1531321288453259305": {
       "content": "mallowmushroom posted a trade:\n#Short LRCX 281.11 DT only with earnings coming up soon",
       "timestamp": "2026-07-27T15:24:05.741000+00:00"
+    },
+    "1531380952553488445": {
+      "content": "mallowmushroom posted a trade:\n#Exit LRCX 292.94 for 11.83 loss above the 100",
+      "timestamp": "2026-07-27T19:21:10.771000+00:00"
     }
-  }
+  },
+  "prices": {}
 }
