@@ -1,5 +1,23 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
+  "marks": {
+    "AA": 44.08,
+    "ASTS": 58.29,
+    "BULL": 7.54,
+    "DELL": 426.91,
+    "EBAY": 113.21,
+    "FBIN": 51.48,
+    "FCEL": 21.49,
+    "GLD": 374.63,
+    "LRCX": 291.61,
+    "MRVL": 189.17,
+    "MU": 900.2,
+    "NBIS": 187.88,
+    "SNDK": 1278.23,
+    "STX": 816.99,
+    "VKTX": 34.87,
+    "WDC": 497.92
+  },
   "messages": {
     "1499041211393118430": {
       "content": "opreme posted a trade:\n#Long QCOM 170c 1.53\n#Long AAPL 272.5c .28",

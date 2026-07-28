@@ -810,6 +810,36 @@ class SummaryTests(unittest.TestCase):
         self.assertIn(f"+{20 - ws.MAX_TICKERS} more", summary)
         self.assertEqual(summary.count("\n- 🟠"), 1)
 
+    def test_open_share_positions_are_marked_to_market(self):
+        log = {"messages": {"1": {
+            "timestamp": "2026-07-09T00:00:00+00:00",
+            "content": "u posted a trade:\n#Long AAA 100",
+        }}}
+        journeys = ws.build_journeys(ws.log_to_trades(log))
+        ws.mark_unreadable(journeys, self.NOW)
+        self.assertEqual(ws.mark_lookups(journeys), ["AAA"])
+        ws.apply_marks(journeys, {"AAA": 110.0})
+        self.assertEqual(journeys[0]["mark"]["pct"], 10.0)
+        # A short is marked the other way.
+        journeys[0]["side"] = "Short"
+        ws.apply_marks(journeys, {"AAA": 110.0})
+        self.assertEqual(journeys[0]["mark"]["pct"], -10.0)
+
+    def test_options_and_nonsense_prices_are_not_marked(self):
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 2.50 calls"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long BBB 2018.4"},
+        }}
+        journeys = ws.build_journeys(ws.log_to_trades(log))
+        ws.mark_unreadable(journeys, self.NOW)
+        # The option is skipped: free data prices the underlying, not the leg.
+        self.assertEqual(ws.mark_lookups(journeys), ["BBB"])
+        # And a mark nowhere near the entry is not the same instrument.
+        ws.apply_marks(journeys, {"BBB": 46.2})
+        self.assertIsNone(journeys[1]["mark"])
+
     def test_a_stale_position_is_flagged(self):
         opened = self.NOW - timedelta(days=ws.STALE_DAYS + 5)
         log = {"messages": {"1": {

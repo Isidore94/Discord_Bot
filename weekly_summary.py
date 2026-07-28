@@ -25,6 +25,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import requests
+from urllib.parse import urlencode
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -630,6 +631,110 @@ def log_to_trades(log):
 
 
 # ---------------------------------------------------------------------------
+# Closing prices
+# ---------------------------------------------------------------------------
+YAHOO_CHART = "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+
+
+def yahoo_last(ticker):
+    """Most recent close for a ticker, or None."""
+    url = YAHOO_CHART.format(ticker=ticker) + "?range=5d&interval=1d"
+    try:
+        resp = requests.get(url, timeout=20, headers={"User-Agent": USER_AGENT})
+        resp.raise_for_status()
+        closes = [c for c in resp.json()["chart"]["result"][0]
+                  ["indicators"]["quote"][0]["close"] if c is not None]
+        return round(float(closes[-1]), 4) if closes else None
+    except Exception as exc:
+        print(f"  no mark for {ticker}: {type(exc).__name__}")
+    return None
+
+
+def yahoo_close(ticker, day):
+    """Closing price for a ticker on a trading day, or None if unavailable.
+
+    Only used for "at MOC", where the close *is* the fill. Any other exit
+    happened at a time the post does not give, and a day's close would be a
+    different number dressed up as the trader's.
+    """
+    try:
+        start = datetime.fromisoformat(day + "T00:00:00+00:00")
+    except ValueError:
+        return None
+    params = {
+        "period1": int(start.timestamp()) - 86400,
+        "period2": int(start.timestamp()) + 3 * 86400,
+        "interval": "1d",
+    }
+    url = YAHOO_CHART.format(ticker=ticker) + "?" + urlencode(params)
+    try:
+        resp = requests.get(url, timeout=20, headers={"User-Agent": USER_AGENT})
+        resp.raise_for_status()
+        result = resp.json()["chart"]["result"][0]
+        closes = result["indicators"]["quote"][0]["close"]
+        for stamp, close in zip(result["timestamp"], closes):
+            at = datetime.fromtimestamp(stamp, tz=timezone.utc)
+            if at.strftime("%Y-%m-%d") == day and close is not None:
+                return round(float(close), 4)
+    except Exception as exc:                      # network, ticker, or shape
+        print(f"  no close for {ticker} on {day}: {type(exc).__name__}")
+    return None
+
+
+def mark_lookups(journeys):
+    """Tickers whose latest close would mark an open share position.
+
+    Options are left out: free data covers the underlying, not the premium a
+    contract is actually worth, and the underlying's move is not the trade's.
+    """
+    return sorted({
+        j["ticker"] for j in journeys
+        if not j["closed"] and not j.get("unreadable")
+        and not j["option"] and j["entry_price"] and j["side"]
+    })
+
+
+def apply_marks(journeys, marks):
+    """Attach an unrealised move to each open share position we have a mark for."""
+    for j in journeys:
+        j["mark"] = None
+        if j["closed"] or j["option"] or not j["entry_price"] or not j["side"]:
+            continue
+        last = marks.get(j["ticker"])
+        if last is None or not _comparable(j["entry_price"], last):
+            continue
+        move = (last - j["entry_price"]) / j["entry_price"]
+        j["mark"] = {
+            "price": last,
+            "pct": 100 * (move if j["side"] == "Long" else -move),
+        }
+
+
+def sweep_lookups(journeys):
+    """(ticker, day) pairs whose MOC close would let a sweep be scored."""
+    wanted = []
+    for j in journeys:
+        if not j["swept"] or j["option"] or not j["closed_at"]:
+            continue
+        if j["exits"] and j["exits"][-1]["price"] is None and j["entry_price"]:
+            wanted.append((j["ticker"], j["closed_at"][:10]))
+    return sorted(set(wanted))
+
+
+def apply_sweep_prices(journeys, prices):
+    """Give swept share positions their closing price and score them."""
+    for j in journeys:
+        if not j["swept"] or j["option"] or not j["closed_at"]:
+            continue
+        close = prices.get(f"{j['ticker']}|{j['closed_at'][:10]}")
+        if close is None or not j["exits"] or j["exits"][-1]["price"] is not None:
+            continue
+        j["exits"][-1]["price"] = close
+        j["exits"][-1]["result_text"] = "closed at MOC"
+        j["result"] = score_journey(j)
+
+
+# ---------------------------------------------------------------------------
 # Trade journeys
 # ---------------------------------------------------------------------------
 def _new_journey(t):
@@ -1025,6 +1130,9 @@ def _journey_line(j, now):
         head.append(entry)
 
     detail = []
+    if j.get("mark"):
+        detail.append(f"now {_fmt_price(j['mark']['price'])} "
+                      f"({j['mark']['pct']:+.1f}%)")
     if j["adds"]:
         detail.append(_plural(j["adds"], "add"))
     partials = sum(1 for e in j["exits"] if e["partial"])
@@ -1087,7 +1195,9 @@ def build_summary(log, now):
     positions still carried, plus this-week and 90-day records per trader.
     """
     journeys = build_journeys(log_to_trades(log))
+    apply_sweep_prices(journeys, log.get("prices", {}))
     unreadable = mark_unreadable(journeys, now)
+    apply_marks(journeys, log.get("marks", {}))
     holdings = compute_holdings(journeys)
 
     week_start = now - timedelta(days=WEEK_DAYS)
@@ -1119,7 +1229,8 @@ def build_summary(log, now):
         f"_{ICON_WIN} win · {ICON_LOSS} loss · {ICON_OPEN} open · "
         f"{ICON_FLAT} scratch · {ICON_STALE} carried {STALE_DAYS}d+ — "
         f"one line per trade, entry through exit._",
-        "_Records read W–L–S (wins–losses–scratches); scratches are counted but "
+        "_An open position shows `now` at its latest close, unrealised. "
+        "Records read W–L–S (wins–losses–scratches); scratches are counted but "
         "left out of the win rate. A `~` exit is derived from a stated gain "
         "rather than a posted fill. A trimmed position stays open and never "
         "scores, so the trimmed count shows how much of a record is still "
@@ -1265,7 +1376,32 @@ def main():
         if backfilling:
             log["covered_since"] = history_start(now).isoformat()
 
-        prune_log(log, build_journeys(log_to_trades(log)), now)
+        journeys = build_journeys(log_to_trades(log))
+        # Closes for the "at MOC" sweeps, cached in the log so each one is
+        # fetched once and the number that was used stays on the record.
+        prices = log.setdefault("prices", {})
+        missing = [(t, d) for t, d in sweep_lookups(journeys)
+                   if f"{t}|{d}" not in prices]
+        if missing:
+            print(f"Fetching {len(missing)} closing price(s) for MOC exits...")
+            for ticker, day in missing:
+                close = yahoo_close(ticker, day)
+                if close is not None:
+                    prices[f"{ticker}|{day}"] = close
+                time.sleep(0.4)
+        mark_unreadable(journeys, now)
+        marks = {}
+        tickers = mark_lookups(journeys)
+        if tickers:
+            print(f"Marking {len(tickers)} open share position(s) to market...")
+            for ticker in tickers:
+                last = yahoo_last(ticker)
+                if last is not None:
+                    marks[ticker] = last
+                time.sleep(0.4)
+        log["marks"] = marks   # replaced each run: a mark is only ever current
+
+        prune_log(log, journeys, now)
         save_log(log)
 
     summary = build_summary(log, now)
