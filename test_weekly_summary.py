@@ -792,7 +792,20 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("This week: 1W–0L–0S (100%)", summary)
         self.assertIn("1 open, 1 trimmed", summary)
 
-    def test_untouched_open_positions_collapse_to_one_line(self):
+    def test_a_small_book_is_listed_in_full(self):
+        # Under the threshold every carried position is spelled out, however
+        # long it has been held.
+        old = (self.NOW - timedelta(days=30)).isoformat()
+        messages = {
+            str(i): {"timestamp": old,
+                     "content": f"u posted a trade:\n#Long AA{chr(65 + i)} 100"}
+            for i in range(4)
+        }
+        summary = ws.build_summary({"messages": messages}, self.NOW)
+        self.assertEqual(summary.count("\n- 🟠"), 4)
+        self.assertNotIn("carried:", summary)
+
+    def test_an_outsized_book_collapses_what_has_not_moved(self):
         old = (self.NOW - timedelta(days=30)).isoformat()
         tickers = [f"AA{chr(ord('A') + i)}" for i in range(20)]
         messages = {
@@ -805,7 +818,7 @@ class SummaryTests(unittest.TestCase):
                           "content": "u posted a trade:\n#Long ZZZ 50"}
         summary = ws.build_summary({"messages": messages}, self.NOW)
         self.assertIn("- 🟠 **ZZZ**", summary)
-        self.assertIn("Also carrying 20:", summary)
+        self.assertIn("+20 carried:", summary)
         # Only MAX_TICKERS get named; the rest are a count.
         self.assertIn(f"+{20 - ws.MAX_TICKERS} more", summary)
         self.assertEqual(summary.count("\n- 🟠"), 1)
@@ -867,7 +880,7 @@ class SummaryTests(unittest.TestCase):
         summary = ws.build_summary(log, self.NOW)
         self.assertIn(f"{ws.STALE_DAYS + 5}d {ws.ICON_STALE}", summary)
 
-    def test_a_trader_who_did_not_trade_collapses_to_one_line(self):
+    def test_a_trader_who_did_not_trade_moves_to_the_carrying_block(self):
         log = {"messages": {
             # Opened well before the week and untouched since.
             "1": {"timestamp": "2026-06-01T00:00:00+00:00",
@@ -882,7 +895,8 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("Carrying — nothing traded this week", summary)
         self.assertNotIn("Unreadable posts", summary)
         self.assertIn("**quiet**", summary)
-        self.assertIn("AAA (41d", summary)
+        # Their book is still spelled out, entry price and all.
+        self.assertIn("🟠 **AAA** Long 100 · open since Jun 1 (41d", summary)
 
     def test_a_trader_who_only_opened_this_week_keeps_a_section(self):
         log = {"messages": {"1": {

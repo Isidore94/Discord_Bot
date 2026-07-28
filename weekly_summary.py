@@ -37,7 +37,8 @@ TARGET_CHANNEL_ID = "1525965273306235051"   # where the summary is posted
 HISTORY_DAYS = 90     # rolling history the bot keeps fetched (~3 months)
 WEEK_DAYS = 7         # "this week" window for the per-trader breakdown
 STALE_DAYS = 30       # an open position carried this long is flagged for review
-OPEN_DETAIL_DAYS = 14  # open positions untouched this long collapse to one line
+OPEN_DETAIL_DAYS = 14  # for an outsized book, detail only what moved this recently
+MAX_OPEN_DETAIL = 12   # a book bigger than this is summarised instead of listed
 MAX_TICKERS = 6       # tickers listed before a carried book is summarised
 EXPIRED_DAYS = 45     # an untouched position this old was closed and never posted
 RETENTION_DAYS = 400  # prune log entries older than this (open positions kept)
@@ -1066,6 +1067,25 @@ def _age(opened, now):
     return f"{days}d {ICON_STALE}" if days >= STALE_DAYS else f"{days}d"
 
 
+def _open_lines(open_trades, now):
+    """Every carried position, with what it cost and where it stands.
+
+    A book past MAX_OPEN_DETAIL is not a list anyone reads, so only what has
+    moved lately is spelled out and the remainder is summarised. Every other
+    trader sees all of theirs.
+    """
+    if len(open_trades) <= MAX_OPEN_DETAIL:
+        return [_journey_line(j, now) for j in open_trades]
+    cutoff = now - timedelta(days=OPEN_DETAIL_DAYS)
+    moved = [j for j in open_trades
+             if j["last_touch"] and parse_ts(j["last_touch"]) >= cutoff]
+    parked = [j for j in open_trades if j not in moved]
+    lines = [_journey_line(j, now) for j in moved]
+    if parked:
+        lines.append(f"_+{len(parked)} carried: {_book_line(parked, now)}_")
+    return lines
+
+
 def _book_line(journeys, now):
     """One line standing in for positions nobody has touched lately.
 
@@ -1282,17 +1302,9 @@ def build_summary(log, now):
             lines.extend(_journey_line(j, now) for j in week_trades)
 
         open_trades = holdings.get(user, [])
-        detail_cutoff = now - timedelta(days=OPEN_DETAIL_DAYS)
-        moved = [j for j in open_trades
-                 if j["last_touch"] and parse_ts(j["last_touch"]) >= detail_cutoff]
-        parked = [j for j in open_trades if j not in moved]
-        if moved:
+        if open_trades:
             lines.append("**Still open**")
-            lines.extend(_journey_line(j, now) for j in moved)
-        if parked:
-            lines.append(
-                f"_Also carrying {len(parked)}: {_book_line(parked, now)}_"
-            )
+            lines.extend(_open_lines(open_trades, now))
 
         if not week_trades and not open_trades:
             lines.append("- _no activity_")
@@ -1306,11 +1318,8 @@ def build_summary(log, now):
         for user in carrying:
             record = _record(tally(closed_history.get(user, [])), "")
             stats = f" _{record.strip()}_" if record else ""
-            book = holdings[user]
-            lines.append(
-                f"- **{user}**{stats} — {len(book)} open: "
-                f"{_book_line(book, now)}"
-            )
+            lines.append(f"**{user}**{stats}")
+            lines.extend(_open_lines(holdings[user], now))
 
     return "\n".join(lines).rstrip() + "\n"
 
