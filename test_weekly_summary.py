@@ -840,6 +840,24 @@ class SummaryTests(unittest.TestCase):
         ws.apply_marks(journeys, {"BBB": 46.2})
         self.assertIsNone(journeys[1]["mark"])
 
+    def test_unreadable_posts_are_counted_per_trader_for_this_week_only(self):
+        log = {"messages": {
+            # Entered this week, replaced same week, no result posted.
+            "1": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA 1.00 calls"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long AAA .40 calls"},
+            # Same shape, but entered long before this week.
+            "3": {"timestamp": "2026-05-01T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long BBB 1.00 calls"},
+            "4": {"timestamp": "2026-05-02T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long BBB .40 calls"},
+        }}
+        summary = ws.build_summary(log, self.NOW)
+        self.assertNotIn("Unreadable posts", summary)
+        # Only the one entered inside the week is counted.
+        self.assertIn("1 unreadable", summary)
+
     def test_a_stale_position_is_flagged(self):
         opened = self.NOW - timedelta(days=ws.STALE_DAYS + 5)
         log = {"messages": {"1": {
@@ -862,6 +880,7 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("## busy", summary)
         self.assertNotIn("## quiet", summary)
         self.assertIn("Carrying — nothing traded this week", summary)
+        self.assertNotIn("Unreadable posts", summary)
         self.assertIn("**quiet**", summary)
         self.assertIn("AAA (41d", summary)
 

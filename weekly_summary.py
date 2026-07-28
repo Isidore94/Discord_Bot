@@ -1237,6 +1237,11 @@ def build_summary(log, now):
         "unresolved._",
     ]
 
+    bad_week = {}
+    for j in unreadable:
+        if j["opened"] and parse_ts(j["opened"]) >= week_start:
+            bad_week[j["user"]] = bad_week.get(j["user"], 0) + 1
+
     active = sorted(set(closed_week) | opened_week, key=str.lower)
     carrying = sorted(set(holdings) - set(active), key=str.lower)
     if not active and not carrying:
@@ -1263,6 +1268,10 @@ def build_summary(log, now):
                     f"Last {HISTORY_DAYS}d:"),
             _open_summary(holdings.get(user, [])),
         ]
+        # Posts from this week that could not be read. Counted here rather
+        # than listed, so the number is visible without a wall of tickers.
+        if bad_week.get(user):
+            stats.append(f"{bad_week[user]} unreadable")
         stat_line = " · ".join(s for s in stats if s)
         if stat_line:
             lines.append(f"_{stat_line}_")
@@ -1287,25 +1296,6 @@ def build_summary(log, now):
 
         if not week_trades and not open_trades:
             lines.append("- _no activity_")
-
-    if unreadable:
-        lines.append("")
-        lines.append(f"## \u26a0\ufe0f Unreadable posts — {len(unreadable)} trades")
-        lines.append("_Left out of every record above. Worth going back to: the "
-                     "format did not say how these ended._")
-        by_user = {}
-        for j in unreadable:
-            by_user.setdefault(j["user"], []).append(j)
-        for user in sorted(by_user, key=str.lower):
-            items = sorted(by_user[user], key=lambda j: j["opened"] or "")
-            named = ", ".join(
-                f"{j['ticker']} ({_fmt_date(parse_ts(j['opened']))})"
-                if j["opened"] else j["ticker"]
-                for j in items[:MAX_TICKERS]
-            )
-            if len(items) > MAX_TICKERS:
-                named += f", +{len(items) - MAX_TICKERS} more"
-            lines.append(f"- **{user}** {len(items)} — {named}")
 
     if carrying:
         # A trader who neither opened nor closed anything this week has no
