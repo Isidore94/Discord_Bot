@@ -630,6 +630,25 @@ class ScoringTests(unittest.TestCase):
         j = self._journey("Long", 100.0, [(110.0, "stopped out for a loss")])
         self.assertEqual(j["result"]["outcome"], "loss")
 
+    def test_a_verdict_fighting_the_prices_is_unreadable(self):
+        # "puts .8 64%" is +64% on a sold put and -64% on a bought one. The
+        # post does not say which, so neither reading is adopted.
+        log = {"messages": {
+            "1": {"timestamp": "2026-07-08T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Long VRT 2.25 calls"},
+            "2": {"timestamp": "2026-07-09T00:00:00+00:00",
+                  "content": "u posted a trade:\n#Exit VRT puts .8 64%"},
+        }}
+        journeys = ws.build_journeys(ws.log_to_trades(log))
+        self.assertTrue(journeys[0]["result"]["conflict"])
+        unreadable = ws.mark_unreadable(
+            journeys, datetime(2026, 7, 12, tzinfo=timezone.utc))
+        self.assertEqual(len(unreadable), 1)
+        self.assertIn("disagrees", unreadable[0]["unreadable"])
+        # ...and it is kept out of the record rather than scored either way.
+        self.assertEqual(ws.tally(journeys),
+                         {"win": 0, "loss": 0, "flat": 0, "unknown": 0})
+
     def test_a_flat_exit_reads_as_a_scratch_not_minus_zero_percent(self):
         j = self._journey("Short", 110.19, [(110.19, "for breakeven.")])
         self.assertEqual(j["result"]["outcome"], "flat")

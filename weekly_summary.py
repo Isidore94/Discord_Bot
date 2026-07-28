@@ -353,7 +353,12 @@ def parse_trade_lines(line):
                    or PREMIUM_AFTER_STRIKE_RE.search(notes))
         if premium is None and side != "Exit":
             premium = PREMIUM_FOR_RE.search(notes)
-        price = float(premium.group(1)) if premium else None
+        if premium is not None:
+            price = float(premium.group(1))
+        elif m.group("strike_suffix"):
+            price = None      # proven a strike by its C/P, and no premium given
+        # Otherwise the captured number is kept: "#Long VRT 2.25 calls" prices
+        # the contract at 2.25, and only the word "calls" made it look otherwise.
     tickers = [
         t.lstrip("$").upper().rstrip(".")
         for t in TICKER_SPLIT_RE.split(m.group("tickers"))
@@ -736,13 +741,13 @@ def score_journey(journey):
     """
     if not journey["closed"]:
         return {"outcome": "open", "pct": None, "text": "",
-                "exit_price": None, "implied": False}
+                "exit_price": None, "implied": False, "conflict": False}
     if journey["superseded"] and not journey["exits"]:
         # Closed only because a later entry replaced it; the trader never said
         # how it went, so nothing is claimed either way.
         return {"outcome": "unknown", "pct": None,
                 "text": "replaced by a later entry",
-                "exit_price": None, "implied": False}
+                "exit_price": None, "implied": False, "conflict": False}
 
     # The trader's last word on the position decides, so ordering is kept:
     # a partial taken for profit does not outrank the stop that ended it.
@@ -789,7 +794,7 @@ def score_journey(journey):
         # No verdict and no price. Nothing is claimed either way; the post is
         # counted as unreadable instead of being scored on a guess.
         return {"outcome": "unknown", "pct": None, "text": text,
-                "exit_price": exit_price, "implied": False}
+                "exit_price": exit_price, "implied": False, "conflict": False}
 
     implied = False
     if pct is None and entry and final is not None and final.get("gain") is not None:
@@ -807,11 +812,14 @@ def score_journey(journey):
         # against a $0.25 option premium is not a -10000% trade -- so the
         # outcome stands on the trader's words and no price is invented.
 
-    # If the trader's own verdict and the arithmetic disagree, the two numbers
-    # are not the pair they look like -- one leg of a spread against another,
-    # say -- so the percentage is dropped rather than printed next to an icon
-    # that contradicts it.
-    if pct is not None and outcome != "flat" and (pct > 0) != (outcome == "win"):
+    # If the trader's own verdict and the arithmetic disagree, there is no way
+    # to tell which is right: "puts .8 64%" is +64% on a sold put and -64% on a
+    # bought one, and "starter swing at 2.20 stopped out" names the entry where
+    # a fill is expected. The post is marked unreadable rather than resolved on
+    # a coin flip.
+    conflict = (pct is not None and outcome != "flat"
+                and (pct > 0) != (outcome == "win"))
+    if conflict:
         pct, exit_price, implied = None, None, False
 
     # A computed percentage beats the trader's prose ("for profit", "the rest"),
@@ -821,7 +829,7 @@ def score_journey(journey):
     elif not text and outcome == "flat":
         text = "scratch"
     return {"outcome": outcome, "pct": pct, "text": text,
-            "exit_price": exit_price, "implied": implied}
+            "exit_price": exit_price, "implied": implied, "conflict": conflict}
 
 
 def mark_unreadable(journeys, now):
@@ -841,6 +849,8 @@ def mark_unreadable(journeys, now):
             # Untouched for longer than any of these positions run. An option
             # this old has expired; shares this old were sold without a post.
             reason = f"no exit posted in {EXPIRED_DAYS}+ days"
+        elif j["closed"] and j["result"].get("conflict"):
+            reason = "stated result disagrees with the posted prices"
         elif j["closed"] and j["result"]["outcome"] == "unknown":
             reason = ("closed in a MOC sweep, no result per ticker"
                       if j["swept"] else "exit posted without a price or result")
