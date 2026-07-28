@@ -10,6 +10,10 @@ on:
         description: "Re-fetch the full history window instead of resuming"
         type: boolean
         default: false
+      post:
+        description: "Post to Discord (untick to preview in the job summary only)"
+        type: boolean
+        default: true
 
 permissions:
   contents: write  # allow committing the updated running log back to the repo
@@ -32,9 +36,15 @@ jobs:
       - name: Post weekly trade summary
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          # Optional repo variables; the live channels are the defaults.
+          SOURCE_CHANNEL_ID: ${{ vars.SOURCE_CHANNEL_ID }}
+          TARGET_CHANNEL_ID: ${{ vars.TARGET_CHANNEL_ID }}
+        # The event guard matters: on the cron schedule `inputs.post` is null,
+        # which compares equal to false, and the summary must still post.
         run: |
           python weekly_summary.py \
-            ${{ inputs.backfill && '--backfill' || '' }}
+            ${{ inputs.backfill && '--backfill' || '' }} \
+            ${{ github.event_name == 'workflow_dispatch' && inputs.post == false && '--no-post' || '' }}
 
       - name: Commit updated running log
         run: |

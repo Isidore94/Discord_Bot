@@ -31,8 +31,12 @@ from urllib.parse import urlencode
 # Configuration
 # ---------------------------------------------------------------------------
 API_BASE = "https://discord.com/api/v10"
-SOURCE_CHANNEL_ID = "1473806053975261452"   # where YAGPDB posts trades
-TARGET_CHANNEL_ID = "1525965273306235051"   # where the summary is posted
+# Channel ids come from the environment so a staging channel is one repo
+# variable away; the live channels are the defaults.
+SOURCE_CHANNEL_ID = (os.environ.get("SOURCE_CHANNEL_ID") or
+                     "1473806053975261452")   # where YAGPDB posts trades
+TARGET_CHANNEL_ID = (os.environ.get("TARGET_CHANNEL_ID") or
+                     "1525965273306235051")   # where the summary is posted
 
 HISTORY_DAYS = 90     # rolling history the bot keeps fetched (~3 months)
 WEEK_DAYS = 7         # "this week" window for the per-trader breakdown
@@ -1387,10 +1391,64 @@ def chunk_message(text, limit=CHUNK_LIMIT):
 
 
 # ---------------------------------------------------------------------------
+# Run reporting
+# ---------------------------------------------------------------------------
+def run_stats(log, now):
+    """One block of counts describing what this run saw.
+
+    These numbers are how every real defect in this bot has been found -- 73
+    orphan exits, 207 open positions, 579 unpriced entries were each a count
+    that looked wrong before they were a bug that was fixed. Printing them on
+    every run means a regression shows up the week it happens instead of when
+    someone notices a record that cannot be right.
+    """
+    trades = log_to_trades(log)
+    journeys = build_journeys(trades)
+    apply_sweep_prices(journeys, log.get("prices", {}))
+    unreadable = mark_unreadable(journeys, now)
+    apply_marks(journeys, log.get("marks", {}))
+    closed = [j for j in journeys if j["closed"] and not j["unreadable"]]
+    open_ = [j for j in journeys if not j["closed"] and not j["unreadable"]]
+    scored = sum(1 for j in closed
+                 if j["result"]["outcome"] in ("win", "loss", "flat"))
+    marked = sum(1 for j in open_ if j.get("mark"))
+    lines = [
+        f"messages logged      : {len(log.get('messages', {}))}",
+        f"trade events parsed  : {len(trades)}",
+        f"journeys             : {len(journeys)}",
+        f"  closed / scored    : {len(closed)} / {scored}",
+        f"  open   / marked    : {len(open_)} / {marked}",
+        f"  unreadable         : {len(unreadable)}",
+    ]
+    reasons = {}
+    for j in unreadable:
+        reasons[j["unreadable"]] = reasons.get(j["unreadable"], 0) + 1
+    for reason in sorted(reasons, key=reasons.get, reverse=True):
+        lines.append(f"    {reasons[reason]:>4}  {reason}")
+    return "\n".join(lines)
+
+
+def write_step_summary(summary, stats):
+    """Mirror the rendered summary into the GitHub Actions job summary.
+
+    Every run gets a free preview on the Actions page, so the output can be
+    read without touching Discord -- which is how a draft should be checked
+    before it is ever posted anywhere.
+    """
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path:
+        return
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(summary)
+        fh.write("\n---\n### Run stats\n```\n" + stats + "\n```\n")
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 def main():
     dry_run = "--dry-run" in sys.argv
+    no_post = "--no-post" in sys.argv   # fetch and preview, post nothing
     force_backfill = "--backfill" in sys.argv
     now = datetime.now(timezone.utc)
     log = load_log()
@@ -1445,16 +1503,21 @@ def main():
 
     summary = build_summary(log, now)
     chunks = chunk_message(summary)
+    stats = run_stats(log, now)
+    write_step_summary(summary, stats)
 
-    if dry_run:
-        print("\n----- DRY RUN: summary preview -----\n")
+    if dry_run or no_post:
+        label = "DRY RUN" if dry_run else "PREVIEW (--no-post)"
+        print(f"\n----- {label}: summary -----\n")
         print(summary)
         print(f"\n({len(chunks)} chunk(s) would be posted)")
+        print("\n[run stats]\n" + stats)
         return
 
     for chunk in chunks:
         post_message(token, TARGET_CHANNEL_ID, chunk)
     print(f"Posted summary in {len(chunks)} chunk(s) to channel {TARGET_CHANNEL_ID}.")
+    print("\n[run stats]\n" + stats)
 
 
 if __name__ == "__main__":
