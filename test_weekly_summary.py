@@ -110,9 +110,12 @@ class ParseTradeLineTests(unittest.TestCase):
         self.assertIsNone(t["price"])
 
     def test_date_is_not_a_price(self):
+        # 7/17 is the expiry and 10C the strike, so .80 is the fill.
         t = ws.parse_trade_line("#Exit TE 7/17 10C .80 for loss")
-        self.assertIsNone(t["price"])
+        self.assertEqual(t["price"], 0.80)
         self.assertEqual(t["outcome"], "loss")
+        # A date with nothing after it still yields no price.
+        self.assertIsNone(ws.parse_trade_line("#Exit TSLA 1/2 out swing")["price"])
 
     def test_partial_written_after_the_price_is_still_a_partial(self):
         for line in (
@@ -160,9 +163,26 @@ class OptionParsingTests(unittest.TestCase):
             self.assertTrue(t["option"], line)
             self.assertEqual(t["price"], want, line)
 
-    def test_a_date_after_the_ticker_is_not_the_premium(self):
+    def test_expiry_then_strike_then_premium(self):
+        # "5/01/26 93 C .73" is expiry, strike, then price per contract.
         t = ws.parse_trade_line("#Long NFLX  5/01/26 93 C .73")
-        self.assertIsNone(t["price"])
+        self.assertTrue(t["option"])
+        self.assertEqual(t["price"], 0.73)
+        t = ws.parse_trade_line("#Long MRVL 6/26/26 250 P 1.6 earlier")
+        self.assertEqual(t["price"], 1.6)
+
+    def test_instrument_then_number_is_the_fill(self):
+        # "puts 4.05" -- the number after the instrument is what it filled at.
+        self.assertEqual(
+            ws.parse_trade_line("#Exit STX puts 4.05")["candidate_price"], 4.05)
+        self.assertEqual(
+            ws.parse_trade_line("#Exit ORCL calls this am 8.25 24%")["candidate_price"],
+            8.25)
+
+    def test_out_one_half_is_a_partial(self):
+        for line in ("#Exit TSLA swing trade here out 1/2 at 10.05",
+                     "#Exit INTC 1/2 out swing trade"):
+            self.assertTrue(ws.parse_trade_line(line)["partial"], line)
 
     def test_cents_note_is_not_an_option(self):
         # ".50c" is fifty cents of gain, not a 50 strike.
@@ -702,7 +722,7 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("1 open, 1 trimmed", summary)
 
     def test_untouched_open_positions_collapse_to_one_line(self):
-        old = (self.NOW - timedelta(days=60)).isoformat()
+        old = (self.NOW - timedelta(days=30)).isoformat()
         tickers = [f"AA{chr(ord('A') + i)}" for i in range(20)]
         messages = {
             str(i): {"timestamp": old,

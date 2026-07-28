@@ -38,6 +38,7 @@ WEEK_DAYS = 7         # "this week" window for the per-trader breakdown
 STALE_DAYS = 30       # an open position carried this long is flagged for review
 OPEN_DETAIL_DAYS = 14  # open positions untouched this long collapse to one line
 MAX_TICKERS = 6       # tickers listed before a carried book is summarised
+EXPIRED_DAYS = 45     # an untouched position this old was closed and never posted
 RETENTION_DAYS = 400  # prune log entries older than this (open positions kept)
 
 LOG_PATH = os.environ.get("TRADE_LOG_PATH", "trade_log.json")
@@ -181,6 +182,17 @@ PREMIUM_RE = re.compile(r"@\s*\$?(\d*\.?\d+)")
 # the first thing left in the notes. Rejected when a "/" follows, which makes
 # it a date: "#Long NFLX 5/01/26 93 C .73".
 PREMIUM_LEADING_RE = re.compile(r"^\$?(\d*\.?\d+)(?![\d/])")
+# "#Long NFLX 5/01/26 93 C .73" -- expiry, then strike, then the premium per
+# contract. The premium is whatever follows the strike's C or P.
+PREMIUM_AFTER_STRIKE_RE = re.compile(
+    r"\b\d+(?:\.\d+)?\s*[CP]\b\s*\$?(\d*\.?\d+)", re.IGNORECASE
+)
+# (2) "puts 4.05", "calls this am 8.25" -- for a position taken via contracts,
+# the number after the instrument is the price it filled at.
+INSTRUMENT_PRICE_RE = re.compile(
+    r"^(?:puts?|calls?|shares?)\s+(?:[\w']+\s+){0,2}\$?(\d*\.?\d+)", re.IGNORECASE
+)
+AT_PRICE_RE = re.compile(r"\bat\s+\$?(\d*\.?\d+)", re.IGNORECASE)
 PREMIUM_FOR_RE = re.compile(r"\bfor\s+\$?(\d*\.?\d+)(?!\s*%)")
 
 # Traders state the result of a trade in plain English far more reliably than
@@ -193,6 +205,7 @@ FLAT_RE = re.compile(r"scratch|breakeven|break even|b/e|\bflat\b", re.IGNORECASE
 PARTIAL_RE = re.compile(
     r"\bpartial(?:ly)?\b|\btrim(?:med|ming)?\b|\bstill (?:have|holding|hold|in)\b"
     r"|\bleaving a runner\b|\b\d/\d(?:th)?\s+(?:out|left)\b"
+    r"|\b(?:out|left)\s+\d/\d(?:th)?\b"
     r"|\bhalf\s+(?:out|left)\b",
     re.IGNORECASE,
 )
@@ -330,7 +343,8 @@ def parse_trade_lines(line):
         # "#Long NVDA 200p July 17th for 17.10", "#Short QQQ 100 21 AUG 26
         # 680/675 PUT @1.79": the captured number is a strike or a contract
         # count. The premium is what the trade actually cost.
-        premium = PREMIUM_RE.search(notes) or PREMIUM_LEADING_RE.match(notes)
+        premium = (PREMIUM_RE.search(notes) or PREMIUM_LEADING_RE.match(notes)
+                   or PREMIUM_AFTER_STRIKE_RE.search(notes))
         if premium is None and side != "Exit":
             premium = PREMIUM_FOR_RE.search(notes)
         price = float(premium.group(1)) if premium else None
@@ -348,7 +362,8 @@ def parse_trade_lines(line):
             # named a number. Scoring accepts it only if it sits close enough
             # to the entry to be the same instrument.
             m2 = (PREMIUM_RE.search(notes) or PREMIUM_FOR_RE.search(notes)
-                  or STOP_PRICE_RE.search(notes))
+                  or STOP_PRICE_RE.search(notes)
+                  or INSTRUMENT_PRICE_RE.match(notes) or AT_PRICE_RE.search(notes))
             candidate = float(m2.group(1)) if m2 else None
         outcome, result_text, firm = _classify_notes(notes)
         if outcome is None and gain is not None:
@@ -764,13 +779,9 @@ def score_journey(journey):
         # Stopped out with no price to check it against: the word is all there
         # is, and a stop usually means the trade went the wrong way.
         outcome = last["outcome"]
-    elif journey["exits"] and not journey["swept"]:
-        # Nothing called it a loss and nothing priced it, so the channel
-        # convention decides: a result that goes unmentioned is a good one.
-        outcome = "win"
     else:
-        # No exit event at all, or a MOC sweep that named no result per
-        # ticker -- silence from the trader, not a claim of profit.
+        # No verdict and no price. Nothing is claimed either way; the post is
+        # counted as unreadable instead of being scored on a guess.
         return {"outcome": "unknown", "pct": None, "text": text,
                 "exit_price": exit_price, "implied": False}
 
@@ -790,6 +801,13 @@ def score_journey(journey):
         # against a $0.25 option premium is not a -10000% trade -- so the
         # outcome stands on the trader's words and no price is invented.
 
+    # If the trader's own verdict and the arithmetic disagree, the two numbers
+    # are not the pair they look like -- one leg of a spread against another,
+    # say -- so the percentage is dropped rather than printed next to an icon
+    # that contradicts it.
+    if pct is not None and outcome != "flat" and (pct > 0) != (outcome == "win"):
+        pct, exit_price, implied = None, None, False
+
     # A computed percentage beats the trader's prose ("for profit", "the rest"),
     # but a move that rounds to nothing is better described as a scratch.
     if pct is not None and abs(pct) >= 0.05:
@@ -800,11 +818,37 @@ def score_journey(journey):
             "exit_price": exit_price, "implied": implied}
 
 
+def mark_unreadable(journeys, now):
+    """Flag journeys that cannot be scored, with the reason, and return them.
+
+    These are excluded from every record rather than guessed at. Each one is a
+    post whose format needs fixing, so the summary reports the count and names
+    the tickers and dates to go back and check.
+    """
+    cutoff = now - timedelta(days=EXPIRED_DAYS)
+    unreadable = []
+    for j in journeys:
+        reason = None
+        if j["superseded"] and not j["exits"]:
+            reason = "replaced by a later entry, no result posted"
+        elif not j["closed"] and j["last_touch"] and parse_ts(j["last_touch"]) < cutoff:
+            # Untouched for longer than any of these positions run. An option
+            # this old has expired; shares this old were sold without a post.
+            reason = f"no exit posted in {EXPIRED_DAYS}+ days"
+        elif j["closed"] and j["result"]["outcome"] == "unknown":
+            reason = ("closed in a MOC sweep, no result per ticker"
+                      if j["swept"] else "exit posted without a price or result")
+        j["unreadable"] = reason
+        if reason:
+            unreadable.append(j)
+    return unreadable
+
+
 def compute_holdings(journeys):
     """Return {user: [open journeys]}, oldest first."""
     holdings = {}
     for j in journeys:
-        if not j["closed"]:
+        if not j["closed"] and not j.get("unreadable"):
             holdings.setdefault(j["user"], []).append(j)
     for items in holdings.values():
         items.sort(key=lambda j: (j["opened"] or "", j["ticker"]))
@@ -815,6 +859,8 @@ def tally(journeys):
     """Count outcomes across closed journeys."""
     counts = {"win": 0, "loss": 0, "flat": 0, "unknown": 0}
     for j in journeys:
+        if j.get("unreadable"):
+            continue          # not a result, a post that could not be read
         outcome = j["result"]["outcome"]
         if outcome in counts:
             counts[outcome] += 1
@@ -971,21 +1017,17 @@ def _record(counts, label, verbose=False):
 
     Wins, losses and scratches each get a column; the percentage is wins over
     wins-plus-losses, so scratches are reported without dragging the win rate
-    down. ``verbose`` also counts exits whose result was never stated, which is
-    worth surfacing for the current week but only clutters the longer run.
+    down. Posts that could not be read are not in here at all -- they are
+    counted on their own, so a record only ever reflects trades that said how
+    they ended.
     """
     wins, losses, scratches = counts["win"], counts["loss"], counts["flat"]
     scored = wins + losses
-    unclear = counts["unknown"] if verbose else 0
-    if not (scored or scratches or unclear):
+    if not (scored or scratches):
         return None
-    if not scored and not scratches:
-        return f"{label} {unclear} unclear"   # a bare 0W-0L-0S says nothing
     text = f"{label} {wins}W–{losses}L–{scratches}S"
     if scored:
         text += f" ({round(100 * wins / scored)}%)"
-    if unclear:
-        text += f", {unclear} unclear"
     return text
 
 
@@ -996,6 +1038,7 @@ def build_summary(log, now):
     positions still carried, plus this-week and 90-day records per trader.
     """
     journeys = build_journeys(log_to_trades(log))
+    unreadable = mark_unreadable(journeys, now)
     holdings = compute_holdings(journeys)
 
     week_start = now - timedelta(days=WEEK_DAYS)
@@ -1007,7 +1050,7 @@ def build_summary(log, now):
     for j in journeys:
         if j["opened"] and parse_ts(j["opened"]) >= week_start:
             opened_week.add(j["user"])
-        if not j["closed"] or not j["closed_at"]:
+        if not j["closed"] or not j["closed_at"] or j["unreadable"]:
             continue
         closed_at = parse_ts(j["closed_at"])
         if closed_at >= horizon:
@@ -1025,8 +1068,8 @@ def build_summary(log, now):
     lines = [
         f"# \U0001F4CA Weekly Trader Review — {label}",
         f"_{ICON_WIN} win · {ICON_LOSS} loss · {ICON_OPEN} open · "
-        f"{ICON_FLAT} scratch · {ICON_UNKNOWN} unclear · {ICON_STALE} carried "
-        f"{STALE_DAYS}d+ — one line per trade, entry through exit._",
+        f"{ICON_FLAT} scratch · {ICON_STALE} carried {STALE_DAYS}d+ — "
+        f"one line per trade, entry through exit._",
         "_Records read W–L–S (wins–losses–scratches); scratches are counted but "
         "left out of the win rate. A `~` exit is derived from a stated gain "
         "rather than a posted fill. A trimmed position stays open and never "
@@ -1084,6 +1127,25 @@ def build_summary(log, now):
 
         if not week_trades and not open_trades:
             lines.append("- _no activity_")
+
+    if unreadable:
+        lines.append("")
+        lines.append(f"## \u26a0\ufe0f Unreadable posts — {len(unreadable)} trades")
+        lines.append("_Left out of every record above. Worth going back to: the "
+                     "format did not say how these ended._")
+        by_user = {}
+        for j in unreadable:
+            by_user.setdefault(j["user"], []).append(j)
+        for user in sorted(by_user, key=str.lower):
+            items = sorted(by_user[user], key=lambda j: j["opened"] or "")
+            named = ", ".join(
+                f"{j['ticker']} ({_fmt_date(parse_ts(j['opened']))})"
+                if j["opened"] else j["ticker"]
+                for j in items[:MAX_TICKERS]
+            )
+            if len(items) > MAX_TICKERS:
+                named += f", +{len(items) - MAX_TICKERS} more"
+            lines.append(f"- **{user}** {len(items)} — {named}")
 
     if carrying:
         # A trader who neither opened nor closed anything this week has no
