@@ -2,8 +2,14 @@ name: Weekly Discord Trade Summary
 
 on:
   schedule:
-    # 16:00 UTC every Sunday == 9:00am US Pacific (PDT)
-    - cron: "0 16 * * 0"
+    # 13:43 UTC every Sunday == 6:43am PDT / 5:43am PST. GitHub queues scheduled
+    # runs on shared capacity and routinely starts this one 50-60 minutes late,
+    # so treat the cron as the earliest possible time, not the actual one. The
+    # hour is chosen so even an on-time run lands after 05:00 local in winter,
+    # and an hour-late one still lands in the morning; the odd minute avoids the
+    # top-of-hour rush, which is where most of the delay comes from. Runs half
+    # an hour behind the avail check so the two don't queue against each other.
+    - cron: "43 13 * * 0"
   workflow_dispatch:
     inputs:
       backfill:

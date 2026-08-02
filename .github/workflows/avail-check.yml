@@ -2,7 +2,13 @@ name: Weekly Discord Avail Check
 
 on:
   schedule:
-    - cron: '0 14 * * 0'
+    # 13:13 UTC every Sunday == 6:13am PDT / 5:13am PST. GitHub queues scheduled
+    # runs on shared capacity and routinely starts this one 50-60 minutes late,
+    # so treat the cron as the earliest possible time, not the actual one. The
+    # hour is chosen so even an on-time run lands after 05:00 local in winter,
+    # and an hour-late one still lands in the morning; the odd minute avoids the
+    # top-of-hour rush, which is where most of the delay comes from.
+    - cron: '13 13 * * 0'
   workflow_dispatch:
 
 jobs:
