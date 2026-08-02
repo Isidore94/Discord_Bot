@@ -1,21 +1,25 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AA": 44.08,
-    "ASTS": 58.29,
-    "BULL": 7.54,
-    "DELL": 426.91,
-    "EBAY": 113.21,
-    "FBIN": 51.48,
-    "FCEL": 21.49,
-    "GLD": 374.63,
-    "MRVL": 189.17,
-    "MU": 900.2,
-    "NBIS": 187.88,
-    "SNDK": 1278.23,
-    "STX": 816.99,
-    "VKTX": 34.87,
-    "WDC": 497.92
+    "AA": 45.26,
+    "ASTS": 58.98,
+    "BULL": 7.06,
+    "CAKE": 101.42,
+    "CRWD": 190.86,
+    "DELL": 405.37,
+    "FCEL": 21.61,
+    "GLD": 371.54,
+    "MU": 823.03,
+    "MUU": 23.67,
+    "NBIS": 190.41,
+    "NTAP": 178.5,
+    "SNDK": 1214.83,
+    "SNDU": 14.62,
+    "STX": 856.13,
+    "VFC": 14.32,
+    "VKTX": 31.74,
+    "VRT": 241.57,
+    "WDC": 544.84
   },
   "messages": {
     "1499041211393118430": {
@@ -7965,6 +7969,226 @@
     "1531380952553488445": {
       "content": "mallowmushroom posted a trade:\n#Exit LRCX 292.94 for 11.83 loss above the 100",
       "timestamp": "2026-07-27T19:21:10.771000+00:00"
+    },
+    "1531665954470363256": {
+      "content": "isidore94 posted a trade:\n#exit partial EBAY for 2.10 per share",
+      "timestamp": "2026-07-28T14:13:40.523000+00:00"
+    },
+    "1531667074961641624": {
+      "content": "opreme posted a trade:\nSwing port trade:\n\n#Long SOXS @ 65.61\nStop at 50\nHedge",
+      "timestamp": "2026-07-28T14:18:07.669000+00:00"
+    },
+    "1531670655370789117": {
+      "content": "00sav00 posted a trade:\n#Exit QQQ at 2.46\n\nClosed due to both strikes ITM. Not a lot of delta between them and price appreciation is low",
+      "timestamp": "2026-07-28T14:32:21.305000+00:00"
+    },
+    "1531671335452020848": {
+      "content": "isidore94 posted a trade:\n#exit EBAY the rest for just under 3 dollars per share. But 2nd stdev",
+      "timestamp": "2026-07-28T14:35:03.449000+00:00"
+    },
+    "1531675532767264768": {
+      "content": "00sav00 posted a trade:\n#Exit IWM at 1.89",
+      "timestamp": "2026-07-28T14:51:44.167000+00:00"
+    },
+    "1531675723276751069": {
+      "content": "isidore94 posted a trade:\n#exit FBIN for a scratch getting too close too earnings now",
+      "timestamp": "2026-07-28T14:52:29.588000+00:00"
+    },
+    "1531695040366121010": {
+      "content": "mallowmushroom posted a trade:\n#Short HAL 31.55 off the 8EMA M5",
+      "timestamp": "2026-07-28T16:09:15.141000+00:00"
+    },
+    "1531701853321171054": {
+      "content": "mallowmushroom posted a trade:\n#Exit HAL 31.55 for a scratch.",
+      "timestamp": "2026-07-28T16:36:19.476000+00:00"
+    },
+    "1531716110666174557": {
+      "content": "1ripley posted a trade:\n#Exit KO $88 for about 10% total profit including adds.",
+      "timestamp": "2026-07-28T17:32:58.692000+00:00"
+    },
+    "1531718575105249563": {
+      "content": "isidore94 posted a trade:\n#short SNDK 1081 extremely RW to the rest of memory and unable to reclaim vwap.",
+      "timestamp": "2026-07-28T17:42:46.260000+00:00"
+    },
+    "1531720406766194750": {
+      "content": "isidore94 posted a trade:\n#Exit SNDK for 2 dollars. I was going to swing this but not over SKHY earnings. Was fine with just STX.",
+      "timestamp": "2026-07-28T17:50:02.962000+00:00"
+    },
+    "1531757808893165579": {
+      "content": "opreme posted a trade:\nGrabbed these yesterday/today in swing port (down on them but posting for transparency). Have been busy lately and only managing swing portfolio.\n\n#Long SMH Aug21 650c at 4.4152 avg. Stop at 1.15. Full size. (took yesterday)\n\n#Long SNDU at 14.57 stop at 9. 1/8 size starter quite small (took after open today).\n\nSwing port sheet updated. Super slow market just a slow bleed for my strat.\nhttps://docs.google.com/spreadsheets/d/1qPQbKUH4Ago-V2vYzbhza98aZBNtzaKSU-oJEEvR0tM/edit?usp=sharing",
+      "timestamp": "2026-07-28T20:18:40.324000+00:00"
+    },
+    "1532026898186506442": {
+      "content": "opreme posted a trade:\nSwing port trade:\n\n#Long NOW sept18 130c at 4.6\nStop at 1.6\nTarget 10-12\nStarter\n\n#Long TEAM sept 130c for 5\nStop at 2\nTarget 11-12\nStarter",
+      "timestamp": "2026-07-29T14:07:56.211000+00:00"
+    },
+    "1532031178499031173": {
+      "content": "mallowmushroom posted a trade:\n#Short CORZ 19.51",
+      "timestamp": "2026-07-29T14:24:56.717000+00:00"
+    },
+    "1532032088872714331": {
+      "content": "mallowmushroom posted a trade:\n#Exit CORZ 19.17 partial for .34c gain",
+      "timestamp": "2026-07-29T14:28:33.767000+00:00"
+    },
+    "1532043051688525844": {
+      "content": "isidore94 posted a trade:\n#short BE 161.32 not looking for much here",
+      "timestamp": "2026-07-29T15:12:07.506000+00:00"
+    },
+    "1532046036602978545": {
+      "content": "isidore94 posted a trade:\n#short GLXY 19.43",
+      "timestamp": "2026-07-29T15:23:59.165000+00:00"
+    },
+    "1532047357225467915": {
+      "content": "mallowmushroom posted a trade:\n#Exit CORZ 18.91 for .60c rest of position.",
+      "timestamp": "2026-07-29T15:29:14.026000+00:00"
+    },
+    "1532053406301032732": {
+      "content": "isidore94 posted a trade:\n#exit GLXY for 25 cents per share",
+      "timestamp": "2026-07-29T15:53:16.238000+00:00"
+    },
+    "1532054134281211996": {
+      "content": "isidore94 posted a trade:\n#exit BE for 3 dollars per share taking profits on this flush to yday LOD.",
+      "timestamp": "2026-07-29T15:56:09.802000+00:00"
+    },
+    "1532096442275987627": {
+      "content": "mallowmushroom posted a trade:\n#Long SPY 7 August 741/742 CDS for .40c",
+      "timestamp": "2026-07-29T18:44:16.814000+00:00"
+    },
+    "1532097081735643276": {
+      "content": "mallowmushroom posted a trade:\n#Exit SPY 7 August 741/72 CDS for .80c 100% gain",
+      "timestamp": "2026-07-29T18:46:49.273000+00:00"
+    },
+    "1532101845235925012": {
+      "content": "opreme posted a trade:\n#Exit ADBE out all but 1/8th at 15\n+214% gain",
+      "timestamp": "2026-07-29T19:05:44.980000+00:00"
+    },
+    "1532103853368017098": {
+      "content": "opreme posted a trade:\n#Exit NOW TEAM 1/4 trim",
+      "timestamp": "2026-07-29T19:13:43.756000+00:00"
+    },
+    "1532134149568200966": {
+      "content": "opreme posted a trade:\n#Exit SOXS took 1/4 off hedge here after hours at 75.71\n+15% gain small on 1/8th size",
+      "timestamp": "2026-07-29T21:14:06.933000+00:00"
+    },
+    "1532146261837217846": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 723.00\n\nNew avg: 912.21",
+      "timestamp": "2026-07-29T22:02:14.723000+00:00"
+    },
+    "1532170308163866765": {
+      "content": "1ripley posted a trade:\n#Exit partial MSFT $425.80 for 6.8% profit",
+      "timestamp": "2026-07-29T23:37:47.814000+00:00"
+    },
+    "1532364669036138566": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 745.00 with an GTC order to fill\n\nNew avg: 848.06",
+      "timestamp": "2026-07-30T12:30:07.057000+00:00"
+    },
+    "1532383262511726644": {
+      "content": "opreme posted a trade:\nSwing port trade:\n\n#Long MUU 23.49\nStop 16\nTarget 40-42\nStarter",
+      "timestamp": "2026-07-30T13:44:00.087000+00:00"
+    },
+    "1532386036691374230": {
+      "content": "mallowmushroom posted a trade:\n#Long NET 278.00",
+      "timestamp": "2026-07-30T13:55:01.503000+00:00"
+    },
+    "1532386717317726379": {
+      "content": "opreme posted a trade:\nSwing port trade:\n\n#Long NBIS at 193.3\nStop 150\nTarget 250\nStarter",
+      "timestamp": "2026-07-30T13:57:43.777000+00:00"
+    },
+    "1532387263332356107": {
+      "content": "mallowmushroom posted a trade:\n#Exit NET 281.00 partial 3.00 profit.",
+      "timestamp": "2026-07-30T13:59:53.957000+00:00"
+    },
+    "1532390854826921984": {
+      "content": "opreme posted a trade:\n#add SNDU",
+      "timestamp": "2026-07-30T14:14:10.236000+00:00"
+    },
+    "1532391064638587102": {
+      "content": "isidore94 posted a trade:\n#short IWM 292p for 2.40",
+      "timestamp": "2026-07-30T14:15:00.259000+00:00"
+    },
+    "1532393411926167632": {
+      "content": "mallowmushroom posted a trade:\n#Short NKE 41.42",
+      "timestamp": "2026-07-30T14:24:19.896000+00:00"
+    },
+    "1532394419540463827": {
+      "content": "isidore94 posted a trade:\n#exit IWM 292p for a 0.50 loss per contract. TLT back over vwap and VXX back below it.",
+      "timestamp": "2026-07-30T14:28:20.130000+00:00"
+    },
+    "1532396877755056410": {
+      "content": "mallowmushroom posted a trade:\n#Exit NKE 41.42 for a scratch.",
+      "timestamp": "2026-07-30T14:38:06.214000+00:00"
+    },
+    "1532400406909554891": {
+      "content": "1ripley posted a trade:\n#Exit MSFT $451 for over 13% profit.",
+      "timestamp": "2026-07-30T14:52:07.630000+00:00"
+    },
+    "1532401308592640090": {
+      "content": "mallowmushroom posted a trade:\n#Exit NET 278.00 rest of position for a scratch.",
+      "timestamp": "2026-07-30T14:55:42.608000+00:00"
+    },
+    "1532411203958345930": {
+      "content": "mallowmushroom posted a trade:\n#Short NOK 10.5p 21 Aug for 1.20",
+      "timestamp": "2026-07-30T15:35:01.847000+00:00"
+    },
+    "1532423912518844536": {
+      "content": "ryderlive posted a trade:\n#Short VRT $228",
+      "timestamp": "2026-07-30T16:25:31.804000+00:00"
+    },
+    "1532453492751335658": {
+      "content": "mallowmushroom posted a trade:\n#Long MU 880/885 CDS 31 Jul 2.05 debit",
+      "timestamp": "2026-07-30T18:23:04.281000+00:00"
+    },
+    "1532457586740166797": {
+      "content": "mallowmushroom posted a trade:\n#Exit MU 880/885 CDS 31 Jul 2.05 credit for a scratch.",
+      "timestamp": "2026-07-30T18:39:20.364000+00:00"
+    },
+    "1532467700192903340": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 881.73. New avg: 849.60\n\nBaby add to reward the stock strength and market toady",
+      "timestamp": "2026-07-30T19:19:31.599000+00:00"
+    },
+    "1532503324044038295": {
+      "content": "opreme posted a trade:\n#Exit MUU here AH at 28.74 1/4 out\n+22% gain",
+      "timestamp": "2026-07-30T21:41:04.987000+00:00"
+    },
+    "1532743682351038579": {
+      "content": "opreme posted a trade:\n#Exit MUU 1/2 out at 30\n+28% gain",
+      "timestamp": "2026-07-31T13:36:10.873000+00:00"
+    },
+    "1532743805437219010": {
+      "content": "opreme posted a trade:\n#Exit SNDU 1/2 out at 19\n+26% gain",
+      "timestamp": "2026-07-31T13:36:40.219000+00:00"
+    },
+    "1532747365390352435": {
+      "content": "mallowmushroom posted a trade:\n#Short QCOM 146.97",
+      "timestamp": "2026-07-31T13:50:48.978000+00:00"
+    },
+    "1532761633091223622": {
+      "content": "isidore94 posted a trade:\n#Long $CAKE 102.82",
+      "timestamp": "2026-07-31T14:47:30.663000+00:00"
+    },
+    "1532775771196887163": {
+      "content": "isidore94 posted a trade:\n#short VFC 14.44",
+      "timestamp": "2026-07-31T15:43:41.450000+00:00"
+    },
+    "1532837081238212670": {
+      "content": "mallowmushroom posted a trade:\n#Exit TTD 18.04 for .19c loss",
+      "timestamp": "2026-07-31T19:47:18.903000+00:00"
+    },
+    "1532837106634854420": {
+      "content": "mallowmushroom posted a trade:\n#Exit QCOM for 1.62 loss",
+      "timestamp": "2026-07-31T19:47:24.958000+00:00"
+    },
+    "1532840289092243598": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $NTAP $178.63 swing",
+      "timestamp": "2026-07-31T20:00:03.715000+00:00"
+    },
+    "1532840313314349316": {
+      "content": "jazzyblacksanta posted a trade:\n#Long CRWD $191.15 swing",
+      "timestamp": "2026-07-31T20:00:09.490000+00:00"
+    },
+    "1532844842231529476": {
+      "content": "00sav00 posted a trade:\n#Exit MU at 821.28. New avg 958.78 (trimmed to half the position)",
+      "timestamp": "2026-07-31T20:18:09.268000+00:00"
     }
   },
   "prices": {}
