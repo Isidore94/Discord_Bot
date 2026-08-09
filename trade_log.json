@@ -1,25 +1,31 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AA": 45.26,
-    "ASTS": 58.98,
-    "BULL": 7.06,
-    "CAKE": 101.42,
-    "CRWD": 190.86,
-    "DELL": 405.37,
-    "FCEL": 21.61,
-    "GLD": 371.54,
-    "MU": 823.03,
-    "MUU": 23.67,
-    "NBIS": 190.41,
-    "NTAP": 178.5,
-    "SNDK": 1214.83,
-    "SNDU": 14.62,
-    "STX": 856.13,
-    "VFC": 14.32,
-    "VKTX": 31.74,
-    "VRT": 241.57,
-    "WDC": 544.84
+    "AA": 50.17,
+    "APPS": 14.34,
+    "ASTS": 71.94,
+    "BULL": 7.32,
+    "CAKE": 107.05,
+    "DELL": 453.77,
+    "GLD": 398.47,
+    "GRMN": 310.89,
+    "HUT": 88.59,
+    "JBL": 341.22,
+    "MMM": 182.9,
+    "MU": 877.57,
+    "MUU": 26.62,
+    "NBIS": 187.97,
+    "NTAP": 189.52,
+    "NVDL": 36.43,
+    "PZZA": 24.47,
+    "SNDK": 1212.21,
+    "SNDU": 14.16,
+    "TRV": 384.31,
+    "VFC": 14.99,
+    "VGNT": 44.1,
+    "VKTX": 34.26,
+    "VRT": 272.4,
+    "WDC": 434.3
   },
   "messages": {
     "1499041211393118430": {
@@ -8189,6 +8195,150 @@
     "1532844842231529476": {
       "content": "00sav00 posted a trade:\n#Exit MU at 821.28. New avg 958.78 (trimmed to half the position)",
       "timestamp": "2026-07-31T20:18:09.268000+00:00"
+    },
+    "1533519456083640320": {
+      "content": "00sav00 posted a trade:\n#Exit HPE $45.63 (trade was closed on July 15 2026)",
+      "timestamp": "2026-08-02T16:58:49.744000+00:00"
+    },
+    "1533519655396839444": {
+      "content": "00sav00 posted a trade:\n#Exit HPW $45.63 (trade was closed on July 15 2026)",
+      "timestamp": "2026-08-02T16:59:37.264000+00:00"
+    },
+    "1533831594950004837": {
+      "content": "1ripley posted a trade:\n#Exit partial ORCL $135.50 for profit.",
+      "timestamp": "2026-08-03T13:39:09.449000+00:00"
+    },
+    "1533836256604323955": {
+      "content": "mallowmushroom posted a trade:\n#Long GE 365.50",
+      "timestamp": "2026-08-03T13:57:40.874000+00:00"
+    },
+    "1533915072563249162": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit Long CRWD swing at $201.75 - took $10.60 profit",
+      "timestamp": "2026-08-03T19:10:52.063000+00:00"
+    },
+    "1533915151760097384": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit Long NTPA Swing at $183.56 took $4.93 profit",
+      "timestamp": "2026-08-03T19:11:10.945000+00:00"
+    },
+    "1533915812920823911": {
+      "content": "mallowmushroom posted a trade:\n#Exit GE 368.25 for 2.75 gain",
+      "timestamp": "2026-08-03T19:13:48.578000+00:00"
+    },
+    "1533937429688352874": {
+      "content": "1ripley posted a trade:\n#Exit partial PLTR $138.50 for profit",
+      "timestamp": "2026-08-03T20:39:42.417000+00:00"
+    },
+    "1534194453772894278": {
+      "content": "mallowmushroom posted a trade:\n#Exit  NOK 10.5p 21 Aug for .59 loss of 50%",
+      "timestamp": "2026-08-04T13:41:01.734000+00:00"
+    },
+    "1534196217209164099": {
+      "content": "opreme posted a trade:\n#Long NVDL at 32.73\nStops 26\nTarget 41-42\nStarter, short term",
+      "timestamp": "2026-08-04T13:48:02.170000+00:00"
+    },
+    "1534197153126158346": {
+      "content": "mallowmushroom posted a trade:\n#Long SPY Aug 4 760c for 3.06",
+      "timestamp": "2026-08-04T13:51:45.310000+00:00"
+    },
+    "1534197203088838706": {
+      "content": "mallowmushroom posted a trade:\n#Long SPY /MES 7675.25",
+      "timestamp": "2026-08-04T13:51:57.222000+00:00"
+    },
+    "1534200888204201984": {
+      "content": "mallowmushroom posted a trade:\n#Exit partial SPY /MES 7695.25 for 20 points",
+      "timestamp": "2026-08-04T14:06:35.822000+00:00"
+    },
+    "1534203329167626323": {
+      "content": "mallowmushroom posted a trade:\n#Exit SPY Aug 4 760c for 5.06 for 2.00 gain",
+      "timestamp": "2026-08-04T14:16:17.793000+00:00"
+    },
+    "1534203505215144088": {
+      "content": "mallowmushroom posted a trade:\n#Exit SPY /MES 7700 for 24.75 point gain.",
+      "timestamp": "2026-08-04T14:16:59.766000+00:00"
+    },
+    "1534236323974483969": {
+      "content": "isidore94 posted a trade:\n#Short LVS 46.25",
+      "timestamp": "2026-08-04T16:27:24.368000+00:00"
+    },
+    "1534243926414725193": {
+      "content": "isidore94 posted a trade:\n#Long $GRMN @ 306",
+      "timestamp": "2026-08-04T16:57:36.931000+00:00"
+    },
+    "1534245322115776602": {
+      "content": "isidore94 posted a trade:\n#exit LVS for 33 cents per share",
+      "timestamp": "2026-08-04T17:03:09.692000+00:00"
+    },
+    "1534256420273258499": {
+      "content": "isidore94 posted a trade:\n#Exit $GRMN partial for just under 3 dollars per share. swinging the rest",
+      "timestamp": "2026-08-04T17:47:15.699000+00:00"
+    },
+    "1534287443421954079": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $VGNT at $46.20\n#Long $MMM at $181.10",
+      "timestamp": "2026-08-04T19:50:32.194000+00:00"
+    },
+    "1534651739922501814": {
+      "content": "isidore94 posted a trade:\n#Long $TRV 382.67",
+      "timestamp": "2026-08-05T19:58:07.248000+00:00"
+    },
+    "1534922090136866827": {
+      "content": "opreme posted a trade:\n#Long SNDK august21 2000c at 4.6 lotto\nTarget 17-20\n\n#Long INTC sept 115c at 5.95\nStop 2\nTarget 15\nStarter",
+      "timestamp": "2026-08-06T13:52:23.762000+00:00"
+    },
+    "1534933114101694564": {
+      "content": "mallowmushroom posted a trade:\n#Long JBL 350.97",
+      "timestamp": "2026-08-06T14:36:12.080000+00:00"
+    },
+    "1534960695236624385": {
+      "content": "mallowmushroom posted a trade:\n#Exit SEDG 32.75 partial for .50c gain",
+      "timestamp": "2026-08-06T16:25:47.935000+00:00"
+    },
+    "1534988474103627878": {
+      "content": "isidore94 posted a trade:\n#Short QQQ 715p expires Aug 12th for 6.50",
+      "timestamp": "2026-08-06T18:16:10.933000+00:00"
+    },
+    "1534988855755804712": {
+      "content": "mallowmushroom posted a trade:\n#Exit SEDG 32.25 for 1.00 gain.",
+      "timestamp": "2026-08-06T18:17:41.926000+00:00"
+    },
+    "1535013384557297856": {
+      "content": "mallowmushroom posted a trade:\n#Long APPS 14.18",
+      "timestamp": "2026-08-06T19:55:10.048000+00:00"
+    },
+    "1535279134702313553": {
+      "content": "opreme posted a trade:\n#Exit TEAM 1/8th left at 24.7\n+394% gain",
+      "timestamp": "2026-08-07T13:31:09.820000+00:00"
+    },
+    "1535282495304761404": {
+      "content": "1ripley posted a trade:\n#Exit ORCL $146 for over $14 profit per share.",
+      "timestamp": "2026-08-07T13:44:31.050000+00:00"
+    },
+    "1535295717630017536": {
+      "content": "opreme posted a trade:\n#Long LULU sept 140c at 4.75\nStops at 1\nTarget 12-14\nStarter, back in these. Still in equity.",
+      "timestamp": "2026-08-07T14:37:03.498000+00:00"
+    },
+    "1535296177409360052": {
+      "content": "opreme posted a trade:\n#Add LULU at 5.25",
+      "timestamp": "2026-08-07T14:38:53.118000+00:00"
+    },
+    "1535296559439159327": {
+      "content": "1ripley posted a trade:\n#Exit partial PLTR $170 for just under $40 profit per share",
+      "timestamp": "2026-08-07T14:40:24.201000+00:00"
+    },
+    "1535299573218541599": {
+      "content": "1ripley posted a trade:\n#Exit PLTR $170 for profit",
+      "timestamp": "2026-08-07T14:52:22.742000+00:00"
+    },
+    "1535300601238265888": {
+      "content": "isidore94 posted a trade:\n#Short $PZZA 24.00",
+      "timestamp": "2026-08-07T14:56:27.841000+00:00"
+    },
+    "1535330413113774145": {
+      "content": "isidore94 posted a trade:\n#Short $HUT 86.45",
+      "timestamp": "2026-08-07T16:54:55.546000+00:00"
+    },
+    "1535361675014709398": {
+      "content": "mallowmushroom posted a trade:\n#Exit QQQ 7 Aug 680/670 rest full loss. -29% overall",
+      "timestamp": "2026-08-07T18:59:08.964000+00:00"
     }
   },
   "prices": {}
