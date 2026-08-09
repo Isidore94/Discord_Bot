@@ -1,9 +1,15 @@
 name: Weekly Discord Trade Summary
 
+# Disabled: we no longer participate in the source Discord, so the summary
+# should not post on its own. The weekly schedule below is intentionally
+# commented out — restore it to bring the automatic Sunday post back.
+#
+#  schedule:
+#    # 16:00 UTC every Sunday == 9:00am US Pacific (PDT)
+#    - cron: "0 16 * * 0"
+#
+# Manual runs stay available for testing; they default to preview-only now.
 on:
-  schedule:
-    # 16:00 UTC every Sunday == 9:00am US Pacific (PDT)
-    - cron: "0 16 * * 0"
   workflow_dispatch:
     inputs:
       backfill:
@@ -11,9 +17,9 @@ on:
         type: boolean
         default: false
       post:
-        description: "Post to Discord (untick to preview in the job summary only)"
+        description: "Post to Discord (off by default; the summary is disabled)"
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: write  # allow committing the updated running log back to the repo
@@ -39,8 +45,9 @@ jobs:
           # Optional repo variables; the live channels are the defaults.
           SOURCE_CHANNEL_ID: ${{ vars.SOURCE_CHANNEL_ID }}
           TARGET_CHANNEL_ID: ${{ vars.TARGET_CHANNEL_ID }}
-        # The event guard matters: on the cron schedule `inputs.post` is null,
-        # which compares equal to false, and the summary must still post.
+        # The event guard is kept for the day the schedule is restored: on a
+        # cron run `inputs.post` is null, which compares equal to false, and
+        # the summary would otherwise never post.
         run: |
           python weekly_summary.py \
             ${{ inputs.backfill && '--backfill' || '' }} \
