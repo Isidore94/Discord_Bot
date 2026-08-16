@@ -1,31 +1,32 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AA": 50.17,
-    "APPS": 14.34,
-    "ASTS": 71.94,
-    "BULL": 7.32,
-    "CAKE": 107.05,
-    "DELL": 453.77,
-    "GLD": 398.47,
-    "GRMN": 310.89,
-    "HUT": 88.59,
-    "JBL": 341.22,
-    "MMM": 182.9,
-    "MU": 877.57,
-    "MUU": 26.62,
-    "NBIS": 187.97,
-    "NTAP": 189.52,
-    "NVDL": 36.43,
-    "PZZA": 24.47,
-    "SNDK": 1212.21,
-    "SNDU": 14.16,
-    "TRV": 384.31,
-    "VFC": 14.99,
-    "VGNT": 44.1,
-    "VKTX": 34.26,
-    "VRT": 272.4,
-    "WDC": 434.3
+    "AA": 49.98,
+    "ASTS": 70.98,
+    "BAC": 64.49,
+    "BULL": 8.04,
+    "CAKE": 113.38,
+    "CHYM": 32.02,
+    "DELL": 490.81,
+    "FTNT": 160.01,
+    "GLD": 401.48,
+    "GRMN": 310.2,
+    "HUT": 85.44,
+    "LLY": 1180.16,
+    "MU": 971.66,
+    "MUU": 32.39,
+    "NBIS": 277.68,
+    "NTAP": 207.08,
+    "NVDL": 36.71,
+    "PZZA": 24.26,
+    "SNDU": 25.17,
+    "TRV": 370.36,
+    "U": 46.25,
+    "VFC": 14.87,
+    "VGNT": 46.2,
+    "VKTX": 33.19,
+    "VRT": 293.84,
+    "WDC": 508.8
   },
   "messages": {
     "1499041211393118430": {
@@ -8339,6 +8340,202 @@
     "1535361675014709398": {
       "content": "mallowmushroom posted a trade:\n#Exit QQQ 7 Aug 680/670 rest full loss. -29% overall",
       "timestamp": "2026-08-07T18:59:08.964000+00:00"
+    },
+    "1536374352864481380": {
+      "content": "mallowmushroom posted a trade:\n#Long FTNT 165.97",
+      "timestamp": "2026-08-10T14:03:10.178000+00:00"
+    },
+    "1536400036491956284": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit $MMM long swing at $181.82 for a scratch/small win",
+      "timestamp": "2026-08-10T15:45:13.632000+00:00"
+    },
+    "1536456238119002252": {
+      "content": "jazzyblacksanta posted a trade:\n#Long RJF at $179.28, essentially a trade swap from $MMM to this pick.",
+      "timestamp": "2026-08-10T19:28:33.144000+00:00"
+    },
+    "1536750515487121520": {
+      "content": "mallowmushroom posted a trade:\n#Long MPC 331.00",
+      "timestamp": "2026-08-11T14:57:54.336000+00:00"
+    },
+    "1536753496043556924": {
+      "content": "mallowmushroom posted a trade:\n#Long CHYM 32.26",
+      "timestamp": "2026-08-11T15:09:44.956000+00:00"
+    },
+    "1536765158494441492": {
+      "content": "mallowmushroom posted a trade:\n#Short APP 323.20 tight leash.",
+      "timestamp": "2026-08-11T15:56:05.501000+00:00"
+    },
+    "1536782045068533762": {
+      "content": "mallowmushroom posted a trade:\n#Exit MPC 333.00 for 2.00 gain",
+      "timestamp": "2026-08-11T17:03:11.574000+00:00"
+    },
+    "1536805614833897583": {
+      "content": "mallowmushroom posted a trade:\n#Long ZETA 28.57",
+      "timestamp": "2026-08-11T18:36:51.044000+00:00"
+    },
+    "1536814356548030584": {
+      "content": "mallowmushroom posted a trade:\n#Exit APP 320.20 partial for 3.00 profit.",
+      "timestamp": "2026-08-11T19:11:35.231000+00:00"
+    },
+    "1536821628841893958": {
+      "content": "jazzyblacksanta posted a trade:\n#Long ALLE Swing at $168.40",
+      "timestamp": "2026-08-11T19:40:29.081000+00:00"
+    },
+    "1536822016718413874": {
+      "content": "mallowmushroom posted a trade:\n#exit APPS 13.18 for 1.00 loss",
+      "timestamp": "2026-08-11T19:42:01.558000+00:00"
+    },
+    "1537093030622797824": {
+      "content": "mallowmushroom posted a trade:\n#Exit ZETA 29.82 for 1.25",
+      "timestamp": "2026-08-12T13:38:56.308000+00:00"
+    },
+    "1537096077201768578": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 925.89\n\nTiny add. New avg: 852.91",
+      "timestamp": "2026-08-12T13:51:02.669000+00:00"
+    },
+    "1537099801139617913": {
+      "content": "mallowmushroom posted a trade:\n#Exit JBL 365.97 for 15.00 gain",
+      "timestamp": "2026-08-12T14:05:50.525000+00:00"
+    },
+    "1537108396942032976": {
+      "content": "mallowmushroom posted a trade:\n#Short NKE 42p 21 Aug for 1.66",
+      "timestamp": "2026-08-12T14:39:59.924000+00:00"
+    },
+    "1537110151872516337": {
+      "content": "mallowmushroom posted a trade:\n#Long CRDO 265.06",
+      "timestamp": "2026-08-12T14:46:58.332000+00:00"
+    },
+    "1537122060135039046": {
+      "content": "mallowmushroom posted a trade:\n#Add APP 313.00 avg now 320.28 from yday",
+      "timestamp": "2026-08-12T15:34:17.483000+00:00"
+    },
+    "1537152404921913446": {
+      "content": "mallowmushroom posted a trade:\n#Exit CRDO 273.32 for 8.26 gain on DT swing rest",
+      "timestamp": "2026-08-12T17:34:52.244000+00:00"
+    },
+    "1537161715064512612": {
+      "content": "mallowmushroom posted a trade:\n#Exit APP 308.28 for 12.00",
+      "timestamp": "2026-08-12T18:11:51.955000+00:00"
+    },
+    "1537187666636967978": {
+      "content": "mallowmushroom posted a trade:\n#Exit CRDO 269.55 for 4.49 changed my mind on swinging this don't like this close.",
+      "timestamp": "2026-08-12T19:54:59.292000+00:00"
+    },
+    "1537280345412599808": {
+      "content": "1ripley posted a trade:\n#Long CRWV $106",
+      "timestamp": "2026-08-13T02:03:15.634000+00:00"
+    },
+    "1537280597066784829": {
+      "content": "1ripley posted a trade:\n#Long PLTR $170",
+      "timestamp": "2026-08-13T02:04:15.633000+00:00"
+    },
+    "1537281403618729984": {
+      "content": "1ripley posted a trade:\n#Long LLY $1220",
+      "timestamp": "2026-08-13T02:07:27.930000+00:00"
+    },
+    "1537455886962790421": {
+      "content": "1ripley posted a trade:\n#Exit CRWV $116 for profit",
+      "timestamp": "2026-08-13T13:40:48.001000+00:00"
+    },
+    "1537456020987711568": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit $RJF swing 1/2 at $181.80 - $2.51 gain",
+      "timestamp": "2026-08-13T13:41:19.955000+00:00"
+    },
+    "1537460294346080409": {
+      "content": "mallowmushroom posted a trade:\n#Long SPY 776c 13 Aug for 1.80",
+      "timestamp": "2026-08-13T13:58:18.803000+00:00"
+    },
+    "1537461688419360958": {
+      "content": "1ripley posted a trade:\n#Exit PLTR $176.40",
+      "timestamp": "2026-08-13T14:03:51.176000+00:00"
+    },
+    "1537466345430454342": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit Long $ALLE at 164.76 - $3.64 loss. Is not producing, and will look to swap to a better pick.",
+      "timestamp": "2026-08-13T14:22:21.494000+00:00"
+    },
+    "1537469329530945596": {
+      "content": "mallowmushroom posted a trade:\n#Exit partial SPY 776c 13 Aug for 3.50. Taking off 7 contracts, leaving 3.",
+      "timestamp": "2026-08-13T14:34:12.959000+00:00"
+    },
+    "1537480275431264266": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 966.61. New avg: 857.65\n\nBaby add. Strength on the sector here is incredible.",
+      "timestamp": "2026-08-13T15:17:42.665000+00:00"
+    },
+    "1537493213978558594": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 963.96. New avg: 861.90",
+      "timestamp": "2026-08-13T16:09:07.455000+00:00"
+    },
+    "1537498500793634827": {
+      "content": "mallowmushroom posted a trade:\n#Long NET 328.06",
+      "timestamp": "2026-08-13T16:30:07.930000+00:00"
+    },
+    "1537512177274060951": {
+      "content": "mallowmushroom posted a trade:\n#Exit NET 330.20 for 2.14 profit",
+      "timestamp": "2026-08-13T17:24:28.657000+00:00"
+    },
+    "1537543057010851890": {
+      "content": "mallowmushroom posted a trade:\n#Exit SPY 776c 13 Aug for 2.25 on the rest",
+      "timestamp": "2026-08-13T19:27:10.960000+00:00"
+    },
+    "1537549760448168036": {
+      "content": "mallowmushroom posted a trade:\n#Long U 45.48",
+      "timestamp": "2026-08-13T19:53:49.184000+00:00"
+    },
+    "1537557299110084700": {
+      "content": "opreme posted a trade:\n#Exit SNDK took 1/2 off of the lotto today at 9.83 for 114% gain. Stopped rest at entry",
+      "timestamp": "2026-08-13T20:23:46.541000+00:00"
+    },
+    "1537563103674376294": {
+      "content": "opreme posted a trade:\n#Long ORCL Sept 180c at 6.186 (full size)\nStop at 5.2\nTarget: 12-14\nentered yday and added to full today. posting bc it hasnt moved above avg yet. same for APP below.\n\n#Long APP Sept 380c at 5.3\nStop 2.3\ntarget: 10.3+\nStarter",
+      "timestamp": "2026-08-13T20:46:50.457000+00:00"
+    },
+    "1537823212690473053": {
+      "content": "opreme posted a trade:\n#Add APP here at 6.80",
+      "timestamp": "2026-08-14T14:00:25.279000+00:00"
+    },
+    "1537833937156706356": {
+      "content": "the_prophet_1 posted a trade:\n#Long AAOI at 150.26 (paper)",
+      "timestamp": "2026-08-14T14:43:02.191000+00:00"
+    },
+    "1537836051802886226": {
+      "content": "mallowmushroom posted a trade:\n#Short MSTR 92.37 tight leash",
+      "timestamp": "2026-08-14T14:51:26.362000+00:00"
+    },
+    "1537840943430897705": {
+      "content": "mallowmushroom posted a trade:\n#Exit MSTR 92.37 for a scratch",
+      "timestamp": "2026-08-14T15:10:52.617000+00:00"
+    },
+    "1537847359160066189": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long AAOI at 148.13\n\nNew average: 149.19",
+      "timestamp": "2026-08-14T15:36:22.246000+00:00"
+    },
+    "1537854365094645870": {
+      "content": "mallowmushroom posted a trade:\n#Long DINO 93.28",
+      "timestamp": "2026-08-14T16:04:12.591000+00:00"
+    },
+    "1537856397046186064": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit RLJ Long at $181.90, about a $2 after my scale outs and scale ins",
+      "timestamp": "2026-08-14T16:12:17.046000+00:00"
+    },
+    "1537859178373062759": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long AAOI for $1.09 per share",
+      "timestamp": "2026-08-14T16:23:20.166000+00:00"
+    },
+    "1537883215342080101": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $TER sold next weeks 360p for $2.25. I have the 50 +1 00 SMA as support.",
+      "timestamp": "2026-08-14T17:58:51.026000+00:00"
+    },
+    "1537909610248409198": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $BAC at $64.44. Beautiful D1 chart, and bounces off the 8EMA have been good entry points.",
+      "timestamp": "2026-08-14T19:43:44.062000+00:00"
+    },
+    "1537913077247254639": {
+      "content": "mallowmushroom posted a trade:\n#Exit DINO 93.52 for .24c gain.",
+      "timestamp": "2026-08-14T19:57:30.659000+00:00"
+    },
+    "1537913655193116743": {
+      "content": "mallowmushroom posted a trade:\n#Add long U 46.34 adding to avg 45.62 now. Just trade swapped that since I like this swing better.",
+      "timestamp": "2026-08-14T19:59:48.452000+00:00"
     }
   },
   "prices": {}
