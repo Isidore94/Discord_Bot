@@ -1,34 +1,30 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AA": 51.85,
-    "ADBE": 275.3,
-    "AEHR": 101.73,
-    "ASTS": 68.65,
-    "BULL": 8.78,
-    "CAKE": 113.33,
-    "CHYM": 32.78,
-    "CRWV": 87.85,
-    "DECK": 91.68,
-    "EXTR": 23.02,
-    "GLD": 423.36,
-    "GRMN": 294.85,
-    "HUT": 80.86,
-    "META": 549.9,
-    "MRNA": 145.13,
-    "MU": 966.78,
-    "MUU": 31.57,
-    "NBIS": 219.13,
-    "NFLX": 79.59,
-    "NTAP": 192.27,
-    "NVDL": 33.29,
-    "PZZA": 23.94,
-    "QMCO": 22.25,
-    "SNDU": 23.26,
-    "TRV": 363.58,
-    "U": 46.93,
-    "VFC": 14.37,
-    "VRT": 261.95
+    "AA": 50.32,
+    "AEHR": 80.81,
+    "BE": 210.77,
+    "CAKE": 112.07,
+    "CHYM": 33.2,
+    "CRWV": 84.23,
+    "EXTR": 22.58,
+    "GRMN": 285.19,
+    "HUT": 79.42,
+    "META": 578.02,
+    "MPC": 368.83,
+    "MRNA": 137.99,
+    "MU": 932.86,
+    "MUU": 29.18,
+    "NBIS": 209.18,
+    "NTAP": 187.02,
+    "NVDL": 33.75,
+    "PZZA": 23.72,
+    "QMCO": 22.26,
+    "SNDU": 19.94,
+    "TRV": 369.9,
+    "U": 43.31,
+    "VFC": 13.67,
+    "VRT": 257.08
   },
   "messages": {
     "1499041211393118430": {
@@ -8742,6 +8738,110 @@
     "1540444759322140782": {
       "content": "jazzyblacksanta posted a trade:\n#Long $QMCO at $21.91",
       "timestamp": "2026-08-21T19:37:30.702000+00:00"
+    },
+    "1541477366398984242": {
+      "content": "the_prophet_1 posted a trade:\n#Long BE at 206.00",
+      "timestamp": "2026-08-24T16:00:43.414000+00:00"
+    },
+    "1541809278720024589": {
+      "content": "mallowmushroom posted a trade:\n#Short QQQ via (28) Aug 713p for 6.54",
+      "timestamp": "2026-08-25T13:59:37.478000+00:00"
+    },
+    "1541823553941278740": {
+      "content": "the_prophet_1 posted a trade:\n#Long MRNA 155.00",
+      "timestamp": "2026-08-25T14:56:20.956000+00:00"
+    },
+    "1541825077002244126": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long MRNA for $3.04 profit per share",
+      "timestamp": "2026-08-25T15:02:24.082000+00:00"
+    },
+    "1541830364056649729": {
+      "content": "mallowmushroom posted a trade:\n#Exit MSFT 485/487.5 via (26) Aug CDS at 1.65 for 35% gain",
+      "timestamp": "2026-08-25T15:23:24.614000+00:00"
+    },
+    "1541942100806082610": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit DELL 390p at 30c for a 85% gain. sorry for the delay, forgot I had posted on here. exited at 12:30 EST.",
+      "timestamp": "2026-08-25T22:47:24.731000+00:00"
+    },
+    "1542171745778270328": {
+      "content": "ryderlive posted a trade:\n#Exit DELL 420p .55 85%",
+      "timestamp": "2026-08-26T13:59:56.359000+00:00"
+    },
+    "1542199201016848394": {
+      "content": "00sav00 posted a trade:\n#Long UNP CDS  Sep26 315/320 for 1.85\n#Long SCHW CDS Oct26 110/120 for 2.91",
+      "timestamp": "2026-08-26T15:49:02.198000+00:00"
+    },
+    "1542200410545066131": {
+      "content": "00sav00 posted a trade:\n#Long ANET CDS Sep26 200/205 for 2.10",
+      "timestamp": "2026-08-26T15:53:50.572000+00:00"
+    },
+    "1542203818450751488": {
+      "content": "the_prophet_1 posted a trade:\n#long ANF at 153.61",
+      "timestamp": "2026-08-26T16:07:23.080000+00:00"
+    },
+    "1542208444663078992": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long ANF at 149.04 for a loss",
+      "timestamp": "2026-08-26T16:25:46.055000+00:00"
+    },
+    "1542248235853422604": {
+      "content": "1ripley posted a trade:\n#Exit NFLX $81.88",
+      "timestamp": "2026-08-26T19:03:53.014000+00:00"
+    },
+    "1542293266056220713": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 976.21. New avg: 870.56",
+      "timestamp": "2026-08-26T22:02:49.051000+00:00"
+    },
+    "1542527111921803265": {
+      "content": "mallowmushroom posted a trade:\n#Exit ADBE 281.76 for 5.00 gain.",
+      "timestamp": "2026-08-27T13:32:02.250000+00:00"
+    },
+    "1542532129211031632": {
+      "content": "00sav00 posted a trade:\n#Exit UNH at 4.39 (scratch)",
+      "timestamp": "2026-08-27T13:51:58.465000+00:00"
+    },
+    "1542536004894855198": {
+      "content": "00sav00 posted a trade:\n#Exit ANET for 2.30\npos price action today. bailing on it",
+      "timestamp": "2026-08-27T14:07:22.500000+00:00"
+    },
+    "1542564344716468306": {
+      "content": "mallowmushroom posted a trade:\n#Exit DECK swing 87.19 for 2.00 gain.",
+      "timestamp": "2026-08-27T15:59:59.240000+00:00"
+    },
+    "1542587273596375132": {
+      "content": "1ripley posted a trade:\n#Exit partial NVDA at $230 for profit. \n\u2014\u2014\u2014\nI now have half of the position. I have been adding on almost all pullbacks and held through earnings like a degenerate - but the PA and Macro was key.",
+      "timestamp": "2026-08-27T17:31:05.911000+00:00"
+    },
+    "1542904304514371589": {
+      "content": "mallowmushroom posted a trade:\n#Short QBTS 17.02",
+      "timestamp": "2026-08-28T14:30:51.972000+00:00"
+    },
+    "1542908248666013806": {
+      "content": "00sav00 posted a trade:\n#Exit GLD at 417.55",
+      "timestamp": "2026-08-28T14:46:32.331000+00:00"
+    },
+    "1542911805268164669": {
+      "content": "mallowmushroom posted a trade:\n#Long AAPL 320.62",
+      "timestamp": "2026-08-28T15:00:40.291000+00:00"
+    },
+    "1542924756641390634": {
+      "content": "mallowmushroom posted a trade:\n#Exit AAPL 321.83 for 1.21 gain",
+      "timestamp": "2026-08-28T15:52:08.139000+00:00"
+    },
+    "1542926348815695963": {
+      "content": "mallowmushroom posted a trade:\n#Exit QBTS 16.86 for .16c gain",
+      "timestamp": "2026-08-28T15:58:27.743000+00:00"
+    },
+    "1542982481823670334": {
+      "content": "mallowmushroom posted a trade:\n#Exit QQQ puts expiring worthless as hedge",
+      "timestamp": "2026-08-28T19:41:30.895000+00:00"
+    },
+    "1542986234211606579": {
+      "content": "mallowmushroom posted a trade:\n#Long MPC 368.65",
+      "timestamp": "2026-08-28T19:56:25.534000+00:00"
+    },
+    "1542986596998062211": {
+      "content": "mallowmushroom posted a trade:\n#Exit BULL 8.22",
+      "timestamp": "2026-08-28T19:57:52.029000+00:00"
     }
   },
   "prices": {}
