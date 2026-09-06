@@ -1,30 +1,31 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AA": 50.32,
-    "AEHR": 80.81,
-    "BE": 210.77,
-    "CAKE": 112.07,
-    "CHYM": 33.2,
-    "CRWV": 84.23,
-    "EXTR": 22.58,
-    "GRMN": 285.19,
-    "HUT": 79.42,
-    "META": 578.02,
-    "MPC": 368.83,
-    "MRNA": 137.99,
-    "MU": 932.86,
-    "MUU": 29.18,
-    "NBIS": 209.18,
-    "NTAP": 187.02,
-    "NVDL": 33.75,
-    "PZZA": 23.72,
-    "QMCO": 22.26,
-    "SNDU": 19.94,
-    "TRV": 369.9,
-    "U": 43.31,
-    "VFC": 13.67,
-    "VRT": 257.08
+    "AEHR": 86.26,
+    "BE": 252.87,
+    "C": 137.72,
+    "CAKE": 107.58,
+    "CAT": 813.94,
+    "CRWD": 213.1,
+    "CRWV": 89.36,
+    "EXTR": 21.7,
+    "GRMN": 277.03,
+    "HUM": 401.54,
+    "HUT": 93.545,
+    "META": 616.77,
+    "MRNA": 145.55,
+    "MU": 1016.59,
+    "MUU": 34.25,
+    "NBIS": 226.39,
+    "NTAP": 185.59,
+    "NVDL": 37.69,
+    "ONON": 27.99,
+    "PZZA": 22.68,
+    "QMCO": 24.73,
+    "SNDU": 26.95,
+    "TRV": 369.35,
+    "VFC": 13.45,
+    "VRT": 280.53
   },
   "messages": {
     "1499041211393118430": {
@@ -8842,6 +8843,98 @@
     "1542986596998062211": {
       "content": "mallowmushroom posted a trade:\n#Exit BULL 8.22",
       "timestamp": "2026-08-28T19:57:52.029000+00:00"
+    },
+    "1543977395273338912": {
+      "content": "mallowmushroom posted a trade:\n#Exit MPC 373.65 for 5.00 gain",
+      "timestamp": "2026-08-31T13:34:56.746000+00:00"
+    },
+    "1543984051294175306": {
+      "content": "mallowmushroom posted a trade:\n#Short ONON 28.49",
+      "timestamp": "2026-08-31T14:01:23.665000+00:00"
+    },
+    "1543985717187846226": {
+      "content": "mallowmushroom posted a trade:\n#Short CAT via 790/785 PDS for 2.10 (18) Sep",
+      "timestamp": "2026-08-31T14:08:00.845000+00:00"
+    },
+    "1543994800913653821": {
+      "content": "1ripley posted a trade:\n#Exit PEGA $36.80",
+      "timestamp": "2026-08-31T14:44:06.574000+00:00"
+    },
+    "1544015044117790730": {
+      "content": "mallowmushroom posted a trade:\n#Short HWM 242.25",
+      "timestamp": "2026-08-31T16:04:32.930000+00:00"
+    },
+    "1544017229471817900": {
+      "content": "mallowmushroom posted a trade:\n#Exit HWM 241.25 for a quick 1.00",
+      "timestamp": "2026-08-31T16:13:13.959000+00:00"
+    },
+    "1544027605546569791": {
+      "content": "mallowmushroom posted a trade:\n#Exit CAT 2.75 for 30% gain via 790/785 PDS (18) Sep",
+      "timestamp": "2026-08-31T16:54:27.808000+00:00"
+    },
+    "1544060585652785434": {
+      "content": "mallowmushroom posted a trade:\n#Long CRWD 229.31",
+      "timestamp": "2026-08-31T19:05:30.878000+00:00"
+    },
+    "1544073683612475514": {
+      "content": "mallowmushroom posted a trade:\n#Exit CRWD 231.31 for partial 2.00 gain trimming this just a bit.",
+      "timestamp": "2026-08-31T19:57:33.675000+00:00"
+    },
+    "1544369178134315149": {
+      "content": "mallowmushroom posted a trade:\n#Long ZETA via 30c (18) Sep for 2.55",
+      "timestamp": "2026-09-01T15:31:45.059000+00:00"
+    },
+    "1544373169597587528": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 968.23. New avg: 874.08",
+      "timestamp": "2026-09-01T15:47:36.698000+00:00"
+    },
+    "1544405578363965564": {
+      "content": "00sav00 posted a trade:\n#Long PCS FAST 47.5p/45p for 0.75",
+      "timestamp": "2026-09-01T17:56:23.550000+00:00"
+    },
+    "1544436461829357659": {
+      "content": "mallowmushroom posted a trade:\n#Exit U 40.99 for 4.63 loss",
+      "timestamp": "2026-09-01T19:59:06.742000+00:00"
+    },
+    "1544436492892639364": {
+      "content": "mallowmushroom posted a trade:\n#Exit CHYM for .65c loss",
+      "timestamp": "2026-09-01T19:59:14.148000+00:00"
+    },
+    "1544772271057674291": {
+      "content": "mallowmushroom posted a trade:\n#Short ASML via (18) Sep 1670/1660 PDS for 4.25",
+      "timestamp": "2026-09-02T18:13:29.901000+00:00"
+    },
+    "1544798584778789096": {
+      "content": "mallowmushroom posted a trade:\n#Exit ASML breakeven",
+      "timestamp": "2026-09-02T19:58:03.581000+00:00"
+    },
+    "1545111933710241953": {
+      "content": "00sav00 posted a trade:\n#Long C 138.05",
+      "timestamp": "2026-09-03T16:43:11.788000+00:00"
+    },
+    "1545112759019245599": {
+      "content": "00sav00 posted a trade:\n#Long HUM 412.45",
+      "timestamp": "2026-09-03T16:46:28.557000+00:00"
+    },
+    "1545135998822912010": {
+      "content": "mallowmushroom posted a trade:\n#Exit ZETA (18) Sep for 3.10 at 20% gain partial exit just a trim.",
+      "timestamp": "2026-09-03T18:18:49.358000+00:00"
+    },
+    "1545158197461917806": {
+      "content": "00sav00 posted a trade:\n#Long CDS VRT Oct 290c/300c for 2.88\n#Add FAST PCS current avg $0.72\n#Long CAT 795.45",
+      "timestamp": "2026-09-03T19:47:01.926000+00:00"
+    },
+    "1545430399872798730": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 986.93. New avg: 877.98",
+      "timestamp": "2026-09-04T13:48:40.038000+00:00"
+    },
+    "1545441166273814528": {
+      "content": "1ripley posted a trade:\n#Exit partial NVDA $234.50 for $39.45 profit per share.\n--------------------------------\nI\u2019ve been steadily scaling out of what was my largest position ever.\nI\u2019m leaving 40% (2/5ths) on the table as a runner, which now still equates to my standard full position size.",
+      "timestamp": "2026-09-04T14:31:26.948000+00:00"
+    },
+    "1545443805367636038": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU 1001.68. New avg: 882.15",
+      "timestamp": "2026-09-04T14:41:56.157000+00:00"
     }
   },
   "prices": {}
