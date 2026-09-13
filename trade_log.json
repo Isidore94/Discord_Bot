@@ -1,31 +1,27 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AEHR": 86.26,
-    "BE": 252.87,
-    "C": 137.72,
-    "CAKE": 107.58,
-    "CAT": 813.94,
-    "CRWD": 213.1,
-    "CRWV": 89.36,
-    "EXTR": 21.7,
-    "GRMN": 277.03,
-    "HUM": 401.54,
-    "HUT": 93.545,
-    "META": 616.77,
-    "MRNA": 145.55,
-    "MU": 1016.59,
-    "MUU": 34.25,
-    "NBIS": 226.39,
-    "NTAP": 185.59,
-    "NVDL": 37.69,
-    "ONON": 27.99,
-    "PZZA": 22.68,
-    "QMCO": 24.73,
-    "SNDU": 26.95,
-    "TRV": 369.35,
-    "VFC": 13.45,
-    "VRT": 280.53
+    "AEHR": 94.69,
+    "BE": 275.75,
+    "CAKE": 102.7,
+    "CAT": 818.57,
+    "CRWD": 206.74,
+    "EXTR": 22.2,
+    "GRMN": 282.67,
+    "HUM": 409.8,
+    "HUT": 98.6,
+    "INTC": 102.94,
+    "META": 648.03,
+    "MRNA": 143.97,
+    "MU": 975.26,
+    "MUU": 31.43,
+    "NTAP": 199.28,
+    "NVDL": 33.8,
+    "PZZA": 20.56,
+    "QMCO": 23.58,
+    "SNDU": 23.52,
+    "TRV": 375.2,
+    "VFC": 13.17
   },
   "messages": {
     "1499041211393118430": {
@@ -8935,6 +8931,50 @@
     "1545443805367636038": {
       "content": "the_prophet_1 posted a trade:\n#Add Long MU 1001.68. New avg: 882.15",
       "timestamp": "2026-09-04T14:41:56.157000+00:00"
+    },
+    "1546877976241508412": {
+      "content": "1ripley posted a trade:\n#Exit partial CRWV $95 for profit\n----------------------------------\nReducing position size from the assigned puts and letting this swing run.\nNext partial pt is the 100-SMA and IPO AVWAP",
+      "timestamp": "2026-09-08T13:40:49.139000+00:00"
+    },
+    "1546882000017694792": {
+      "content": "mallowmushroom posted a trade:\n#Exit ONON swing 27.49 for 1.00",
+      "timestamp": "2026-09-08T13:56:48.482000+00:00"
+    },
+    "1546896058268000366": {
+      "content": "1ripley posted a trade:\n#Exit CRWV $98.30 for $6.30 profit per share",
+      "timestamp": "2026-09-08T14:52:40.230000+00:00"
+    },
+    "1546909154533441647": {
+      "content": "00sav00 posted a trade:\n#Exit SCHW at 2.39",
+      "timestamp": "2026-09-08T15:44:42.623000+00:00"
+    },
+    "1546910176647577681": {
+      "content": "00sav00 posted a trade:\n#Exit VRT for 4.72",
+      "timestamp": "2026-09-08T15:48:46.314000+00:00"
+    },
+    "1546931639911972957": {
+      "content": "00sav00 posted a trade:\nAdding to this trade with\n#Long C Oct CDS 140/145 for 1.84",
+      "timestamp": "2026-09-08T17:14:03.555000+00:00"
+    },
+    "1547263372360155187": {
+      "content": "mallowmushroom posted a trade:\n#Short SHOP 129.86",
+      "timestamp": "2026-09-09T15:12:14.734000+00:00"
+    },
+    "1547276908348051598": {
+      "content": "mallowmushroom posted a trade:\n#Exit SHOP 128.80 for 1.06 gain",
+      "timestamp": "2026-09-09T16:06:01.965000+00:00"
+    },
+    "1547284459559198843": {
+      "content": "00sav00 posted a trade:\n#Long INTC at 105.85\n#Long WFC CDS Nov 90/100 for 3.27\n#Long C CDS Noc 15/150 for 1.55 (basically an add for the shares and other shorter term CDS)",
+      "timestamp": "2026-09-09T16:36:02.314000+00:00"
+    },
+    "1548014862179901452": {
+      "content": "the_prophet_1 posted a trade:\n#Long APP at 322.32",
+      "timestamp": "2026-09-11T16:58:23.869000+00:00"
+    },
+    "1548021251245875212": {
+      "content": "the_prophet_1 posted a trade:\n#Exit APP for $1.70 profit per share",
+      "timestamp": "2026-09-11T17:23:47.141000+00:00"
     }
   },
   "prices": {}
