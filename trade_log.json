@@ -1,27 +1,18 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AEHR": 94.69,
-    "BE": 275.75,
-    "CAKE": 102.7,
-    "CAT": 818.57,
-    "CRWD": 206.74,
-    "EXTR": 22.2,
-    "GRMN": 282.67,
-    "HUM": 409.8,
-    "HUT": 98.6,
-    "INTC": 102.94,
-    "META": 648.03,
-    "MRNA": 143.97,
-    "MU": 975.26,
-    "MUU": 31.43,
-    "NTAP": 199.28,
-    "NVDL": 33.8,
-    "PZZA": 20.56,
-    "QMCO": 23.58,
-    "SNDU": 23.52,
-    "TRV": 375.2,
-    "VFC": 13.17
+    "AEHR": 93.49,
+    "BE": 265.63,
+    "EXTR": 22.31,
+    "HOOD": 119.82,
+    "HUM": 386.22,
+    "HUT": 98.74,
+    "MRNA": 154.04,
+    "MU": 1015.8,
+    "NVDA": 222.27,
+    "P": 104.14,
+    "PZZA": 19.78,
+    "QMCO": 25.09
   },
   "messages": {
     "1499041211393118430": {
@@ -8975,6 +8966,158 @@
     "1548021251245875212": {
       "content": "the_prophet_1 posted a trade:\n#Exit APP for $1.70 profit per share",
       "timestamp": "2026-09-11T17:23:47.141000+00:00"
+    },
+    "1548766013976481884": {
+      "content": "1ripley posted a trade:\n\u2014\u2014\u2014\nNot sure why the bot shows my META short. It closed at profit with an auto stop loss as I posted. Therefore:\n\n#Exit META $547",
+      "timestamp": "2026-09-13T18:43:12.413000+00:00"
+    },
+    "1549073742917795963": {
+      "content": "the_prophet_1 posted a trade:\n#Long MU at 912.89",
+      "timestamp": "2026-09-14T15:06:00.710000+00:00"
+    },
+    "1549189006934417489": {
+      "content": "00sav00 posted a trade:\n#exit CDS",
+      "timestamp": "2026-09-14T22:44:01.793000+00:00"
+    },
+    "1549189028321042544": {
+      "content": "00sav00 posted a trade:\n#exit PDS",
+      "timestamp": "2026-09-14T22:44:06.892000+00:00"
+    },
+    "1549189442835583098": {
+      "content": "00sav00 posted a trade:\n#Exit PCS",
+      "timestamp": "2026-09-14T22:45:45.720000+00:00"
+    },
+    "1549447221689450609": {
+      "content": "00sav00 posted a trade:\n#Long FTNT 170.78",
+      "timestamp": "2026-09-15T15:50:04.988000+00:00"
+    },
+    "1549462333561241662": {
+      "content": "00sav00 posted a trade:\n#Exit FTNT for 172.22",
+      "timestamp": "2026-09-15T16:50:07.939000+00:00"
+    },
+    "1549463043254124675": {
+      "content": "00sav00 posted a trade:\n#Exit WFC cds for 2.93",
+      "timestamp": "2026-09-15T16:52:57.143000+00:00"
+    },
+    "1549509607456776203": {
+      "content": "mallowmushroom posted a trade:\n#Long CRWD 241.97 for new avg of 234.36",
+      "timestamp": "2026-09-15T19:57:58.914000+00:00"
+    },
+    "1549779980144222259": {
+      "content": "mallowmushroom posted a trade:\n#Long NVDA 214.71",
+      "timestamp": "2026-09-16T13:52:20.786000+00:00"
+    },
+    "1549805977744973955": {
+      "content": "mallowmushroom posted a trade:\n#Exit CRWD 244.64 for 10.28 gain",
+      "timestamp": "2026-09-16T15:35:39.097000+00:00"
+    },
+    "1549806007759151106": {
+      "content": "mallowmushroom posted a trade:\n#Exit NVDA partial for 1.18",
+      "timestamp": "2026-09-16T15:35:46.253000+00:00"
+    },
+    "1550140402668142697": {
+      "content": "mallowmushroom posted a trade:\n#Short META via (16) Oct 700p for 43.30 : not very wiki but I think this is fine",
+      "timestamp": "2026-09-17T13:44:32.212000+00:00"
+    },
+    "1550144795232567429": {
+      "content": "00sav00 posted a trade:\n#Exit CAT for 799.66 (scratched)",
+      "timestamp": "2026-09-17T14:01:59.481000+00:00"
+    },
+    "1550147236669816984": {
+      "content": "mallowmushroom posted a trade:\n#Short CMCSA via (16) Oct 24p for 1.24",
+      "timestamp": "2026-09-17T14:11:41.565000+00:00"
+    },
+    "1550149555851632674": {
+      "content": "mallowmushroom posted a trade:\n#Exit  CMCSA via (16) Oct 24p 1.36 for 10% gain",
+      "timestamp": "2026-09-17T14:20:54.501000+00:00"
+    },
+    "1550158932834656307": {
+      "content": "mallowmushroom posted a trade:\n#Long AMD CDS 540/542.5 for 1.25",
+      "timestamp": "2026-09-17T14:58:10.148000+00:00"
+    },
+    "1550159300960190626": {
+      "content": "mallowmushroom posted a trade:\n#Exit AMD 1.50 can't even keep up typing things today",
+      "timestamp": "2026-09-17T14:59:37.916000+00:00"
+    },
+    "1550172902404653067": {
+      "content": "jazzyblacksanta posted a trade:\n#Long LITE sold next weeks 800p for $5.50. Nice RS all the way since august and above 2 SMAs",
+      "timestamp": "2026-09-17T15:53:40.753000+00:00"
+    },
+    "1550221288583200799": {
+      "content": "00sav00 posted a trade:\n#Long SMH Oct 575c/585c for 3.60",
+      "timestamp": "2026-09-17T19:05:56.917000+00:00"
+    },
+    "1550221800397602867": {
+      "content": "00sav00 posted a trade:\n#Long BAC 60c for 1.00",
+      "timestamp": "2026-09-17T19:07:58.943000+00:00"
+    },
+    "1550227384710463489": {
+      "content": "ryderlive posted a trade:\n#Long GOOGL 346.3",
+      "timestamp": "2026-09-17T19:30:10.347000+00:00"
+    },
+    "1550234016207085661": {
+      "content": "00sav00 posted a trade:\n#Long GOOGL 347.45\n#Long HOOD 109.51\n#Long MU 980.09",
+      "timestamp": "2026-09-17T19:56:31.419000+00:00"
+    },
+    "1550234176165388389": {
+      "content": "ryderlive posted a trade:\n#Long HOOD 109.44",
+      "timestamp": "2026-09-17T19:57:09.556000+00:00"
+    },
+    "1550501378940604448": {
+      "content": "ryderlive posted a trade:\n#Exit GOOGL 359.25",
+      "timestamp": "2026-09-18T13:38:55.662000+00:00"
+    },
+    "1550504576703135815": {
+      "content": "00sav00 posted a trade:\n#Exit GOOGL 354.67",
+      "timestamp": "2026-09-18T13:51:38.068000+00:00"
+    },
+    "1550506132689256550": {
+      "content": "00sav00 posted a trade:\n#Exit BAC for 0.78",
+      "timestamp": "2026-09-18T13:57:49.044000+00:00"
+    },
+    "1550510752366858251": {
+      "content": "mallowmushroom posted a trade:\n#Short SPY via (18) Sep 761p for 2.24",
+      "timestamp": "2026-09-18T14:16:10.461000+00:00"
+    },
+    "1550513704943091843": {
+      "content": "mallowmushroom posted a trade:\n#Exit SPY via (18) Sep 761p for 2.24",
+      "timestamp": "2026-09-18T14:27:54.410000+00:00"
+    },
+    "1550516446713487482": {
+      "content": "00sav00 posted a trade:\n#Exit INTC for 107.99 \nscratching this one for now due to size",
+      "timestamp": "2026-09-18T14:38:48.099000+00:00"
+    },
+    "1550520931934543883": {
+      "content": "mallowmushroom posted a trade:\n#Long MSTR 147.35",
+      "timestamp": "2026-09-18T14:56:37.459000+00:00"
+    },
+    "1550522083791077468": {
+      "content": "mallowmushroom posted a trade:\n#Exit MSTR 148.35 for a quick 1.00",
+      "timestamp": "2026-09-18T15:01:12.083000+00:00"
+    },
+    "1550522780825555018": {
+      "content": "00sav00 posted a trade:\n#Exit FAST pcs at 0.67",
+      "timestamp": "2026-09-18T15:03:58.269000+00:00"
+    },
+    "1550523686774251695": {
+      "content": "00sav00 posted a trade:\n#Exit UNP for 0.00",
+      "timestamp": "2026-09-18T15:07:34.264000+00:00"
+    },
+    "1550525390735278241": {
+      "content": "mallowmushroom posted a trade:\n#Long SNDK via (18) Sep 1710/1720 CDS for 4.11",
+      "timestamp": "2026-09-18T15:14:20.520000+00:00"
+    },
+    "1550526319350251663": {
+      "content": "mallowmushroom posted a trade:\n#Exit SNDK via (18) Sep 1710/1720 for 4.11 idk why even bothered posting that",
+      "timestamp": "2026-09-18T15:18:01.919000+00:00"
+    },
+    "1550544647065964676": {
+      "content": "00sav00 posted a trade:\n#Exit MU for 990.24",
+      "timestamp": "2026-09-18T16:30:51.587000+00:00"
+    },
+    "1550594886858711045": {
+      "content": "ryderlive posted a trade:\n#Long P 104",
+      "timestamp": "2026-09-18T19:50:29.687000+00:00"
     }
   },
   "prices": {}
