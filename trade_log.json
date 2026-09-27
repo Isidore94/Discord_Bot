@@ -1,18 +1,15 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AEHR": 93.49,
-    "BE": 265.63,
-    "EXTR": 22.31,
-    "HOOD": 119.82,
-    "HUM": 386.22,
-    "HUT": 98.74,
-    "MRNA": 154.04,
-    "MU": 1015.8,
-    "NVDA": 222.27,
-    "P": 104.14,
-    "PZZA": 19.78,
-    "QMCO": 25.09
+    "AEHR": 104.39,
+    "BE": 288.7,
+    "EXTR": 21.52,
+    "GLW": 156.74,
+    "HOOD": 119.4,
+    "HUM": 397.93,
+    "NVDA": 225.07,
+    "QMCO": 31.68,
+    "ZBRA": 370.04
   },
   "messages": {
     "1499041211393118430": {
@@ -9118,6 +9115,114 @@
     "1550594886858711045": {
       "content": "ryderlive posted a trade:\n#Long P 104",
       "timestamp": "2026-09-18T19:50:29.687000+00:00"
+    },
+    "1551588108582260859": {
+      "content": "00sav00 posted a trade:\n#Exit HOOD at 122.34",
+      "timestamp": "2026-09-21T13:37:12.199000+00:00"
+    },
+    "1551590559653695519": {
+      "content": "mallowmushroom posted a trade:\n#Exit NVDA 224.71 partial exit for 10.00 gain. Have to close under 200 to lose money on this now, looking to keep longer term.",
+      "timestamp": "2026-09-21T13:46:56.580000+00:00"
+    },
+    "1551595101829206111": {
+      "content": "mallowmushroom posted a trade:\n#Exit MRNA 168.79 partial for 16.00 gain. Some previous horizontal here at 170.",
+      "timestamp": "2026-09-21T14:04:59.519000+00:00"
+    },
+    "1551597888356876320": {
+      "content": "mallowmushroom posted a trade:\n#Long AMD 611.62",
+      "timestamp": "2026-09-21T14:16:03.879000+00:00"
+    },
+    "1551605210000916623": {
+      "content": "ryderlive posted a trade:\n#Exit P 110.5",
+      "timestamp": "2026-09-21T14:45:09.495000+00:00"
+    },
+    "1551613658864287797": {
+      "content": "ryderlive posted a trade:\n#Long HUT 103.52",
+      "timestamp": "2026-09-21T15:18:43.861000+00:00"
+    },
+    "1551615989676773437": {
+      "content": "mallowmushroom posted a trade:\n#Exit AMD 611.62 for a scratch will re-evaluate later",
+      "timestamp": "2026-09-21T15:27:59.570000+00:00"
+    },
+    "1551621943239643268": {
+      "content": "mallowmushroom posted a trade:\n#Long AAPL via (26) Sep 337.5/340 CDS for 1.25",
+      "timestamp": "2026-09-21T15:51:39.010000+00:00"
+    },
+    "1551632482317901888": {
+      "content": "mallowmushroom posted a trade:\n#Long GLW 159.75 swing",
+      "timestamp": "2026-09-21T16:33:31.722000+00:00"
+    },
+    "1551680406368165969": {
+      "content": "ryderlive posted a trade:\n#Exit HUT stopped out 104.25",
+      "timestamp": "2026-09-21T19:43:57.706000+00:00"
+    },
+    "1551681445272223755": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit $LITE short puts at 65c, 88% profit.",
+      "timestamp": "2026-09-21T19:48:05.400000+00:00"
+    },
+    "1551694080843579515": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long MU for $16 dollars profit per share\n\nBot did not track my exit.",
+      "timestamp": "2026-09-21T20:38:17.955000+00:00"
+    },
+    "1551694427557466234": {
+      "content": "the_prophet_1 posted a trade:\n#Long MU avg 882.17",
+      "timestamp": "2026-09-21T20:39:40.618000+00:00"
+    },
+    "1551949980514910249": {
+      "content": "mallowmushroom posted a trade:\n#Exit AAPL via (26) Sep 337.5/340 CDS for 60% gain",
+      "timestamp": "2026-09-22T13:35:09.191000+00:00"
+    },
+    "1551963546940739676": {
+      "content": "mallowmushroom posted a trade:\n#Exit MRNA 181.79 for 19.00 gain",
+      "timestamp": "2026-09-22T14:29:03.679000+00:00"
+    },
+    "1551989191154475008": {
+      "content": "mallowmushroom posted a trade:\n#Long MU via (25) Sep 1080/1085 CDS for 2.35",
+      "timestamp": "2026-09-22T16:10:57.736000+00:00"
+    },
+    "1551989222406234123": {
+      "content": "00sav00 posted a trade:\n#Exit SMH for 7.00",
+      "timestamp": "2026-09-22T16:11:05.187000+00:00"
+    },
+    "1552006323305193562": {
+      "content": "mallowmushroom posted a trade:\n#Exit MU via (25) Sep 1080/1085 CDS for 2.35 breakeven",
+      "timestamp": "2026-09-22T17:19:02.359000+00:00"
+    },
+    "1552015076213661707": {
+      "content": "mallowmushroom posted a trade:\n#Add GLW for avg of 159.76",
+      "timestamp": "2026-09-22T17:53:49.215000+00:00"
+    },
+    "1552034180244971641": {
+      "content": "00sav00 posted a trade:\n#Long DDOG for 249.03",
+      "timestamp": "2026-09-22T19:09:43.971000+00:00"
+    },
+    "1552046970171035791": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $OKTA at $196.73 swing",
+      "timestamp": "2026-09-22T20:00:33.327000+00:00"
+    },
+    "1552318858633936919": {
+      "content": "ryderlive posted a trade:\n#Long SNDK by selling SNDK 09/25/2026 1760.00 P for 13.1",
+      "timestamp": "2026-09-23T14:00:56.588000+00:00"
+    },
+    "1552363234588229643": {
+      "content": "00sav00 posted a trade:\n#Exit DDOG for  250.96",
+      "timestamp": "2026-09-23T16:57:16.640000+00:00"
+    },
+    "1552370496929013821": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit Long $OKTA at $204.06 for a $7.33 gain. Choppy market and the stock is getting a little extended so good place to take gains and I can reload on a dip.",
+      "timestamp": "2026-09-23T17:26:08.117000+00:00"
+    },
+    "1552718774661288067": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $ZBRA at $368.66 swing, sized for a move to the 50 SMA and i like how it's been holding up in the market.",
+      "timestamp": "2026-09-24T16:30:03.999000+00:00"
+    },
+    "1552763106311282800": {
+      "content": "jazzyblacksanta posted a trade:\n#Long BE sold next weeks 230p for $1.29",
+      "timestamp": "2026-09-24T19:26:13.488000+00:00"
+    },
+    "1553049952228216944": {
+      "content": "ryderlive posted a trade:\n#Exit SNDK puts for 5.25 this am at open",
+      "timestamp": "2026-09-25T14:26:02.884000+00:00"
     }
   },
   "prices": {}
