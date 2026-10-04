@@ -1,15 +1,15 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AEHR": 104.39,
-    "BE": 288.7,
-    "EXTR": 21.52,
-    "GLW": 156.74,
-    "HOOD": 119.4,
-    "HUM": 397.93,
-    "NVDA": 225.07,
-    "QMCO": 31.68,
-    "ZBRA": 370.04
+    "BE": 289.15,
+    "DOCS": 27.93,
+    "GLW": 164.19,
+    "HOOD": 112.74,
+    "HUM": 388.36,
+    "NVDA": 233.95,
+    "QMCO": 34.5,
+    "SMTC": 194.88,
+    "TXG": 93.5
   },
   "messages": {
     "1499041211393118430": {
@@ -9223,6 +9223,50 @@
     "1553049952228216944": {
       "content": "ryderlive posted a trade:\n#Exit SNDK puts for 5.25 this am at open",
       "timestamp": "2026-09-25T14:26:02.884000+00:00"
+    },
+    "1554156532239826986": {
+      "content": "ryderlive posted a trade:\n#Long SWKS 87.5 tight stop",
+      "timestamp": "2026-09-28T15:43:12.118000+00:00"
+    },
+    "1554198428396028057": {
+      "content": "ryderlive posted a trade:\n#Exit SWKS be",
+      "timestamp": "2026-09-28T18:29:40.940000+00:00"
+    },
+    "1554497742842241056": {
+      "content": "ryderlive posted a trade:\n#Long SMTC 180.4 off vwap",
+      "timestamp": "2026-09-29T14:19:03.065000+00:00"
+    },
+    "1554534242493538335": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit $BE OTM puts expiring this week for 7c, 95% gain. get out on the rip on this guy",
+      "timestamp": "2026-09-29T16:44:05.260000+00:00"
+    },
+    "1554584955210829855": {
+      "content": "ryderlive posted a trade:\n#Long MXL 1/4 size 92.5",
+      "timestamp": "2026-09-29T20:05:36.114000+00:00"
+    },
+    "1554850911589765121": {
+      "content": "ryderlive posted a trade:\n#Exit MXL be",
+      "timestamp": "2026-09-30T13:42:25.056000+00:00"
+    },
+    "1554866352618078280": {
+      "content": "ryderlive posted a trade:\n#Long DOCS 27.58",
+      "timestamp": "2026-09-30T14:43:46.484000+00:00"
+    },
+    "1554885656264839249": {
+      "content": "ryderlive posted a trade:\n#Long TSLA TSLA 10/16/2026 360.00c 7.8 tiny size",
+      "timestamp": "2026-09-30T16:00:28.832000+00:00"
+    },
+    "1554904840432517403": {
+      "content": "ryderlive posted a trade:\n#Exit TSLA calls 8.5 just singles",
+      "timestamp": "2026-09-30T17:16:42.694000+00:00"
+    },
+    "1555573684649992256": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit $ZBRA swing from 9/24 at $382 for a $13.34 gain.",
+      "timestamp": "2026-10-02T13:34:27.582000+00:00"
+    },
+    "1555670097971118132": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $TXG at $94 swing",
+      "timestamp": "2026-10-02T19:57:34.309000+00:00"
     }
   },
   "prices": {}
