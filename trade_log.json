@@ -1,15 +1,15 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "BE": 289.15,
-    "DOCS": 27.93,
-    "GLW": 164.19,
-    "HOOD": 112.74,
-    "HUM": 388.36,
-    "NVDA": 233.95,
-    "QMCO": 34.5,
-    "SMTC": 194.88,
-    "TXG": 93.5
+    "ALAB": 342.21,
+    "DOCS": 30.5,
+    "GLW": 156.68,
+    "GSAT": 83.82,
+    "HOOD": 109.02,
+    "HUM": 431.87,
+    "NVDA": 229.28,
+    "OKTA": 232.13,
+    "SMTC": 187.3
   },
   "messages": {
     "1499041211393118430": {
@@ -9267,6 +9267,50 @@
     "1555670097971118132": {
       "content": "jazzyblacksanta posted a trade:\n#Long $TXG at $94 swing",
       "timestamp": "2026-10-02T19:57:34.309000+00:00"
+    },
+    "1557064877552566403": {
+      "content": "the_prophet_1 posted a trade:\n#Long MRVL at 281.38",
+      "timestamp": "2026-10-06T16:19:55.675000+00:00"
+    },
+    "1557069015501902038": {
+      "content": "the_prophet_1 posted a trade:\n#Exit 2/3 Long MRVL for $2.30 profit per share",
+      "timestamp": "2026-10-06T16:36:22.239000+00:00"
+    },
+    "1557069902865498184": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit TXG swing at $100 for a $6 win, took profits at the open. sorry for the late post here, had an GTC order out and couldn't post this morning.",
+      "timestamp": "2026-10-06T16:39:53.803000+00:00"
+    },
+    "1557114987875664048": {
+      "content": "the_prophet_1 posted a trade:\n#Long PENG at 63.21\n\nTiny flier",
+      "timestamp": "2026-10-06T19:39:02.907000+00:00"
+    },
+    "1557385831721738431": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long PENG for $10.96 profit per share",
+      "timestamp": "2026-10-07T13:35:17.112000+00:00"
+    },
+    "1557478445259432029": {
+      "content": "jazzyblacksanta posted a trade:\n#Long GSAT at $83.60, stock is a little thin for my usually liking but I love the chart",
+      "timestamp": "2026-10-07T19:43:17.900000+00:00"
+    },
+    "1557481116133228616": {
+      "content": "jazzyblacksanta posted a trade:\n#Long ALAB at $384.90 swing",
+      "timestamp": "2026-10-07T19:53:54.686000+00:00"
+    },
+    "1557505466341531699": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MU at 1088.56. New avg: 895.08",
+      "timestamp": "2026-10-07T21:30:40.228000+00:00"
+    },
+    "1557772826188980265": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long MRVL at 275.27. New avg: 277.31",
+      "timestamp": "2026-10-08T15:13:03.783000+00:00"
+    },
+    "1557800117577449513": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long MRVL for ~10 dollar loss",
+      "timestamp": "2026-10-08T17:01:30.557000+00:00"
+    },
+    "1558145734736609396": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $OKTA at $227 swing",
+      "timestamp": "2026-10-09T15:54:52.109000+00:00"
     }
   },
   "prices": {}
