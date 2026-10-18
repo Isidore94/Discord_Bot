@@ -1,15 +1,13 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "ALAB": 342.21,
-    "DOCS": 30.5,
-    "GLW": 156.68,
-    "GSAT": 83.82,
-    "HOOD": 109.02,
-    "HUM": 431.87,
-    "NVDA": 229.28,
-    "OKTA": 232.13,
-    "SMTC": 187.3
+    "CRM": 240.7,
+    "DOCS": 30.97,
+    "GLW": 132.0,
+    "HOOD": 98.87,
+    "NVDA": 214.13,
+    "SMTC": 136.73,
+    "THC": 267.25
   },
   "messages": {
     "1499041211393118430": {
@@ -9311,6 +9309,86 @@
     "1558145734736609396": {
       "content": "jazzyblacksanta posted a trade:\n#Long $OKTA at $227 swing",
       "timestamp": "2026-10-09T15:54:52.109000+00:00"
+    },
+    "1559229022813036599": {
+      "content": "jazzyblacksanta posted a trade:\n#Short BROS at $37 swing",
+      "timestamp": "2026-10-12T15:39:28.113000+00:00"
+    },
+    "1559287690321600535": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit ALAB add at $323.79 for about $18 loss, still in original, needs to hold the 50",
+      "timestamp": "2026-10-12T19:32:35.537000+00:00"
+    },
+    "1559288307639386244": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $THC at $268.45 swing",
+      "timestamp": "2026-10-12T19:35:02.717000+00:00"
+    },
+    "1559612706732900363": {
+      "content": "leebero posted a trade:\n#Short MSTR via MSTZ 2.67 (anticipation entry)",
+      "timestamp": "2026-10-13T17:04:05.488000+00:00"
+    },
+    "1559673953524392029": {
+      "content": "leebero posted a trade:\n#exit MSTR 0.02 gain\u2026 wanted a weaker close",
+      "timestamp": "2026-10-13T21:07:27.861000+00:00"
+    },
+    "1559945863474970777": {
+      "content": "the_prophet_1 posted a trade:\n#Short CRWV at 66.77",
+      "timestamp": "2026-10-14T15:07:56.245000+00:00"
+    },
+    "1559950156651036747": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Short CRWV for .55 profit per share",
+      "timestamp": "2026-10-14T15:24:59.818000+00:00"
+    },
+    "1559957365133017239": {
+      "content": "the_prophet_1 posted a trade:\n#Long PENG at 69.88",
+      "timestamp": "2026-10-14T15:53:38.454000+00:00"
+    },
+    "1559959433616822334": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long PENG for .30 cents profit per share",
+      "timestamp": "2026-10-14T16:01:51.619000+00:00"
+    },
+    "1559963836713406536": {
+      "content": "the_prophet_1 posted a trade:\n#Long MRVL at 252.83\n\nTight stop at LoD",
+      "timestamp": "2026-10-14T16:19:21.399000+00:00"
+    },
+    "1559965161752629360": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long MRVL for .59 loss per share",
+      "timestamp": "2026-10-14T16:24:37.313000+00:00"
+    },
+    "1560013525982777468": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit ALAB at $303.70 for about a an $80 loss overall",
+      "timestamp": "2026-10-14T19:36:48.244000+00:00"
+    },
+    "1560014181049172098": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit GSAT at $82.44 for about a $1 loss, stock closing below the 50 SMA",
+      "timestamp": "2026-10-14T19:39:24.424000+00:00"
+    },
+    "1560376365864189957": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit BROS at $40.98 for a $4 loss",
+      "timestamp": "2026-10-15T19:38:36.013000+00:00"
+    },
+    "1560380693421363201": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $CRM at $246.25. I like this bounce on SPY and this stock held up nicely while SPY sold off.",
+      "timestamp": "2026-10-15T19:55:47.783000+00:00"
+    },
+    "1560651201354137602": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit Long $OKTA at $198 for a $28 loss.",
+      "timestamp": "2026-10-16T13:50:41.900000+00:00"
+    },
+    "1560699829548617751": {
+      "content": "the_prophet_1 posted a trade:\n#long UVXY at 18.19",
+      "timestamp": "2026-10-16T17:03:55.765000+00:00"
+    },
+    "1560728870095949857": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long UVXY for ~$1.00 profit per share",
+      "timestamp": "2026-10-16T18:59:19.571000+00:00"
+    },
+    "1560744770551418997": {
+      "content": "the_prophet_1 posted a trade:\n#Long PENG at 56.93 at the close",
+      "timestamp": "2026-10-16T20:02:30.535000+00:00"
+    },
+    "1560753256475533446": {
+      "content": "the_prophet_1 posted a trade:\n#Exit long PENG for a scratch",
+      "timestamp": "2026-10-16T20:36:13.737000+00:00"
     }
   },
   "prices": {}
