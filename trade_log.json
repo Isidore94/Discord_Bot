@@ -1,13 +1,17 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "CRM": 240.7,
-    "DOCS": 30.97,
-    "GLW": 132.0,
-    "HOOD": 98.87,
-    "NVDA": 214.13,
-    "SMTC": 136.73,
-    "THC": 267.25
+    "CRM": 248.57,
+    "DOCS": 33.39,
+    "GLW": 123.69,
+    "HOOD": 95.07,
+    "NVDA": 210.96,
+    "PDD": 79.04,
+    "SMTC": 132.0,
+    "SNXX": 8.16,
+    "THC": 268.45,
+    "UNH": 418.09,
+    "WAFD": 29.47
   },
   "messages": {
     "1499041211393118430": {
@@ -9389,6 +9393,86 @@
     "1560753256475533446": {
       "content": "the_prophet_1 posted a trade:\n#Exit long PENG for a scratch",
       "timestamp": "2026-10-16T20:36:13.737000+00:00"
+    },
+    "1561828616906739805": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $PDD at $16.68 swing",
+      "timestamp": "2026-10-19T19:49:19.643000+00:00"
+    },
+    "1561830464862290122": {
+      "content": "jazzyblacksanta posted a trade:\n#Short $WAFD at $28.44",
+      "timestamp": "2026-10-19T19:56:40.230000+00:00"
+    },
+    "1562109241756745900": {
+      "content": "mallowmushroom posted a trade:\n#Long UNH 417.00",
+      "timestamp": "2026-10-20T14:24:25.821000+00:00"
+    },
+    "1562131433420488905": {
+      "content": "mallowmushroom posted a trade:\n#Exit UNH 420.69 \ud83d\ude0e partial swinging the rest",
+      "timestamp": "2026-10-20T15:52:36.726000+00:00"
+    },
+    "1562471397597515850": {
+      "content": "mallowmushroom posted a trade:\n#Long MSTR 147.35 just a DT",
+      "timestamp": "2026-10-21T14:23:30.502000+00:00"
+    },
+    "1562478822576623677": {
+      "content": "mallowmushroom posted a trade:\n#Exit MSTR 151.33 for 4.00 gain just call me young Michael Saylor",
+      "timestamp": "2026-10-21T14:53:00.755000+00:00"
+    },
+    "1562540166017585256": {
+      "content": "the_prophet_1 posted a trade:\n#Long UVXY at 16.93",
+      "timestamp": "2026-10-21T18:56:46.171000+00:00"
+    },
+    "1562543701610467460": {
+      "content": "the_prophet_1 posted a trade:\n#Add Long UVXY at 17.11. New avg: 17.02",
+      "timestamp": "2026-10-21T19:10:49.122000+00:00"
+    },
+    "1562545049890328627": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long UVXY for a scratch",
+      "timestamp": "2026-10-21T19:16:10.577000+00:00"
+    },
+    "1562840586799808614": {
+      "content": "mallowmushroom posted a trade:\n#Short APH 73.62",
+      "timestamp": "2026-10-22T14:50:32.067000+00:00"
+    },
+    "1562845851972272219": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit PD swing at $17.25 a few candles ago for a 57c gain.",
+      "timestamp": "2026-10-22T15:11:27.382000+00:00"
+    },
+    "1562857042446647297": {
+      "content": "mallowmushroom posted a trade:\n#Exit APH 72.47 for 1.15 gain",
+      "timestamp": "2026-10-22T15:55:55.399000+00:00"
+    },
+    "1562890594924241018": {
+      "content": "the_prophet_1 posted a trade:\n#Long SNXX at 8.28\n\nPretty anti wiki. I\u2019ll close if SNDK closes below the 200.",
+      "timestamp": "2026-10-22T18:09:14.933000+00:00"
+    },
+    "1562896908429697035": {
+      "content": "the_prophet_1 posted a trade:\n#Long MRNA at 188.14",
+      "timestamp": "2026-10-22T18:34:20.190000+00:00"
+    },
+    "1562909084758446142": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long MRNA for $4.04 profit per share",
+      "timestamp": "2026-10-22T19:22:43.253000+00:00"
+    },
+    "1563177058153140277": {
+      "content": "the_prophet_1 posted a trade:\n#Exit partial Long SNXX for .50 profit per share. I have 2 partials left",
+      "timestamp": "2026-10-23T13:07:33.089000+00:00"
+    },
+    "1563211549248716894": {
+      "content": "mallowmushroom posted a trade:\n#Long CRWD 249.45",
+      "timestamp": "2026-10-23T15:24:36.407000+00:00"
+    },
+    "1563214451266560128": {
+      "content": "mallowmushroom posted a trade:\n#Exit CRWD 252.45 for 3.00",
+      "timestamp": "2026-10-23T15:36:08.302000+00:00"
+    },
+    "1563251538720460819": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $OKTA $213.30 day trade",
+      "timestamp": "2026-10-23T18:03:30.640000+00:00"
+    },
+    "1563280549672386641": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit Long $OKTA at $213.31 for large 1c gain.",
+      "timestamp": "2026-10-23T19:58:47.390000+00:00"
     }
   },
   "prices": {}
