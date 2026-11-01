@@ -1,17 +1,13 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "CRM": 248.57,
-    "DOCS": 33.39,
-    "GLW": 123.69,
-    "HOOD": 95.07,
-    "NVDA": 210.96,
-    "PDD": 79.04,
-    "SMTC": 132.0,
-    "SNXX": 8.16,
-    "THC": 268.45,
-    "UNH": 418.09,
-    "WAFD": 29.47
+    "DOCS": 32.76,
+    "GLW": 123.31,
+    "NVDA": 204.64,
+    "PDD": 78.61,
+    "SMTC": 127.38,
+    "THC": 273.25,
+    "WAFD": 29.35
   },
   "messages": {
     "1499041211393118430": {
@@ -9473,6 +9469,90 @@
     "1563280549672386641": {
       "content": "jazzyblacksanta posted a trade:\n#Exit Long $OKTA at $213.31 for large 1c gain.",
       "timestamp": "2026-10-23T19:58:47.390000+00:00"
+    },
+    "1564289497519104062": {
+      "content": "the_prophet_1 posted a trade:\n#Long SNXX at 8.24\n\nSmall starter. Another non-wiki. Planning on building this.",
+      "timestamp": "2026-10-26T14:47:59.302000+00:00"
+    },
+    "1564289511943311572": {
+      "content": "mallowmushroom posted a trade:\n#Long TSLA 395.64",
+      "timestamp": "2026-10-26T14:48:02.741000+00:00"
+    },
+    "1564290077348069548": {
+      "content": "mallowmushroom posted a trade:\n#Exit UNH 417.00 swing portion at breakeven",
+      "timestamp": "2026-10-26T14:50:17.544000+00:00"
+    },
+    "1564317523237937295": {
+      "content": "the_prophet_1 posted a trade:\n#Short FICO at 687.76",
+      "timestamp": "2026-10-26T16:39:21.154000+00:00"
+    },
+    "1564319137142935555": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Short FICO for $10.34 profit per share",
+      "timestamp": "2026-10-26T16:45:45.939000+00:00"
+    },
+    "1564368449902354508": {
+      "content": "jazzyblacksanta posted a trade:\n#Long $NTAP at $222",
+      "timestamp": "2026-10-26T20:01:43.017000+00:00"
+    },
+    "1564392283103567943": {
+      "content": "the_prophet_1 posted a trade:\n#Add SNXX at 8.41. New avg: 8.38",
+      "timestamp": "2026-10-26T21:36:25.295000+00:00"
+    },
+    "1564652446171660391": {
+      "content": "mallowmushroom posted a trade:\n#Short FIS 35.91 DT only",
+      "timestamp": "2026-10-27T14:50:13.004000+00:00"
+    },
+    "1564654987206856747": {
+      "content": "mallowmushroom posted a trade:\n#Long BE 223.08 got Pelosi on speedial",
+      "timestamp": "2026-10-27T15:00:18.834000+00:00"
+    },
+    "1564707912033509427": {
+      "content": "mallowmushroom posted a trade:\n#Exit FIS 35.47 for .44c gain.",
+      "timestamp": "2026-10-27T18:30:37.096000+00:00"
+    },
+    "1564733026649378821": {
+      "content": "mallowmushroom posted a trade:\n#Exit BE 218.63 for 4.45 loss. Never calling Pelosi again.",
+      "timestamp": "2026-10-27T20:10:24.887000+00:00"
+    },
+    "1564997301267857439": {
+      "content": "mallowmushroom posted a trade:\n#Exit TSLA 405.64 for 10 gain.",
+      "timestamp": "2026-10-28T13:40:32.866000+00:00"
+    },
+    "1565069076412235797": {
+      "content": "the_prophet_1 posted a trade:\n#Long NBIS at 174.52",
+      "timestamp": "2026-10-28T18:25:45.394000+00:00"
+    },
+    "1565070333189554339": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long NBIS for $2.50 profit per share",
+      "timestamp": "2026-10-28T18:30:45.033000+00:00"
+    },
+    "1565073036120694966": {
+      "content": "the_prophet_1 posted a trade:\n#Long ORCL at 144.13",
+      "timestamp": "2026-10-28T18:41:29.462000+00:00"
+    },
+    "1565073462597390438": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long ORCL for $1.20 profit per share",
+      "timestamp": "2026-10-28T18:43:11.142000+00:00"
+    },
+    "1565413633104674891": {
+      "content": "the_prophet_1 posted a trade:\n#Short IREN at 26.67",
+      "timestamp": "2026-10-29T17:14:54.111000+00:00"
+    },
+    "1565414082184618187": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Short IREN for .13 profit per share. Didn\u2019t realize we were at LOD on spy basically",
+      "timestamp": "2026-10-29T17:16:41.180000+00:00"
+    },
+    "1565454433221877810": {
+      "content": "the_prophet_1 posted a trade:\n#Exit 1/2 Long SNXX at 9.30 for .92 profit per share",
+      "timestamp": "2026-10-29T19:57:01.617000+00:00"
+    },
+    "1565455395231637616": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit CRM for a $16.50 loss, close below the 50 here",
+      "timestamp": "2026-10-29T20:00:50.978000+00:00"
+    },
+    "1565731939938467922": {
+      "content": "jazzyblacksanta posted a trade:\n#Exit Long $NTAP at $200.16 for about a $22 loss. Stock Weak and SPY breaking below the 100 SMA.",
+      "timestamp": "2026-10-30T14:19:44.374000+00:00"
     }
   },
   "prices": {}
