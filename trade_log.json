@@ -1,13 +1,11 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "DOCS": 32.76,
-    "GLW": 123.31,
-    "NVDA": 204.64,
-    "PDD": 78.61,
-    "SMTC": 127.38,
-    "THC": 273.25,
-    "WAFD": 29.35
+    "DOCS": 32.51,
+    "PDD": 83.03,
+    "SMTC": 103.21,
+    "THC": 283.33,
+    "WAFD": 29.43
   },
   "messages": {
     "1499041211393118430": {
@@ -9553,6 +9551,66 @@
     "1565731939938467922": {
       "content": "jazzyblacksanta posted a trade:\n#Exit Long $NTAP at $200.16 for about a $22 loss. Stock Weak and SPY breaking below the 100 SMA.",
       "timestamp": "2026-10-30T14:19:44.374000+00:00"
+    },
+    "1566832832775590013": {
+      "content": "mallowmushroom posted a trade:\n#Long TXN 307.83",
+      "timestamp": "2026-11-02T15:14:17.680000+00:00"
+    },
+    "1566840036668874803": {
+      "content": "mallowmushroom posted a trade:\n#Long TSLA 411.72",
+      "timestamp": "2026-11-02T15:42:55.222000+00:00"
+    },
+    "1566848545468977284": {
+      "content": "mallowmushroom posted a trade:\n#Exit TSLA 412.72 for a 1.00",
+      "timestamp": "2026-11-02T16:16:43.878000+00:00"
+    },
+    "1566849891437904023": {
+      "content": "mallowmushroom posted a trade:\n#Exit TXN 308.20 for .37 c",
+      "timestamp": "2026-11-02T16:22:04.782000+00:00"
+    },
+    "1567549931395350620": {
+      "content": "the_prophet_1 posted a trade:\n#Long AMD at 502.19",
+      "timestamp": "2026-11-04T14:43:47.314000+00:00"
+    },
+    "1567550630963191871": {
+      "content": "ryderlive posted a trade:\n#Long AMD small size 492.34",
+      "timestamp": "2026-11-04T14:46:34.104000+00:00"
+    },
+    "1567587586401116264": {
+      "content": "ryderlive posted a trade:\n#Long CDNA 85.75",
+      "timestamp": "2026-11-04T17:13:24.967000+00:00"
+    },
+    "1567926390676914289": {
+      "content": "szxj posted a trade:\n#Long SMH 462.8",
+      "timestamp": "2026-11-05T15:39:42.201000+00:00"
+    },
+    "1567928167212253225": {
+      "content": "szxj posted a trade:\n#exit SMH 455.5",
+      "timestamp": "2026-11-05T15:46:45.760000+00:00"
+    },
+    "1567952583270735994": {
+      "content": "ryderlive posted a trade:\n#Exit CDNA 77.75 for the L",
+      "timestamp": "2026-11-05T17:23:47.002000+00:00"
+    },
+    "1568019244472344576": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long AMD for a fat loss",
+      "timestamp": "2026-11-05T21:48:40.271000+00:00"
+    },
+    "1568283234758959238": {
+      "content": "mallowmushroom posted a trade:\n#Short WDC 264.50 tight leash",
+      "timestamp": "2026-11-06T15:17:40.460000+00:00"
+    },
+    "1568285978274299935": {
+      "content": "szxj posted a trade:\n#short WDC 262",
+      "timestamp": "2026-11-06T15:28:34.565000+00:00"
+    },
+    "1568289604413431969": {
+      "content": "mallowmushroom posted a trade:\n#Exit WDC 264.50 for a scratch",
+      "timestamp": "2026-11-06T15:42:59.104000+00:00"
+    },
+    "1568296963164872910": {
+      "content": "szxj posted a trade:\n#exit WDC 260.75 small profit didn't like the bounce earlier on stacked candles and LPTE on SPY",
+      "timestamp": "2026-11-06T16:12:13.567000+00:00"
     }
   },
   "prices": {}
