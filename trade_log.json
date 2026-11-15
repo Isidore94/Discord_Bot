@@ -1,11 +1,13 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "DOCS": 32.51,
-    "PDD": 83.03,
-    "SMTC": 103.21,
-    "THC": 283.33,
-    "WAFD": 29.43
+    "AMD": 534.06,
+    "ANET": 197.29,
+    "AVGO": 347.01,
+    "PDD": 78.97,
+    "THC": 286.03,
+    "U": 52.81,
+    "WAFD": 29.42
   },
   "messages": {
     "1499041211393118430": {
@@ -9611,6 +9613,134 @@
     "1568296963164872910": {
       "content": "szxj posted a trade:\n#exit WDC 260.75 small profit didn't like the bounce earlier on stacked candles and LPTE on SPY",
       "timestamp": "2026-11-06T16:12:13.567000+00:00"
+    },
+    "1569378817473118339": {
+      "content": "szxj posted a trade:\n#long TXN again for starter swing position, sized very small at 200SMA SL",
+      "timestamp": "2026-11-09T15:51:07.734000+00:00"
+    },
+    "1569728546253963396": {
+      "content": "szxj posted a trade:\n#long TXN 296.55 add here",
+      "timestamp": "2026-11-10T15:00:49.573000+00:00"
+    },
+    "1569735360559452162": {
+      "content": "mallowmushroom posted a trade:\n#Short UPST 20.58",
+      "timestamp": "2026-11-10T15:27:54.230000+00:00"
+    },
+    "1569740238752845878": {
+      "content": "the_prophet_1 posted a trade:\n#Short NVDA at 169.18",
+      "timestamp": "2026-11-10T15:47:17.282000+00:00"
+    },
+    "1569740702466703421": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long NVDA for a scratch",
+      "timestamp": "2026-11-10T15:49:07.840000+00:00"
+    },
+    "1569741047578230836": {
+      "content": "mallowmushroom posted a trade:\n#Exit UPST 20.08 for .50c",
+      "timestamp": "2026-11-10T15:50:30.121000+00:00"
+    },
+    "1569748360640995389": {
+      "content": "szxj posted a trade:\n#short NVDA 169",
+      "timestamp": "2026-11-10T16:19:33.691000+00:00"
+    },
+    "1569750486385557736": {
+      "content": "szxj posted a trade:\n#exit short NVDA 168.5",
+      "timestamp": "2026-11-10T16:28:00.508000+00:00"
+    },
+    "1569893873239728129": {
+      "content": "szxj posted a trade:\n#exit TXN 307 for about 13.50 profit for a double sized position.",
+      "timestamp": "2026-11-11T01:57:46.598000+00:00"
+    },
+    "1570103152454410456": {
+      "content": "mallowmushroom posted a trade:\n#Long RKLB 67.72 looking at 100 SMA magnet",
+      "timestamp": "2026-11-11T15:49:22.651000+00:00"
+    },
+    "1570105701559304306": {
+      "content": "mallowmushroom posted a trade:\n#Exit RKLB 67.89 for a scratch should be in semis",
+      "timestamp": "2026-11-11T15:59:30.405000+00:00"
+    },
+    "1570107951803400284": {
+      "content": "szxj posted a trade:\n#long TXN 309.43",
+      "timestamp": "2026-11-11T16:08:26.905000+00:00"
+    },
+    "1570112643237281805": {
+      "content": "mallowmushroom posted a trade:\n#Long QQQ via (15) Jan 670c for 43.10",
+      "timestamp": "2026-11-11T16:27:05.430000+00:00"
+    },
+    "1570174229087920150": {
+      "content": "ryderlive posted a trade:\n#Long MRNA starter 249",
+      "timestamp": "2026-11-11T20:31:48.641000+00:00"
+    },
+    "1570453742216552593": {
+      "content": "szxj posted a trade:\n#long AAPL 330 calls expiring 15 jan for $35.61\n\nintending to hold this for a longer swing period",
+      "timestamp": "2026-11-12T15:02:29.764000+00:00"
+    },
+    "1570463743257608203": {
+      "content": "mallowmushroom posted a trade:\n#Long ANET 200.00",
+      "timestamp": "2026-11-12T15:42:14.198000+00:00"
+    },
+    "1570467909996642305": {
+      "content": "mallowmushroom posted a trade:\n#Exit ANET 204.50 partial for 4.50 gain, swing rest",
+      "timestamp": "2026-11-12T15:58:47.626000+00:00"
+    },
+    "1570475029693472799": {
+      "content": "szxj posted a trade:\n#exit TXN 315.55",
+      "timestamp": "2026-11-12T16:27:05.094000+00:00"
+    },
+    "1570494678212673700": {
+      "content": "mallowmushroom posted a trade:\n#Long RKLB 65.71",
+      "timestamp": "2026-11-12T17:45:09.666000+00:00"
+    },
+    "1570538440460607550": {
+      "content": "mallowmushroom posted a trade:\n#exit RKLB 64.22 for 1.49 loss did not want to get under yday open",
+      "timestamp": "2026-11-12T20:39:03.399000+00:00"
+    },
+    "1570818298348572722": {
+      "content": "szxj posted a trade:\n#short AAOI starter",
+      "timestamp": "2026-11-13T15:11:06.719000+00:00"
+    },
+    "1570822800837705879": {
+      "content": "mallowmushroom posted a trade:\n#Long AMD 533.64",
+      "timestamp": "2026-11-13T15:29:00.196000+00:00"
+    },
+    "1570826714001445045": {
+      "content": "szxj posted a trade:\n#short AAOI added 47.83",
+      "timestamp": "2026-11-13T15:44:33.167000+00:00"
+    },
+    "1570834362604331138": {
+      "content": "szxj posted a trade:\n#exit AAOI 47.58 for a 0.535 profit",
+      "timestamp": "2026-11-13T16:14:56.736000+00:00"
+    },
+    "1570837450794864692": {
+      "content": "mallowmushroom posted a trade:\n#Exit HOOD 77.19 for 3.03 gain",
+      "timestamp": "2026-11-13T16:27:13.018000+00:00"
+    },
+    "1570845990897057893": {
+      "content": "szxj posted a trade:\n#short TSEM starer 142.23",
+      "timestamp": "2026-11-13T17:01:09.137000+00:00"
+    },
+    "1570870400387129464": {
+      "content": "mallowmushroom posted a trade:\n#Long AVGO 346.10",
+      "timestamp": "2026-11-13T18:38:08.813000+00:00"
+    },
+    "1570874033409364092": {
+      "content": "the_prophet_1 posted a trade:\n#Long AMDL at 50.49",
+      "timestamp": "2026-11-13T18:52:34.993000+00:00"
+    },
+    "1570874702795120782": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long AMDL for a scratch",
+      "timestamp": "2026-11-13T18:55:14.587000+00:00"
+    },
+    "1570877909642645627": {
+      "content": "the_prophet_1 posted a trade:\n#Long MU at 768.34",
+      "timestamp": "2026-11-13T19:07:59.159000+00:00"
+    },
+    "1570881048449912905": {
+      "content": "the_prophet_1 posted a trade:\n#Exit Long MU for 3.04 profit per share",
+      "timestamp": "2026-11-13T19:20:27.509000+00:00"
+    },
+    "1570904848382042303": {
+      "content": "jazzyblacksanta posted a trade:\n#long $U at $52.77",
+      "timestamp": "2026-11-13T20:55:01.855000+00:00"
     }
   },
   "prices": {}
