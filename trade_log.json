@@ -1,13 +1,11 @@
 {
   "covered_since": "2026-04-28T19:04:39.822115+00:00",
   "marks": {
-    "AMD": 534.06,
-    "ANET": 197.29,
-    "AVGO": 347.01,
-    "PDD": 78.97,
-    "THC": 286.03,
-    "U": 52.81,
-    "WAFD": 29.42
+    "ANET": 167.62,
+    "PDD": 83.68,
+    "THC": 263.19,
+    "U": 44.75,
+    "WAFD": 26.73
   },
   "messages": {
     "1499041211393118430": {
@@ -9741,6 +9739,130 @@
     "1570904848382042303": {
       "content": "jazzyblacksanta posted a trade:\n#long $U at $52.77",
       "timestamp": "2026-11-13T20:55:01.855000+00:00"
+    },
+    "1571895657508241550": {
+      "content": "szxj posted a trade:\n#exit TSEM the rest at 136",
+      "timestamp": "2026-11-16T14:32:09.159000+00:00"
+    },
+    "1571899682379145219": {
+      "content": "szxj posted a trade:\n#long APP starter swing 415",
+      "timestamp": "2026-11-16T14:48:08.763000+00:00"
+    },
+    "1571903147935408279": {
+      "content": "mallowmushroom posted a trade:\n#Exit AMD 513.10\n#Exit AVGO 330.34\n#Exit QQQ (15) Jan 670c 28.50\n\nTaking the L on all these.",
+      "timestamp": "2026-11-16T15:01:55.016000+00:00"
+    },
+    "1571930742001369200": {
+      "content": "szxj posted a trade:\n#long APP added at 417",
+      "timestamp": "2026-11-16T16:51:33.954000+00:00"
+    },
+    "1572277701975220317": {
+      "content": "szxj posted a trade:\n#exit APP 389.76 took the loss",
+      "timestamp": "2026-11-17T15:50:15.658000+00:00"
+    },
+    "1572281709561643093": {
+      "content": "mallowmushroom posted a trade:\n#Short DDOG 166.72 avg now. Didn't post my earlier entry, but just added to it.",
+      "timestamp": "2026-11-17T16:06:11.141000+00:00"
+    },
+    "1572283619399958749": {
+      "content": "szxj posted a trade:\n#short IREN 15.79",
+      "timestamp": "2026-11-17T16:13:46.482000+00:00"
+    },
+    "1572284469325598913": {
+      "content": "szxj posted a trade:\n#short CRM 195",
+      "timestamp": "2026-11-17T16:17:09.120000+00:00"
+    },
+    "1572291591945850931": {
+      "content": "mallowmushroom posted a trade:\n#Short MSFT 497.75",
+      "timestamp": "2026-11-17T16:45:27.285000+00:00"
+    },
+    "1572291768584503467": {
+      "content": "szxj posted a trade:\n#exit IREN 15.72 scratching this SMH not the weakest here vs MSFT and IGV",
+      "timestamp": "2026-11-17T16:46:09.399000+00:00"
+    },
+    "1572294285041213583": {
+      "content": "mallowmushroom posted a trade:\n#Exit MSFT 497.75 for a scratch",
+      "timestamp": "2026-11-17T16:56:09.369000+00:00"
+    },
+    "1572317598325014629": {
+      "content": "szxj posted a trade:\n#exit CRM 198\n\ntook the loss, stacking candles to go above the 200SMA and vwap isn't what im looking for",
+      "timestamp": "2026-11-17T18:28:47.689000+00:00"
+    },
+    "1572333404089884674": {
+      "content": "mallowmushroom posted a trade:\n#Exit DDOG 166.72 for a scratch",
+      "timestamp": "2026-11-17T19:31:36.077000+00:00"
+    },
+    "1572639661124489368": {
+      "content": "szxj posted a trade:\n#short ADBE PDS 230/225 for $2.15",
+      "timestamp": "2026-11-18T15:48:33.444000+00:00"
+    },
+    "1572644391124733986": {
+      "content": "mallowmushroom posted a trade:\n#Short ASTS 26.22",
+      "timestamp": "2026-11-18T16:07:21.164000+00:00"
+    },
+    "1572647779933880433": {
+      "content": "szxj posted a trade:\n#exit ADBE PDS  for $0.70 profit (30%)",
+      "timestamp": "2026-11-18T16:20:49.119000+00:00"
+    },
+    "1572650919714234451": {
+      "content": "mallowmushroom posted a trade:\n#Exit ASTS 25.72 for .50c gain",
+      "timestamp": "2026-11-18T16:33:17.701000+00:00"
+    },
+    "1572653170595856409": {
+      "content": "szxj posted a trade:\n#short CRWV 46.9",
+      "timestamp": "2026-11-18T16:42:14.353000+00:00"
+    },
+    "1572991684285964462": {
+      "content": "mallowmushroom posted a trade:\n#Short MRK 135.09 (I think, idk, Schwab can suck my balls)",
+      "timestamp": "2026-11-19T15:07:22.306000+00:00"
+    },
+    "1572993253538537499": {
+      "content": "mallowmushroom posted a trade:\n#Exit MRK 135.09 gonna wait for this clown shown ToS to figure itself out",
+      "timestamp": "2026-11-19T15:13:36.445000+00:00"
+    },
+    "1573002300111192125": {
+      "content": "mallowmushroom posted a trade:\n#Short MSTR 88.45",
+      "timestamp": "2026-11-19T15:49:33.316000+00:00"
+    },
+    "1573003562609283117": {
+      "content": "szxj posted a trade:\n#short C with a put expiring 24 dec for $9.35",
+      "timestamp": "2026-11-19T15:54:34.319000+00:00"
+    },
+    "1573004026260492329": {
+      "content": "mallowmushroom posted a trade:\n#Exit MSTR 88.45 breakeven orders are working again at least",
+      "timestamp": "2026-11-19T15:56:24.862000+00:00"
+    },
+    "1573021226463404244": {
+      "content": "szxj posted a trade:\n#add short CRWV at 46.2",
+      "timestamp": "2026-11-19T17:04:45.710000+00:00"
+    },
+    "1573022281733775371": {
+      "content": "szxj posted a trade:\n#exit C put at 10.15",
+      "timestamp": "2026-11-19T17:08:57.306000+00:00"
+    },
+    "1573024383159767061": {
+      "content": "szxj posted a trade:\n#exit CRWV full at 46, just err-ing on side of caution",
+      "timestamp": "2026-11-19T17:17:18.325000+00:00"
+    },
+    "1573025987531247720": {
+      "content": "szxj posted a trade:\n#long APP 398.8 starter again",
+      "timestamp": "2026-11-19T17:23:40.837000+00:00"
+    },
+    "1573045542794035332": {
+      "content": "szxj posted a trade:\n#short CRWV 45.85",
+      "timestamp": "2026-11-19T18:41:23.175000+00:00"
+    },
+    "1573047915746951169": {
+      "content": "szxj posted a trade:\n#exit CRWV 45.7 not going down with the market and SPY is back at LOD",
+      "timestamp": "2026-11-19T18:50:48.931000+00:00"
+    },
+    "1573050584322408550": {
+      "content": "szxj posted a trade:\n#long CRWD with 215p sold expiring next friday at $2.02",
+      "timestamp": "2026-11-19T19:01:25.169000+00:00"
+    },
+    "1573120971936890981": {
+      "content": "szxj posted a trade:\n#exit APP 375",
+      "timestamp": "2026-11-19T23:41:06.884000+00:00"
     }
   },
   "prices": {}
